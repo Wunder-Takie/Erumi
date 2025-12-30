@@ -1,0 +1,250 @@
+[
+  {
+    "id": 1,
+    "bad_word": "Suck",
+    "related_hangul": "석",
+    "reason": "빨다, 형편없다(Slang)",
+    "severity": "critical",
+    "alternative": "Seok"
+  },
+  {
+    "id": 2,
+    "bad_word": "Fuk",
+    "related_hangul": "복",
+    "reason": "영어 욕설(Fuck) 연상",
+    "severity": "critical",
+    "alternative": "Pok / Bok"
+  },
+  {
+    "id": 3,
+    "bad_word": "Hell",
+    "related_hangul": "해",
+    "reason": "지옥(Hell)",
+    "severity": "critical",
+    "alternative": "Hae"
+  },
+  {
+    "id": 4,
+    "bad_word": "Kill",
+    "related_hangul": "길",
+    "reason": "죽이다(Kill)",
+    "severity": "critical",
+    "alternative": "Gil"
+  },
+  {
+    "id": 5,
+    "bad_word": "Cock",
+    "related_hangul": "각",
+    "reason": "남성 성기 비속어",
+    "severity": "critical",
+    "alternative": "Gak"
+  },
+  {
+    "id": 6,
+    "bad_word": "Gang",
+    "related_hangul": "강",
+    "reason": "범죄 조직(Gang)",
+    "severity": "critical",
+    "alternative": "Kang"
+  },
+  {
+    "id": 7,
+    "bad_word": "Ho",
+    "related_hangul": "호",
+    "reason": "매춘부 비속어(Hoe)",
+    "severity": "critical",
+    "alternative": "Hoh"
+  },
+  {
+    "id": 8,
+    "bad_word": "Bum",
+    "related_hangul": "범",
+    "reason": "거지, 엉덩이",
+    "severity": "warning",
+    "alternative": "Beom"
+  },
+  {
+    "id": 9,
+    "bad_word": "Gun",
+    "related_hangul": "건",
+    "reason": "총(Gun)",
+    "severity": "warning",
+    "alternative": "Geon"
+  },
+  {
+    "id": 10,
+    "bad_word": "Sin",
+    "related_hangul": "신",
+    "reason": "죄(Sin)",
+    "severity": "warning",
+    "alternative": "Shin"
+  },
+  {
+    "id": 11,
+    "bad_word": "No",
+    "related_hangul": "노",
+    "reason": "부정어(No)",
+    "severity": "warning",
+    "alternative": "Roh"
+  },
+  {
+    "id": 12,
+    "bad_word": "Job",
+    "related_hangul": "잡",
+    "reason": "직업, 일",
+    "severity": "warning",
+    "alternative": "Jab"
+  },
+  {
+    "id": 13,
+    "bad_word": "War",
+    "related_hangul": "워",
+    "reason": "전쟁(War)",
+    "severity": "warning",
+    "alternative": "Wo"
+  },
+  {
+    "id": 14,
+    "bad_word": "Bin",
+    "related_hangul": "빈",
+    "reason": "쓰레기통(Trash Bin)",
+    "severity": "warning",
+    "alternative": "Been"
+  },
+  {
+    "id": 15,
+    "bad_word": "Moo",
+    "related_hangul": "무",
+    "reason": "소 울음소리",
+    "severity": "warning",
+    "alternative": "Mu"
+  },
+  {
+    "id": 16,
+    "bad_word": "Pee",
+    "related_hangul": "피",
+    "reason": "소변",
+    "severity": "warning",
+    "alternative": "Pi"
+  },
+  {
+    "id": 17,
+    "bad_word": "Rim",
+    "related_hangul": "림",
+    "reason": "가장자리, 성적 은어 가능성",
+    "severity": "warning",
+    "alternative": "Lim"
+  },
+  {
+    "id": 18,
+    "bad_word": "Dong",
+    "related_hangul": "동",
+    "reason": "남성 성기 비속어",
+    "severity": "warning",
+    "alternative": "Dohng"
+  },
+  {
+    "id": 19,
+    "bad_word": "Wang",
+    "related_hangul": "왕",
+    "reason": "남성 성기 비속어",
+    "severity": "warning",
+    "alternative": "Whang"
+  },
+  {
+    "id": 20,
+    "bad_word": "Sew",
+    "related_hangul": "수",
+    "reason": "바느질하다 / 고소하다(Sue)",
+    "severity": "warning",
+    "alternative": "Soo"
+  },
+  {
+    "id": 21,
+    "bad_word": "Young",
+    "related_hangul": "영",
+    "reason": "어리다(Young)",
+    "severity": "warning",
+    "alternative": "Yeong"
+  },
+  {
+    "id": 22,
+    "bad_word": "Soon",
+    "related_hangul": "순",
+    "reason": "곧(Soon)",
+    "severity": "warning",
+    "alternative": "Sun"
+  },
+  {
+    "id": 23,
+    "bad_word": "Rob",
+    "related_hangul": "랍",
+    "reason": "강도질하다(Rob)",
+    "severity": "critical",
+    "alternative": "Rap"
+  },
+  {
+    "id": 24,
+    "bad_word": "Ban",
+    "related_hangul": "반",
+    "reason": "금지하다(Ban)",
+    "severity": "warning",
+    "alternative": "Bahn"
+  },
+  {
+    "id": 25,
+    "bad_word": "Dam",
+    "related_hangul": "담",
+    "reason": "저주(Damn) 연상",
+    "severity": "warning",
+    "alternative": "Dahm"
+  },
+  {
+    "id": 26,
+    "bad_word": "Gil",
+    "related_hangul": "길",
+    "reason": "생선 아가미(Gill)",
+    "severity": "warning",
+    "alternative": "Kil"
+  },
+  {
+    "id": 27,
+    "bad_word": "Lee",
+    "related_hangul": "이",
+    "reason": "피하다(Lee side)",
+    "severity": "warning",
+    "alternative": "Rhee / Yi"
+  },
+  {
+    "id": 28,
+    "bad_word": "Gag",
+    "related_hangul": "객",
+    "reason": "구역질(Gag)",
+    "severity": "warning",
+    "alternative": "Gaek"
+  },
+  {
+    "id": 29,
+    "bad_word": "Boon",
+    "related_hangul": "분",
+    "reason": "시골뜨기(Boon) / 은혜(Boon)",
+    "severity": "warning",
+    "alternative": "Bun"
+  },
+  {
+    "id": 30,
+    "bad_word": "Dung",
+    "related_hangul": "덩",
+    "reason": "똥/거름(Dung)",
+    "severity": "critical",
+    "alternative": "Deong"
+  },
+  {
+    "id": 31,
+    "bad_word": "Geon",
+    "related_hangul": "건",
+    "reason": "총(Gun) 발음 유사",
+    "severity": "warning",
+    "alternative": "Keon / Kun"
+  }
+]

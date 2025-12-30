@@ -1,0 +1,22 @@
+[
+  { "id": "t1", "tag": "글로벌 리더", "related_element": "Metal", "desc": "넓은 세상을 무대로 활약하는 카리스마" },
+  { "id": "t2", "tag": "논리적인", "related_element": "Metal", "desc": "이성적이고 명확한 판단력" },
+  { "id": "t3", "tag": "자존감 높은", "related_element": "Metal", "desc": "스스로를 믿고 당당하게 나아가는 힘" },
+  
+  { "id": "t4", "tag": "창의력 대장", "related_element": "Wood", "desc": "남다른 생각으로 새로운 가치를 만드는" },
+  { "id": "t5", "tag": "예술적 감각", "related_element": "Wood", "desc": "풍부한 감수성과 뛰어난 표현력" },
+  { "id": "t6", "tag": "건강하고 튼튼한", "related_element": "Wood", "desc": "몸과 마음이 모두 건강하게 자라나는" },
+  
+  { "id": "t7", "tag": "사랑받는 아이", "related_element": "Earth", "desc": "어디서나 환영받는 따뜻한 매력" },
+  { "id": "t8", "tag": "재물복 있는", "related_element": "Earth", "desc": "삶이 풍요롭고 넉넉한 기운" },
+  { "id": "t9", "tag": "배려심 깊은", "related_element": "Earth", "desc": "타인을 이해하고 감싸주는 넓은 마음" },
+  
+  { "id": "t10", "tag": "지혜로운", "related_element": "Water", "desc": "깊은 통찰력으로 문제를 해결하는" },
+  { "id": "t11", "tag": "유연한 사고", "related_element": "Water", "desc": "변화에 능동적으로 대처하는 현명함" },
+  { "id": "t12", "tag": "차분하고 깊은", "related_element": "Water", "desc": "쉽게 흔들리지 않는 평정심" },
+  
+  { "id": "t13", "tag": "인싸력 만렙", "related_element": "Fire", "desc": "주변을 밝게 비추는 긍정 에너지" },
+  { "id": "t14", "tag": "열정적인", "related_element": "Fire", "desc": "목표를 향해 뜨겁게 도전하는 자세" },
+  { "id": "t15", "tag": "용기 있는", "related_element": "Fire", "desc": "두려움 없이 앞장서는 리더십" }
+]
+

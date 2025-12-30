@@ -1,0 +1,418 @@
+{
+  "jongseong_scores": {
+    "": 8,
+    "ㄴ": 10,
+    "ㄹ": 7,
+    "ㅁ": 9,
+    "ㅇ": 10
+  },
+  "vowel_scores": {
+    "ㅏ": 10,
+    "ㅓ": 10,
+    "ㅗ": 9,
+    "ㅜ": 9,
+    "ㅡ": 8,
+    "ㅣ": 9,
+    "ㅐ": 7,
+    "ㅔ": 7
+  },
+  "archaic_hanja": [
+    {
+      "hanja": "夏",
+      "hangul": "하",
+      "penalty": 3
+    }
+  ],
+  "popular_syllables_2020s": {
+    "서": 20,
+    "하": 0,
+    "지": 18,
+    "우": 16,
+    "아": 0,
+    "유": 15,
+    "수": 12,
+    "은": 10,
+    "진": 18,
+    "윤": -12,
+    "현": -15,
+    "영": -12,
+    "건": -10,
+    "민": -8,
+    "준": -10
+  },
+  "homophone_words": {
+    "웃어": {
+      "syllables": [
+        "우서"
+      ],
+      "severity": "warning"
+    },
+    "가서": {
+      "syllables": [
+        "가서"
+      ],
+      "severity": "warning"
+    },
+    "사서": {
+      "syllables": [
+        "사서"
+      ],
+      "severity": "warning"
+    },
+    "서로": {
+      "syllables": [
+        "서로",
+        "서도"
+      ],
+      "severity": "warning"
+    },
+    "지하": {
+      "syllables": [
+        "지하"
+      ],
+      "severity": "critical"
+    },
+    "수하": {
+      "syllables": [
+        "수하"
+      ],
+      "severity": "critical"
+    },
+    "노예": {
+      "syllables": [
+        "노예"
+      ],
+      "severity": "critical"
+    },
+    "하인": {
+      "syllables": [
+        "하인"
+      ],
+      "severity": "critical"
+    },
+    "아지": {
+      "syllables": [
+        "아지"
+      ],
+      "severity": "critical"
+    },
+    "운지": {
+      "syllables": [
+        "운지"
+      ],
+      "severity": "critical",
+      "reason": "부적절한 연상"
+    },
+    "우아": {
+      "syllables": [
+        "우아"
+      ],
+      "severity": "warning"
+    },
+    "부자": {
+      "syllables": [
+        "부자"
+      ],
+      "severity": "warning"
+    },
+    "모자": {
+      "syllables": [
+        "모자"
+      ],
+      "severity": "warning"
+    },
+    "하자": {
+      "syllables": [
+        "하자"
+      ],
+      "severity": "warning"
+    },
+    "석유": {
+      "syllables": [
+        "석유"
+      ],
+      "severity": "critical",
+      "reason": "석유(石油) 연상"
+    },
+    "평안": {
+      "syllables": [
+        "평안"
+      ],
+      "severity": "critical",
+      "reason": "평안도 연상"
+    },
+    "영지": {
+      "syllables": [
+        "영지"
+      ],
+      "severity": "critical",
+      "reason": "영지버섯 연상"
+    },
+    "선원": {
+      "syllables": [
+        "선원"
+      ],
+      "severity": "critical",
+      "reason": "선원(船員) 연상"
+    },
+    "지평": {
+      "syllables": [
+        "지평"
+      ],
+      "severity": "critical",
+      "reason": "지평선 연상"
+    },
+    "성리": {
+      "syllables": [
+        "성리"
+      ],
+      "severity": "critical",
+      "reason": "ㅣ 모음 반복"
+    },
+    "재리": {
+      "syllables": [
+        "재리"
+      ],
+      "severity": "critical",
+      "reason": "ㅣ 모음 반복"
+    },
+    "유린": {
+      "syllables": [
+        "유린"
+      ],
+      "severity": "critical",
+      "reason": "유린(蹂躪) 연상, ㄴ-ㄹ"
+    },
+    "운나": {
+      "syllables": [
+        "운나"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "원민": {
+      "syllables": [
+        "원민"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "진유": {
+      "syllables": [
+        "진유"
+      ],
+      "severity": "warning",
+      "reason": "올드한 느낌"
+    },
+    "진예": {
+      "syllables": [
+        "진예"
+      ],
+      "severity": "warning",
+      "reason": "올드한 느낌"
+    },
+    "시자": {
+      "syllables": [
+        "시자"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "성지": {
+      "syllables": [
+        "성지"
+      ],
+      "severity": "critical",
+      "reason": "'성지(聖地)' 연상"
+    }
+  },
+  "critical_blocks": [
+    "운지",
+    "시발",
+    "개새",
+    "병신",
+    "씨발",
+    "좆",
+    "지랄"
+  ],
+  "awkward_combinations": {
+    "description": "발음이 어색하거나 일상어와 겹치는 조합",
+    "combinations": [
+      {
+        "name": "시지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅅ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "시주",
+        "severity": "critical",
+        "reason": "시주(施主) 연상"
+      },
+      {
+        "name": "시린",
+        "severity": "critical",
+        "reason": "'시리다' 연상, 부정적 의미"
+      },
+      {
+        "name": "우린",
+        "severity": "critical",
+        "reason": "'우리는' 연상, 대명사처럼 들림"
+      },
+      {
+        "name": "환지",
+        "severity": "critical",
+        "reason": "환지(換地) 연상, 전문용어"
+      },
+      {
+        "name": "찬지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅊ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "성린",
+        "severity": "critical",
+        "reason": "어색한 조합, 발음 어려움"
+      },
+      {
+        "name": "진지",
+        "severity": "critical",
+        "reason": "'진지(먹다)' 연상"
+      },
+      {
+        "name": "준지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅈ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "선지",
+        "severity": "critical",
+        "reason": "선지(血) 연상"
+      },
+      {
+        "name": "우지",
+        "severity": "critical",
+        "reason": "어색한 발음"
+      },
+      {
+        "name": "주지",
+        "severity": "critical",
+        "reason": "'주지(住持)' 연상"
+      }
+    ]
+  },
+  "archaic_hanja_syllables": {
+    "겸": -12,
+    "결": -12,
+    "경": -6,
+    "규": -6,
+    "도": -8,
+    "로": -8,
+    "숙": -10,
+    "순": -10,
+    "식": -10,
+    "철": -10,
+    "석": -10,
+    "길": -10,
+    "광": -10,
+    "만": -10,
+    "춘": -10,
+    "봉": -10,
+    "덕": -10
+  },
+  "difficult_pronunciation": [
+    {
+      "jong1": "ㄹ",
+      "cho2": "ㅈ",
+      "penalty": 15
+    },
+    {
+      "jong1": "ㄹ",
+      "cho2": "ㄱ",
+      "penalty": 15
+    },
+    {
+      "jong1": "ㅂ",
+      "cho2": "ㄱ",
+      "penalty": 10
+    },
+    {
+      "jong1": "ㄱ",
+      "cho2": "ㅁ",
+      "penalty": 10
+    },
+    {
+      "jong1": "ㄱ",
+      "cho2": "ㄴ",
+      "penalty": 10
+    }
+  ],
+  "awkward_phonetic_patterns": [],
+  "global_risk_penalty_multiplier": {
+    "warning": 5,
+    "critical": 30
+  },
+  "overused_combinations": [
+    "나하",
+    "도우",
+    "미선",
+    "민수",
+    "민준",
+    "사랑",
+    "서준",
+    "선미",
+    "성애",
+    "성우",
+    "성진",
+    "수지",
+    "아수",
+    "아아",
+    "아우",
+    "애성",
+    "우아",
+    "우유",
+    "우하",
+    "유우",
+    "유지",
+    "유진",
+    "은지",
+    "의리",
+    "지수",
+    "지은",
+    "진우",
+    "진혜",
+    "천사",
+    "태지",
+    "평화",
+    "하우",
+    "하하",
+    "하히",
+    "한우",
+    "한진",
+    "현빈"
+  ],
+  "trendy_patterns": [
+    {
+      "description": "서 + 받침없음/ㄴ받침",
+      "char1_vowel": "ㅓ",
+      "char2_jongseong": [
+        "",
+        "ㄴ"
+      ],
+      "bonus": 5
+    }
+  ],
+  "syllable_simplicity_bonus": {
+    "description": "단순하고 발음하기 쉬운 음절",
+    "easy_syllables": [
+      "서",
+      "우",
+      "지",
+      "유",
+      "수",
+      "주",
+      "진",
+      "은"
+    ],
+    "bonus_per_match": 2
+  }
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>점수 테스트</title>
+</head>
+
+<body>
+  <h1>김지우 점수 직접 계산</h1>
+  <div id="result"></div>
+
+  <script type="module">
+    window.onerror = function (msg, url, line, col, error) {
+      document.getElementById('result').innerHTML = `<h3 style="color:red">Error: ${msg}</h3><pre>${error?.stack || ''}</pre>`;
+    };
+
+    import { generateNames } from './src/utils/namingUtils.js';
+
+    try {
+      const names = generateNames('김', []);
+      const jiwo = names.find(n => n.fullName.hangul === '김지우');
+
+      const html = `
+        <h2>김지우 결과</h2>
+        <p>점수: ${jiwo?.score || '없음'}</p>
+        <pre>Breakdown: ${JSON.stringify(jiwo?.scoreBreakdown, null, 2)}</pre>
+        <hr>
+        <h2>전체 통계</h2>
+        <p>총 개수: ${names.length}</p>
+        <p>최고점: ${Math.max(...names.map(n => n.score))}</p>
+        <p>90점+: ${names.filter(n => n.score >= 90).length}</p>
+        <p>85점+: ${names.filter(n => n.score >= 85).length}</p>
+        <p>80점+: ${names.filter(n => n.score >= 80).length}</p>
+      `;
+
+      document.getElementById('result').innerHTML = html;
+      console.log('김지우 상세:', jiwo);
+    } catch (e) {
+      document.getElementById('result').innerHTML = `<h3 style="color:red">Execution Error: ${e.message}</h3><pre>${e.stack}</pre>`;
+      console.error(e);
+    }
+  </script>
+</body>
+
+</html>
