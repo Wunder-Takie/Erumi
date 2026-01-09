@@ -1,0 +1,210 @@
+{
+    "initial": {
+        "ㄱ": {
+            "element": "Wood",
+            "yinYang": "양",
+            "korean": "목(木)"
+        },
+        "ㅋ": {
+            "element": "Wood",
+            "yinYang": "음",
+            "korean": "목(木)"
+        },
+        "ㄴ": {
+            "element": "Fire",
+            "yinYang": "양",
+            "korean": "화(火)"
+        },
+        "ㄷ": {
+            "element": "Fire",
+            "yinYang": "양",
+            "korean": "화(火)"
+        },
+        "ㄹ": {
+            "element": "Fire",
+            "yinYang": "음",
+            "korean": "화(火)"
+        },
+        "ㅌ": {
+            "element": "Fire",
+            "yinYang": "음",
+            "korean": "화(火)"
+        },
+        "ㅁ": {
+            "element": "Earth",
+            "yinYang": "양",
+            "korean": "토(土)"
+        },
+        "ㅂ": {
+            "element": "Earth",
+            "yinYang": "양",
+            "korean": "토(土)"
+        },
+        "ㅍ": {
+            "element": "Earth",
+            "yinYang": "음",
+            "korean": "토(土)"
+        },
+        "ㅅ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        },
+        "ㅈ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        },
+        "ㅊ": {
+            "element": "Metal",
+            "yinYang": "음",
+            "korean": "금(金)"
+        },
+        "ㅇ": {
+            "element": "Water",
+            "yinYang": "양",
+            "korean": "수(水)"
+        },
+        "ㅎ": {
+            "element": "Water",
+            "yinYang": "음",
+            "korean": "수(水)"
+        },
+        "ㄲ": {
+            "element": "Wood",
+            "yinYang": "양",
+            "korean": "목(木)"
+        },
+        "ㄸ": {
+            "element": "Fire",
+            "yinYang": "양",
+            "korean": "화(火)"
+        },
+        "ㅃ": {
+            "element": "Earth",
+            "yinYang": "양",
+            "korean": "토(土)"
+        },
+        "ㅆ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        },
+        "ㅉ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        }
+    },
+    "final": {
+        "ㄱ": {
+            "element": "Wood",
+            "yinYang": "양",
+            "korean": "목(木)"
+        },
+        "ㄴ": {
+            "element": "Fire",
+            "yinYang": "양",
+            "korean": "화(火)"
+        },
+        "ㄷ": {
+            "element": "Fire",
+            "yinYang": "양",
+            "korean": "화(火)"
+        },
+        "ㄹ": {
+            "element": "Fire",
+            "yinYang": "음",
+            "korean": "화(火)"
+        },
+        "ㅁ": {
+            "element": "Earth",
+            "yinYang": "양",
+            "korean": "토(土)"
+        },
+        "ㅂ": {
+            "element": "Earth",
+            "yinYang": "양",
+            "korean": "토(土)"
+        },
+        "ㅅ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        },
+        "ㅇ": {
+            "element": "Water",
+            "yinYang": "양",
+            "korean": "수(水)"
+        },
+        "ㅈ": {
+            "element": "Metal",
+            "yinYang": "양",
+            "korean": "금(金)"
+        },
+        "ㅊ": {
+            "element": "Metal",
+            "yinYang": "음",
+            "korean": "금(金)"
+        },
+        "ㅋ": {
+            "element": "Wood",
+            "yinYang": "음",
+            "korean": "목(木)"
+        },
+        "ㅌ": {
+            "element": "Fire",
+            "yinYang": "음",
+            "korean": "화(火)"
+        },
+        "ㅍ": {
+            "element": "Earth",
+            "yinYang": "음",
+            "korean": "토(土)"
+        },
+        "ㅎ": {
+            "element": "Water",
+            "yinYang": "음",
+            "korean": "수(水)"
+        }
+    },
+    "elementInfo": {
+        "Wood": {
+            "korean": "목(木)",
+            "emoji": "🌳",
+            "color": "#22c55e"
+        },
+        "Fire": {
+            "korean": "화(火)",
+            "emoji": "🔥",
+            "color": "#ef4444"
+        },
+        "Earth": {
+            "korean": "토(土)",
+            "emoji": "⛰️",
+            "color": "#f59e0b"
+        },
+        "Metal": {
+            "korean": "금(金)",
+            "emoji": "⚔️",
+            "color": "#94a3b8"
+        },
+        "Water": {
+            "korean": "수(水)",
+            "emoji": "💧",
+            "color": "#3b82f6"
+        }
+    },
+    "yinYangInfo": {
+        "양": {
+            "label": "양(陽)",
+            "emoji": "☀️",
+            "description": "밝고 활발한 에너지"
+        },
+        "음": {
+            "label": "음(陰)",
+            "emoji": "🌙",
+            "description": "차분하고 깊은 에너지"
+        }
+    }
+}

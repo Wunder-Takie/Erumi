@@ -1,0 +1,153 @@
+{
+    "intro": {
+        "headline": "아이의 첫 번째 브랜드를 만듭니다",
+        "subline": "이름은 평생을 함께할 첫 번째 선물",
+        "cta": "시작하기"
+    },
+    "basics": {
+        "surnameLabel": "아이의 성씨를 알려주세요",
+        "surnamePlaceholder": "김",
+        "genderLabel": "성별",
+        "genderOptions": [
+            {
+                "value": "M",
+                "label": "남아"
+            },
+            {
+                "value": "F",
+                "label": "여아"
+            },
+            {
+                "value": null,
+                "label": "아직 몰라요"
+            }
+        ]
+    },
+    "story": {
+        "question": "아이가 찾아온 특별한 순간이 있나요?",
+        "subtitle": "태몽이나 특별한 순간을 떠올려보세요",
+        "options": [
+            {
+                "id": "spring_dream",
+                "emoji": "🌸",
+                "label": "봄날의 꿈속에서",
+                "description": "새싹과 꽃이 피어나는 태몽",
+                "elements": {
+                    "Wood": 1.0
+                },
+                "storyKeyword": "봄날의 꿈"
+            },
+            {
+                "id": "summer_waiting",
+                "emoji": "☀️",
+                "label": "한여름 뜨거운 기다림 끝에",
+                "description": "열정적으로 기다린 소중한 순간",
+                "elements": {
+                    "Fire": 1.0
+                },
+                "storyKeyword": "뜨거운 기다림"
+            },
+            {
+                "id": "autumn_blessing",
+                "emoji": "🍂",
+                "label": "풍요로운 가을의 선물",
+                "description": "결실처럼 찾아온 축복",
+                "elements": {
+                    "Earth": 1.0
+                },
+                "storyKeyword": "가을의 선물"
+            },
+            {
+                "id": "winter_star",
+                "emoji": "❄️",
+                "label": "맑은 겨울밤 별을 보며",
+                "description": "고요하게 기다린 기적",
+                "elements": {
+                    "Metal": 1.0
+                },
+                "storyKeyword": "겨울밤 별"
+            },
+            {
+                "id": "quiet_night",
+                "emoji": "🌙",
+                "label": "조용한 밤 꿈결에",
+                "description": "자연스럽게 흘러온 인연",
+                "elements": {
+                    "Water": 1.0
+                },
+                "storyKeyword": "밤의 꿈결"
+            },
+            {
+                "id": "skip",
+                "emoji": "✨",
+                "label": "이야기는 지금부터",
+                "description": "새로운 이야기를 시작해요",
+                "elements": {},
+                "storyKeyword": "새로운 이야기"
+            }
+        ]
+    },
+    "vibe": {
+        "question": "아이에게 바라는 모습이 있나요?",
+        "subtitle": "아이의 미래를 상상해보세요",
+        "options": [
+            {
+                "id": "forest_growth",
+                "emoji": "🌲",
+                "label": "숲속 나무처럼 쑥쑥",
+                "description": "건강하고 창의적인 성장",
+                "elements": {
+                    "Wood": 1.0
+                },
+                "vibeKeyword": "싱그러운 숲"
+            },
+            {
+                "id": "warm_sunshine",
+                "emoji": "🔥",
+                "label": "햇살처럼 따뜻하게",
+                "description": "사람들에게 사랑받는 리더",
+                "elements": {
+                    "Fire": 1.0
+                },
+                "vibeKeyword": "따뜻한 햇살"
+            },
+            {
+                "id": "steady_mountain",
+                "emoji": "🏔️",
+                "label": "산처럼 듬직하게",
+                "description": "든든하고 믿음직한 아이",
+                "elements": {
+                    "Earth": 1.0
+                },
+                "vibeKeyword": "든든한 산"
+            },
+            {
+                "id": "shining_star",
+                "emoji": "⭐",
+                "label": "별처럼 빛나게",
+                "description": "어디서든 돋보이는 존재",
+                "elements": {
+                    "Metal": 1.0
+                },
+                "vibeKeyword": "빛나는 별"
+            },
+            {
+                "id": "deep_ocean",
+                "emoji": "🌊",
+                "label": "바다처럼 깊게",
+                "description": "지혜롭고 유연한 아이",
+                "elements": {
+                    "Water": 1.0
+                },
+                "vibeKeyword": "깊은 바다"
+            }
+        ]
+    },
+    "loading": {
+        "template": "{storyKeyword}의 기운과 {vibeKeyword}의 풍경을 담는 중...",
+        "fallback": "특별한 이름을 찾는 중..."
+    },
+    "reveal": {
+        "copyTemplate": "{storyKeyword}로 찾아와, {vibeKeyword}처럼 자라날 아이"
+    }
+}

@@ -1,0 +1,213 @@
+{
+    "description": "분파(分派) 한자 목록 - 가로/세로로 갈라지는 한자",
+    "bunpa_horizontal": {
+        "description": "가로로 갈라지는 한자 (상하 분리)",
+        "characters": [
+            {
+                "hanja": "多",
+                "reading": "다",
+                "reason": "夕+夕로 상하 분리"
+            },
+            {
+                "hanja": "昌",
+                "reading": "창",
+                "reason": "日+日로 상하 분리"
+            },
+            {
+                "hanja": "品",
+                "reading": "품",
+                "reason": "口가 3개로 분리"
+            },
+            {
+                "hanja": "晶",
+                "reading": "정",
+                "reason": "日이 3개로 분리"
+            },
+            {
+                "hanja": "森",
+                "reading": "삼",
+                "reason": "木이 3개로 분리"
+            },
+            {
+                "hanja": "磊",
+                "reading": "뢰",
+                "reason": "石이 3개로 분리"
+            },
+            {
+                "hanja": "蟲",
+                "reading": "충",
+                "reason": "虫이 3개로 분리"
+            },
+            {
+                "hanja": "卉",
+                "reading": "훼",
+                "reason": "상하가 분리된 형태"
+            },
+            {
+                "hanja": "尖",
+                "reading": "첨",
+                "reason": "小+大로 상하 분리"
+            },
+            {
+                "hanja": "岩",
+                "reading": "암",
+                "reason": "山+石으로 상하 분리"
+            },
+            {
+                "hanja": "炎",
+                "reading": "염",
+                "reason": "火+火로 상하 분리"
+            },
+            {
+                "hanja": "甚",
+                "reading": "심",
+                "reason": "상하 분리 구조"
+            },
+            {
+                "hanja": "罡",
+                "reading": "강",
+                "reason": "相+日로 상하 분리"
+            }
+        ]
+    },
+    "bunpa_vertical": {
+        "description": "세로로 갈라지는 한자 (좌우 분리)",
+        "characters": [
+            {
+                "hanja": "林",
+                "reading": "림",
+                "reason": "木+木으로 좌우 분리"
+            },
+            {
+                "hanja": "明",
+                "reading": "명",
+                "reason": "日+月로 좌우 분리"
+            },
+            {
+                "hanja": "朋",
+                "reading": "붕",
+                "reason": "月+月로 좌우 분리"
+            },
+            {
+                "hanja": "比",
+                "reading": "비",
+                "reason": "人+人으로 좌우 분리"
+            },
+            {
+                "hanja": "北",
+                "reading": "북",
+                "reason": "두 사람이 등지는 형태"
+            },
+            {
+                "hanja": "从",
+                "reading": "종",
+                "reason": "人+人으로 분리"
+            },
+            {
+                "hanja": "竹",
+                "reading": "죽",
+                "reason": "대나무가 분리된 형태"
+            },
+            {
+                "hanja": "羽",
+                "reading": "우",
+                "reason": "깃이 분리된 형태"
+            },
+            {
+                "hanja": "双",
+                "reading": "쌍",
+                "reason": "又+又로 좌우 분리"
+            },
+            {
+                "hanja": "卵",
+                "reading": "란",
+                "reason": "알이 분리된 형태"
+            },
+            {
+                "hanja": "斑",
+                "reading": "반",
+                "reason": "玉이 분리된 형태"
+            },
+            {
+                "hanja": "班",
+                "reading": "반",
+                "reason": "玉이 분리된 형태"
+            },
+            {
+                "hanja": "弱",
+                "reading": "약",
+                "reason": "弓이 분리된 형태"
+            },
+            {
+                "hanja": "辨",
+                "reading": "판",
+                "reason": "가운데가 분리"
+            },
+            {
+                "hanja": "辮",
+                "reading": "변",
+                "reason": "가운데가 분리"
+            },
+            {
+                "hanja": "辯",
+                "reading": "변",
+                "reason": "가운데가 분리"
+            }
+        ]
+    },
+    "bunpa_combined": {
+        "description": "이름에서 피해야 할 분파 한자 전체 목록",
+        "hangul_list": [
+            "다",
+            "창",
+            "품",
+            "정",
+            "삼",
+            "뢰",
+            "충",
+            "훼",
+            "첨",
+            "암",
+            "염",
+            "심",
+            "강",
+            "림",
+            "명",
+            "붕",
+            "비",
+            "북",
+            "종",
+            "죽",
+            "우",
+            "쌍",
+            "란",
+            "반",
+            "약",
+            "판",
+            "변"
+        ]
+    },
+    "severity": {
+        "strong_bunpa": [
+            "林",
+            "明",
+            "多",
+            "比",
+            "北"
+        ],
+        "medium_bunpa": [
+            "品",
+            "晶",
+            "森",
+            "朋",
+            "竹"
+        ],
+        "mild_bunpa": [
+            "班",
+            "斑",
+            "弱",
+            "羽"
+        ]
+    },
+    "warning_message": "분파 한자는 이름에서 기운이 갈라진다고 보아 피하는 경우가 있습니다."
+}

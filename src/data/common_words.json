@@ -241,6 +241,48 @@
             "category": "noun",
             "severity": "warning",
             "reason": "일상 명사 (부정적)"
+        },
+        {
+            "word": "성인",
+            "category": "noun",
+            "severity": "critical",
+            "reason": "일반명사 (成人, 聖人) 충돌"
+        },
+        {
+            "word": "성자",
+            "category": "noun",
+            "severity": "critical",
+            "reason": "일반명사 (聖者) 충돌 + 올드한 느낌"
+        },
+        {
+            "word": "환아",
+            "category": "medical",
+            "severity": "critical",
+            "reason": "환아(患兒) 의료용어"
+        },
+        {
+            "word": "영성",
+            "category": "noun",
+            "severity": "warning",
+            "reason": "일반명사 (靈性, 영성체험)"
+        },
+        {
+            "word": "원성",
+            "category": "noun",
+            "severity": "warning",
+            "reason": "일반명사 (怨聲, 원성을 사다)"
+        },
+        {
+            "word": "영린",
+            "category": "old",
+            "severity": "warning",
+            "reason": "올드한 느낌 + 연음 어색"
+        },
+        {
+            "word": "의린",
+            "category": "old",
+            "severity": "warning",
+            "reason": "올드한 느낌 + 연음 어색"
         }
     ]
 }

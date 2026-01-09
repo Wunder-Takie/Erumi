@@ -1,0 +1,345 @@
+{
+    "description": "음운 패턴 기반 필터링 규칙",
+    "version": "1.0",
+    "syllable_patterns": {
+        "first_syllable_blocks": {
+            "description": "첫글자로 시작시 차단",
+            "patterns": {
+                "율": {
+                    "block_all": true,
+                    "reason": "어색한 발음"
+                },
+                "근": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "광": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "솔": {
+                    "allowed": [
+                        "아"
+                    ],
+                    "reason": "대부분 어색함"
+                },
+                "태": {
+                    "allowed": [
+                        "아",
+                        "오"
+                    ],
+                    "reason": "올드함"
+                },
+                "한": {
+                    "allowed": [
+                        "나",
+                        "별"
+                    ],
+                    "reason": "어색함"
+                },
+                "자": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "완": {
+                    "block_all": true,
+                    "reason": "어색함"
+                },
+                "석": {
+                    "block_all": true,
+                    "reason": "올드함"
+                }
+            }
+        },
+        "second_syllable_blocks": {
+            "description": "둘째글자로 끝날시 차단",
+            "patterns": {
+                "나": {
+                    "block_all": true,
+                    "reason": "어색함"
+                },
+                "광": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "결": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "석": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "겸": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "환": {
+                    "block_all": true,
+                    "reason": "어색함"
+                },
+                "엽": {
+                    "block_all": true,
+                    "reason": "매우 올드함"
+                },
+                "경": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "근": {
+                    "block_all": true,
+                    "reason": "올드함"
+                },
+                "도": {
+                    "allowed": [
+                        "태",
+                        "이"
+                    ],
+                    "reason": "올드함"
+                },
+                "린": {
+                    "allowed": [
+                        "예",
+                        "유",
+                        "아",
+                        "하",
+                        "수",
+                        "시"
+                    ],
+                    "reason": "대부분 어색함"
+                },
+                "건": {
+                    "allowed": [
+                        "태",
+                        "도"
+                    ],
+                    "reason": "어색함"
+                },
+                "한": {
+                    "block_all": true,
+                    "reason": "어색함"
+                },
+                "희": {
+                    "block_all": true,
+                    "reason": "매우 올드함"
+                }
+            }
+        }
+    },
+    "phonetic_rules": {
+        "jongseong_choseong_conflicts": [
+            {
+                "jong": "ㅇ",
+                "cho": "ㅇ",
+                "reason": "연음 어색",
+                "penalty": -50
+            },
+            {
+                "jong": "ㅇ",
+                "cho": "ㄹ",
+                "reason": "연음 어색",
+                "penalty": -50
+            },
+            {
+                "jong": "ㄴ",
+                "cho": "ㄹ",
+                "reason": "발음 어려움",
+                "penalty": -40
+            },
+            {
+                "jong": "ㄹ",
+                "cho": "ㄴ",
+                "reason": "발음 어려움",
+                "penalty": -40
+            },
+            {
+                "jong": "ㄴ",
+                "cho": "ㅎ",
+                "reason": "연음 발음 어려움",
+                "penalty": -30
+            },
+            {
+                "jong": "ㄴ",
+                "cho": "ㅅ",
+                "reason": "연음 어색 (환성, 완성)",
+                "penalty": -40
+            }
+        ],
+        "vowel_conflicts": [
+            {
+                "vowel1": "ㅜ",
+                "vowel2": "ㅣ",
+                "reason": "우지 등 어색함",
+                "penalty": -30
+            }
+        ],
+        "difficult_pronunciation": [
+            {
+                "first": "현",
+                "second": "유",
+                "reason": "ㄴ받침+ㅇ+ㅠ 발음 어려움"
+            },
+            {
+                "first": "한",
+                "second": "유",
+                "reason": "ㄴ받침+ㅇ+ㅠ 발음 어려움"
+            },
+            {
+                "first": "찬",
+                "second": "예",
+                "reason": "ㄴ받침+ㅇ+ㅖ 발음 어려움"
+            },
+            {
+                "first": "진",
+                "second": "예",
+                "reason": "ㄴ받침+ㅇ+ㅖ 발음 어려움"
+            },
+            {
+                "first": "준",
+                "second": "예",
+                "reason": "ㄴ받침+ㅇ+ㅖ 발음 어려움"
+            }
+        ]
+    },
+    "specific_combinations": {
+        "blocks": [
+            {
+                "first": "서",
+                "second": "린",
+                "reason": "시린 연상"
+            },
+            {
+                "first": "규",
+                "second": "린",
+                "reason": "어색함"
+            },
+            {
+                "first": "진",
+                "second": "채",
+                "reason": "어색함"
+            },
+            {
+                "first": "운",
+                "second": "성",
+                "reason": "어색한 발음"
+            }
+        ]
+    },
+    "korean_phonology": {
+        "fortition": {
+            "description": "경음화 - ㄱ/ㄷ/ㅂ 받침 뒤 ㄱ/ㄷ/ㅂ/ㅅ/ㅈ이 된소리로 발음",
+            "trigger_jongseong": [
+                "ㄱ",
+                "ㄷ",
+                "ㅂ"
+            ],
+            "affected_choseong": [
+                "ㄱ",
+                "ㄷ",
+                "ㅂ",
+                "ㅅ",
+                "ㅈ"
+            ],
+            "penalty": -15,
+            "reason": "경음화로 발음이 딱딱함"
+        },
+        "nasalization": {
+            "description": "비음화 - ㄱ/ㄷ/ㅂ 받침 + ㄴ/ㅁ 초성",
+            "rules": [
+                {
+                    "jong": "ㄱ",
+                    "cho": "ㄴ",
+                    "result": "ㅇㄴ",
+                    "penalty": -10
+                },
+                {
+                    "jong": "ㄱ",
+                    "cho": "ㅁ",
+                    "result": "ㅇㅁ",
+                    "penalty": -10
+                },
+                {
+                    "jong": "ㄷ",
+                    "cho": "ㄴ",
+                    "result": "ㄴㄴ",
+                    "penalty": -10
+                },
+                {
+                    "jong": "ㄷ",
+                    "cho": "ㅁ",
+                    "result": "ㄴㅁ",
+                    "penalty": -10
+                },
+                {
+                    "jong": "ㅂ",
+                    "cho": "ㄴ",
+                    "result": "ㅁㄴ",
+                    "penalty": -10
+                },
+                {
+                    "jong": "ㅂ",
+                    "cho": "ㅁ",
+                    "result": "ㅁㅁ",
+                    "penalty": -15
+                }
+            ]
+        },
+        "aspiration": {
+            "description": "격음화 - ㄱ/ㄷ/ㅂ 받침 + ㅎ 초성 = 격음화",
+            "rules": [
+                {
+                    "jong": "ㄱ",
+                    "cho": "ㅎ",
+                    "result": "ㅋ",
+                    "penalty": -5
+                },
+                {
+                    "jong": "ㄷ",
+                    "cho": "ㅎ",
+                    "result": "ㅌ",
+                    "penalty": -5
+                },
+                {
+                    "jong": "ㅂ",
+                    "cho": "ㅎ",
+                    "result": "ㅍ",
+                    "penalty": -5
+                }
+            ]
+        }
+    },
+    "similar_sound_detection": {
+        "description": "비속어 유사 발음 탐지",
+        "patterns": [
+            {
+                "blocked": "시발",
+                "similar": [
+                    "시팔",
+                    "씨발",
+                    "씨팔",
+                    "시바",
+                    "씨바"
+                ],
+                "reason": "비속어 유사 발음"
+            },
+            {
+                "blocked": "병신",
+                "similar": [
+                    "병씬",
+                    "뼝신",
+                    "뼝씬"
+                ],
+                "reason": "비속어 유사 발음"
+            },
+            {
+                "blocked": "지랄",
+                "similar": [
+                    "지랄",
+                    "찌랄",
+                    "찌랄"
+                ],
+                "reason": "비속어 유사 발음"
+            }
+        ]
+    }
+}
