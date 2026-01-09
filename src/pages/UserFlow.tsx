@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { generateNames } from '../utils/namingUtils';
 import { calculateSaju, sajuToWeights, analyzeElements, extractYongsin } from '../utils/sajuUtils';
 import storyFlow from '../data/story_flow.json';
@@ -27,13 +27,31 @@ interface VibeOption {
 
 type Step = 'intro' | 'basics' | 'saju' | 'story' | 'vibe' | 'result';
 
-// 결제 패키지
+// 테마 정의
+const BATCH_THEMES = [
+    { id: 'yongsin', emoji: '🔥', title: '용신 최적 이름', description: '사주에 가장 잘 맞는' },
+    { id: 'balance', emoji: '⚖️', title: '오행 균형 이름', description: '오행이 고르게 분포된' },
+    { id: 'suri', emoji: '🔢', title: '수리 운세 이름', description: '획수 조합이 좋은' },
+    { id: 'story', emoji: '📖', title: '스토리 매칭 이름', description: '선택한 스토리와 어울리는' },
+    { id: 'total', emoji: '✨', title: '종합 추천 이름', description: '모든 요소가 조화로운' },
+];
+
+// 결제 패키지 (5개 묶음에서 1개는 무료, 4개 잠금)
 const PAYMENT_PACKAGES = [
     { count: 1, price: 1900, label: '1개', popular: false },
     { count: 3, price: 3900, label: '3개', popular: false },
-    { count: 5, price: 4900, label: '5개', popular: true },
-    { count: -1, price: 9900, label: '전체', popular: false }, // -1 = all
+    { count: 4, price: 4900, label: '전체 (4개)', popular: true },
 ];
+
+// 오행 이모지
+const ELEMENT_EMOJI: Record<string, string> = {
+    Wood: '🌳', Fire: '🔥', Earth: '🏔️', Metal: '⚔️', Water: '💧',
+};
+
+// 오행 한글
+const ELEMENT_KO: Record<string, string> = {
+    Wood: '목(木)', Fire: '화(火)', Earth: '토(土)', Metal: '금(金)', Water: '수(水)',
+};
 
 // Progress Bar Component
 function ProgressBar({ currentStep }: { currentStep: Step }) {
@@ -77,41 +95,74 @@ function ProgressBar({ currentStep }: { currentStep: Step }) {
     );
 }
 
-// 잠금된 이름 카드
-function LockedNameCard({ rank, onUnlock }: { rank: number; onUnlock: () => void }) {
+// 힌트 생성 함수
+function generateHint(name: NameItem): string {
+    const hangulName = 'hanjaName' in name ? name.fullName.hangul : String(name.fullName);
+    const charCount = hangulName.length;
+    const elements = 'elements' in name ? name.elements : [];
+    const mainElement = elements?.[0] || 'Wood';
+    const elementKo = ELEMENT_KO[mainElement] || mainElement;
+
+    // 느낌 키워드 (점수 기반)
+    let vibe = '조화로운';
+    if (name.score >= 95) vibe = '빛나는';
+    else if (name.score >= 90) vibe = '밝은';
+    else if (name.score >= 85) vibe = '따뜻한';
+    else if (name.score >= 80) vibe = '부드러운';
+
+    return `${charCount}글자 · ${elementKo} · ${vibe} 느낌`;
+}
+
+// 잠금된 이름 카드 (힌트 표시)
+function LockedNameCard({
+    hint,
+    onUnlock,
+    isFreeAvailable,
+    onFreeUnlock
+}: {
+    hint: string;
+    onUnlock: () => void;
+    isFreeAvailable?: boolean;
+    onFreeUnlock?: () => void;
+}) {
     return (
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center relative overflow-hidden">
-            <div className="absolute inset-0 backdrop-blur-sm bg-white/70 z-10 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 backdrop-blur-sm bg-white/80 z-10 flex flex-col items-center justify-center">
                 <div className="text-4xl mb-4">🔒</div>
-                <div className="text-lg font-bold text-gray-700 mb-2">{rank}위 이름</div>
-                <button
-                    onClick={onUnlock}
-                    className="bg-indigo-600 text-white px-6 py-2 rounded-full font-medium hover:bg-indigo-700 transition-colors"
-                >
-                    잠금 해제하기
-                </button>
+                <div className="text-sm text-gray-500 mb-4">{hint}</div>
+                {isFreeAvailable ? (
+                    <button
+                        onClick={onFreeUnlock}
+                        className="bg-green-500 text-white px-6 py-3 rounded-full font-bold hover:bg-green-600 transition-colors shadow-lg"
+                    >
+                        🎁 무료로 열기
+                    </button>
+                ) : (
+                    <button
+                        onClick={onUnlock}
+                        className="bg-indigo-600 text-white px-6 py-2 rounded-full font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                        잠금 해제하기
+                    </button>
+                )}
             </div>
-            <div className="text-6xl font-bold text-gray-300 blur-sm mb-2">김**</div>
-            <div className="text-2xl text-gray-300 blur-sm mb-4">金**</div>
-            <div className="text-5xl font-bold text-gray-300 blur-sm">??점</div>
+            <div className="text-6xl font-bold text-gray-300 blur-md mb-2">김**</div>
+            <div className="text-2xl text-gray-300 blur-md mb-4">金**</div>
+            <div className="text-5xl font-bold text-gray-300 blur-md">??점</div>
         </div>
     );
 }
 
 // 결제 모달
 function PaymentModal({
-    totalCount,
-    unlockedCount,
+    remainingCount,
     onSelectPackage,
     onClose,
 }: {
-    totalCount: number;
-    unlockedCount: number;
+    remainingCount: number;
     onSelectPackage: (count: number) => void;
     onClose: () => void;
 }) {
-    const remainingCount = totalCount - unlockedCount;
-
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl max-w-md w-full p-6 relative">
@@ -124,13 +175,12 @@ function PaymentModal({
 
                 <h3 className="text-xl font-bold text-center mb-2">이름 잠금 해제</h3>
                 <p className="text-gray-500 text-center text-sm mb-6">
-                    총 {totalCount}개 중 {remainingCount}개 잠김
+                    이 묶음에서 {remainingCount}개의 이름이 잠겨있어요
                 </p>
 
                 <div className="space-y-3">
-                    {PAYMENT_PACKAGES.map((pkg) => {
-                        const displayCount = pkg.count === -1 ? remainingCount : pkg.count;
-                        const perPrice = Math.round(pkg.price / displayCount);
+                    {PAYMENT_PACKAGES.filter(pkg => pkg.count <= remainingCount).map((pkg) => {
+                        const perPrice = Math.round(pkg.price / pkg.count);
 
                         return (
                             <button
@@ -177,21 +227,23 @@ function PaymentModal({
 // 이름 카드 (열람 가능)
 function UnlockedNameCard({
     name,
-    rank,
     onViewReport,
+    isFree,
 }: {
     name: NameItem;
-    rank: number;
     onViewReport: () => void;
+    isFree?: boolean;
 }) {
     const hangulName = 'hanjaName' in name ? name.fullName.hangul : String(name.fullName);
     const hanjaName = 'hanjaName' in name ? name.hanjaName : '';
 
     return (
         <div className="bg-white rounded-2xl shadow-lg p-8 text-center relative">
-            <div className="absolute top-4 left-4 text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full font-medium">
-                {rank}위
-            </div>
+            {isFree && (
+                <div className="absolute top-4 left-4 text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-medium">
+                    🎁 무료 열람
+                </div>
+            )}
             <div className="text-5xl font-bold text-gray-900 mb-2">{hangulName}</div>
             {hanjaName && <div className="text-2xl text-gray-500 mb-4">{hanjaName}</div>}
             <div
@@ -210,7 +262,7 @@ function UnlockedNameCard({
                 <div className="flex justify-center gap-2 mb-4">
                     {name.elements.map((el: string) => (
                         <span key={el} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
-                            {el}
+                            {ELEMENT_EMOJI[el] || ''} {ELEMENT_KO[el] || el}
                         </span>
                     ))}
                 </div>
@@ -232,11 +284,11 @@ export default function UserFlow() {
     const [gender, setGender] = useState<'M' | 'F' | null>(null);
     const [selectedStory, setSelectedStory] = useState<StoryOption | null>(null);
     const [selectedVibe, setSelectedVibe] = useState<VibeOption | null>(null);
-    const [results, setResults] = useState<NameItem[]>([]);
+    const [allNames, setAllNames] = useState<NameItem[]>([]); // 전체 이름 풀
     const [loading, setLoading] = useState(false);
     const [selectedReportName, setSelectedReportName] = useState<NameItem | null>(null);
 
-    // 사주 (이제 별도 Step)
+    // 사주
     const [birthDate, setBirthDate] = useState('');
     const [birthHour, setBirthHour] = useState<number | null>(null);
     const [computedSaju, setComputedSaju] = useState<Record<string, unknown> | null>(null);
@@ -246,10 +298,13 @@ export default function UserFlow() {
         excessElements: string[];
     } | null>(null);
 
-    // 잠금 시스템
-    const [unlockedIndices, setUnlockedIndices] = useState<Set<number>>(new Set([1])); // 2위(index 1)는 무료
+    // 5개 묶음 시스템
+    const [currentBatch, setCurrentBatch] = useState<NameItem[]>([]);
+    const [unlockedIndices, setUnlockedIndices] = useState<Set<number>>(new Set()); // 모두 잠금 상태로 시작
+    const [usedNames, setUsedNames] = useState<Set<string>>(new Set()); // 이미 본 이름들
+    const [batchIndex, setBatchIndex] = useState(0); // 테마 순환용
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [hasFreeChance, setHasFreeChance] = useState(true); // 무료 열람 기회 (묶음당 1회)
 
     const hourOptions = [
         { value: null, label: '모름 / 건너뛰기' },
@@ -266,6 +321,25 @@ export default function UserFlow() {
         { value: 10, label: '술시 (19:30~21:30)' },
         { value: 11, label: '해시 (21:30~23:30)' },
     ];
+
+    // 현재 테마
+    const currentTheme = BATCH_THEMES[batchIndex % BATCH_THEMES.length];
+
+    // 5개 묶음 생성 함수
+    const generateBatch = useCallback((names: NameItem[], usedSet: Set<string>): NameItem[] => {
+        // 아직 안 본 이름들 필터링
+        const availableNames = names.filter(n => {
+            const key = 'hanjaName' in n ? n.hanjaName : String(n.fullName);
+            return !usedSet.has(key);
+        });
+
+        if (availableNames.length === 0) return [];
+
+        // 상위 20개에서 랜덤으로 5개 추출
+        const topPool = availableNames.slice(0, Math.min(20, availableNames.length));
+        const shuffled = [...topPool].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 5);
+    }, []);
 
     const generateNameResults = () => {
         setLoading(true);
@@ -318,15 +392,48 @@ export default function UserFlow() {
             }
 
             const names = generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
-            setResults(names);
-            // 2위(index 1)만 무료로 시작
-            setUnlockedIndices(new Set([1]));
-            setCurrentCardIndex(1); // 2위부터 시작
+            const sortedNames = [...names].sort((a, b) => b.score - a.score);
+            setAllNames(sortedNames);
+
+            // 첫 묶음 생성
+            const firstBatch = generateBatch(sortedNames, new Set());
+            setCurrentBatch(firstBatch);
+            setUnlockedIndices(new Set()); // 모두 잠금 상태
+            setHasFreeChance(true); // 무료 기회 1번
+            setUsedNames(new Set());
+            setBatchIndex(0);
         } catch (err) {
             console.error('Error generating names:', err);
         } finally {
             setLoading(false);
         }
+    };
+
+    // 새 묶음 로드
+    const loadNextBatch = () => {
+        // 현재 묶음의 이름들을 used에 추가
+        const newUsed = new Set(usedNames);
+        currentBatch.forEach(n => {
+            const key = 'hanjaName' in n ? n.hanjaName : String(n.fullName);
+            newUsed.add(key);
+        });
+        setUsedNames(newUsed);
+
+        // 새 묶음 생성
+        const newBatch = generateBatch(allNames, newUsed);
+        if (newBatch.length > 0) {
+            setCurrentBatch(newBatch);
+            setUnlockedIndices(new Set()); // 모두 잠금 상태
+            setHasFreeChance(true); // 새 묶음에서 무료 기회 리셋
+            setBatchIndex(prev => prev + 1);
+        }
+    };
+
+    // 무료로 카드 열기
+    const handleFreeUnlock = (index: number) => {
+        if (!hasFreeChance) return;
+        setUnlockedIndices(new Set([index]));
+        setHasFreeChance(false);
     };
 
     const goNext = () => {
@@ -348,39 +455,45 @@ export default function UserFlow() {
         else if (step === 'result') setStep('vibe');
     };
 
-    // 결제 시뮬레이션 (실제 결제 없음)
+    // 결제 시뮬레이션
     const handlePayment = (count: number) => {
-        const sortedNames = [...results].sort((a, b) => b.score - a.score);
         const newUnlocked = new Set(unlockedIndices);
 
-        if (count === -1) {
-            // 전체
-            sortedNames.forEach((_, idx) => newUnlocked.add(idx));
-        } else {
-            // 잠긴 것 중에서 count개 해제
-            let unlockCount = 0;
-            for (let i = 0; i < sortedNames.length && unlockCount < count; i++) {
-                if (!newUnlocked.has(i)) {
-                    newUnlocked.add(i);
-                    unlockCount++;
-                }
+        // 잠긴 것 중에서 count개 해제
+        let unlockCount = 0;
+        for (let i = 0; i < currentBatch.length && unlockCount < count; i++) {
+            if (!newUnlocked.has(i)) {
+                newUnlocked.add(i);
+                unlockCount++;
             }
         }
 
         setUnlockedIndices(newUnlocked);
         setShowPaymentModal(false);
-
-        // 첫 번째 새로 해제된 이름으로 이동
-        const firstNewUnlocked = [...newUnlocked].find(i => !unlockedIndices.has(i));
-        if (firstNewUnlocked !== undefined) {
-            setCurrentCardIndex(firstNewUnlocked);
-        }
     };
 
-    // Sorted results
-    const sortedResults = useMemo(() => {
-        return [...results].sort((a, b) => b.score - a.score);
-    }, [results]);
+    // 남은 잠금 개수
+    const remainingLocked = useMemo(() => {
+        return currentBatch.length - unlockedIndices.size;
+    }, [currentBatch.length, unlockedIndices.size]);
+
+    // 전부 열람했는지
+    const allUnlocked = useMemo(() => {
+        return currentBatch.length > 0 && unlockedIndices.size >= currentBatch.length;
+    }, [currentBatch.length, unlockedIndices.size]);
+
+    // 더 불러올 이름이 있는지
+    const hasMoreNames = useMemo(() => {
+        const newUsed = new Set(usedNames);
+        currentBatch.forEach(n => {
+            const key = 'hanjaName' in n ? n.hanjaName : String(n.fullName);
+            newUsed.add(key);
+        });
+        return allNames.some(n => {
+            const key = 'hanjaName' in n ? n.hanjaName : String(n.fullName);
+            return !newUsed.has(key);
+        });
+    }, [allNames, usedNames, currentBatch]);
 
     // ESC로 모달 닫기
     useEffect(() => {
@@ -393,10 +506,6 @@ export default function UserFlow() {
         window.addEventListener('keydown', handleEsc);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [selectedReportName, showPaymentModal]);
-
-    // 카드 네비게이션
-    const goNextCard = () => setCurrentCardIndex((prev) => Math.min(prev + 1, sortedResults.length - 1));
-    const goPrevCard = () => setCurrentCardIndex((prev) => Math.max(prev - 1, 0));
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
@@ -476,7 +585,7 @@ export default function UserFlow() {
                     </div>
                 )}
 
-                {/* Step: Saju (새로 추가) */}
+                {/* Step: Saju */}
                 {step === 'saju' && (
                     <div className="py-8">
                         <button onClick={goBack} className="text-gray-500 hover:text-gray-700 mb-4">
@@ -621,16 +730,16 @@ export default function UserFlow() {
                             ← 다시 선택하기
                         </button>
 
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-                            ✨ 추천 이름
-                        </h2>
-                        <p className="text-gray-600 mb-2 text-center">
-                            총 <span className="font-bold text-indigo-600">{sortedResults.length}개</span>의 이름을 찾았습니다
-                        </p>
-                        <p className="text-sm text-gray-400 mb-8 text-center">
-                            {selectedStory?.storyKeyword || '특별한'}의 기운 + {selectedVibe?.vibeKeyword || '아름다운'} 풍경
-                            {birthDate && ' + 사주 분석'}
-                        </p>
+                        {/* 테마 헤더 */}
+                        <div className="text-center mb-8">
+                            <div className="text-4xl mb-2">{currentTheme.emoji}</div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                                {currentTheme.title}
+                            </h2>
+                            <p className="text-gray-500 text-sm">
+                                {currentTheme.description}
+                            </p>
+                        </div>
 
                         {loading ? (
                             <div className="text-center py-12">
@@ -639,60 +748,42 @@ export default function UserFlow() {
                             </div>
                         ) : (
                             <>
-                                {/* 카드 표시 */}
-                                {sortedResults.length > 0 && (
-                                    <div className="mb-6">
-                                        {unlockedIndices.has(currentCardIndex) ? (
-                                            <UnlockedNameCard
-                                                name={sortedResults[currentCardIndex]}
-                                                rank={currentCardIndex + 1}
-                                                onViewReport={() => setSelectedReportName(sortedResults[currentCardIndex])}
-                                            />
-                                        ) : (
-                                            <LockedNameCard
-                                                rank={currentCardIndex + 1}
-                                                onUnlock={() => setShowPaymentModal(true)}
-                                            />
-                                        )}
-                                    </div>
+                                {/* 5개 카드 한번에 표시 */}
+                                <div className="space-y-4 mb-6">
+                                    {currentBatch.map((name, idx) => (
+                                        <div key={idx}>
+                                            {unlockedIndices.has(idx) ? (
+                                                <UnlockedNameCard
+                                                    name={name}
+                                                    isFree={idx === [...unlockedIndices][0] && hasFreeChance === false}
+                                                    onViewReport={() => setSelectedReportName(name)}
+                                                />
+                                            ) : (
+                                                <LockedNameCard
+                                                    hint={generateHint(name)}
+                                                    onUnlock={() => setShowPaymentModal(true)}
+                                                    isFreeAvailable={hasFreeChance}
+                                                    onFreeUnlock={() => handleFreeUnlock(idx)}
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* 새 묶음 버튼 (전부 열람 시) */}
+                                {allUnlocked && hasMoreNames && (
+                                    <button
+                                        onClick={loadNextBatch}
+                                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg mb-4"
+                                    >
+                                        ✨ 새로운 이름 묶음 보기
+                                    </button>
                                 )}
 
-                                {/* 카드 네비게이션 */}
-                                <div className="flex items-center justify-center gap-4 mb-6">
-                                    <button
-                                        onClick={goPrevCard}
-                                        disabled={currentCardIndex === 0}
-                                        className="p-3 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        ◀
-                                    </button>
-                                    <div className="text-sm text-gray-500">
-                                        {currentCardIndex + 1} / {sortedResults.length}
+                                {allUnlocked && !hasMoreNames && (
+                                    <div className="text-center text-gray-500 mb-4 py-4">
+                                        모든 추천 이름을 확인했습니다 🎉
                                     </div>
-                                    <button
-                                        onClick={goNextCard}
-                                        disabled={currentCardIndex === sortedResults.length - 1}
-                                        className="p-3 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                        ▶
-                                    </button>
-                                </div>
-
-                                {/* 잠금 해제 상태 */}
-                                <div className="text-center mb-6">
-                                    <span className="text-sm text-gray-500">
-                                        🔓 {unlockedIndices.size}개 열람 가능 / 🔒 {sortedResults.length - unlockedIndices.size}개 잠김
-                                    </span>
-                                </div>
-
-                                {/* 더 열기 버튼 */}
-                                {unlockedIndices.size < sortedResults.length && (
-                                    <button
-                                        onClick={() => setShowPaymentModal(true)}
-                                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
-                                    >
-                                        더 많은 이름 보기 →
-                                    </button>
                                 )}
 
                                 {/* 다시하기 */}
@@ -703,15 +794,18 @@ export default function UserFlow() {
                                         setGender(null);
                                         setSelectedStory(null);
                                         setSelectedVibe(null);
-                                        setResults([]);
+                                        setAllNames([]);
+                                        setCurrentBatch([]);
                                         setBirthDate('');
                                         setBirthHour(null);
                                         setComputedSaju(null);
                                         setComputedAnalysis(null);
-                                        setUnlockedIndices(new Set([1]));
-                                        setCurrentCardIndex(0);
+                                        setUnlockedIndices(new Set());
+                                        setUsedNames(new Set());
+                                        setBatchIndex(0);
+                                        setHasFreeChance(true);
                                     }}
-                                    className="w-full mt-4 py-3 text-gray-500 hover:text-gray-700"
+                                    className="w-full py-3 text-gray-500 hover:text-gray-700"
                                 >
                                     처음부터 다시 하기
                                 </button>
@@ -723,8 +817,7 @@ export default function UserFlow() {
                 {/* Payment Modal */}
                 {showPaymentModal && (
                     <PaymentModal
-                        totalCount={sortedResults.length}
-                        unlockedCount={unlockedIndices.size}
+                        remainingCount={remainingLocked}
                         onSelectPackage={handlePayment}
                         onClose={() => setShowPaymentModal(false)}
                     />
