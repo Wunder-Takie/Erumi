@@ -36,12 +36,25 @@ const BATCH_THEMES = [
     { id: 'total', emoji: '✨', title: '종합 추천 이름', description: '모든 요소가 조화로운' },
 ];
 
-// 결제 패키지 (5개 묶음에서 1개는 무료, 4개 잠금)
-const PAYMENT_PACKAGES = [
-    { count: 1, price: 1900, label: '1개', popular: false },
-    { count: 3, price: 3900, label: '3개', popular: false },
-    { count: 4, price: 4900, label: '전체 (4개)', popular: true },
-];
+// 결제 패키지 생성 함수 (잠금된 개수에 따라 동적 생성)
+function getPaymentPackages(remainingCount: number) {
+    const packages = [
+        { count: 1, price: 1900, label: '1개', popular: false },
+        { count: 3, price: 3900, label: '3개', popular: false },
+    ];
+
+    // 전체 패키지 추가 (잠금된 개수에 따라 4개 또는 5개)
+    if (remainingCount >= 4) {
+        packages.push({
+            count: remainingCount,
+            price: remainingCount === 5 ? 5900 : 4900,
+            label: `전체 (${remainingCount}개)`,
+            popular: true,
+        });
+    }
+
+    return packages.filter(pkg => pkg.count <= remainingCount);
+}
 
 // 오행 이모지
 const ELEMENT_EMOJI: Record<string, string> = {
@@ -89,6 +102,7 @@ function ProgressBar({ currentStep }: { currentStep: Step }) {
                 <div
                     className="h-full bg-indigo-600 transition-all duration-300"
                     style={{ width: `${((currentIndex + 1) / steps.length) * 100}%` }}
+                    title={`진행률: ${currentIndex + 1}/${steps.length}`}
                 />
             </div>
         </div>
@@ -179,7 +193,7 @@ function PaymentModal({
                 </p>
 
                 <div className="space-y-3">
-                    {PAYMENT_PACKAGES.filter(pkg => pkg.count <= remainingCount).map((pkg) => {
+                    {getPaymentPackages(remainingCount).map((pkg) => {
                         const perPrice = Math.round(pkg.price / pkg.count);
 
                         return (
@@ -304,7 +318,8 @@ export default function UserFlow() {
     const [usedNames, setUsedNames] = useState<Set<string>>(new Set()); // 이미 본 이름들
     const [batchIndex, setBatchIndex] = useState(0); // 테마 순환용
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [hasFreeChance, setHasFreeChance] = useState(true); // 무료 열람 기회 (묶음당 1회)
+    const [hasFreeChance, setHasFreeChance] = useState(true); // 무료 열람 기회 (전체 1회)
+    const [freeUnlockedKey, setFreeUnlockedKey] = useState<string | null>(null); // 무료로 열린 이름 키
 
     const hourOptions = [
         { value: null, label: '모름 / 건너뛰기' },
@@ -341,7 +356,7 @@ export default function UserFlow() {
         return shuffled.slice(0, 5);
     }, []);
 
-    const generateNameResults = () => {
+    const generateNameResults = async () => {
         setLoading(true);
         try {
             const storyWeights: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
@@ -350,7 +365,7 @@ export default function UserFlow() {
             const useSaju = !!birthDate;
 
             if (useSaju) {
-                const saju = (calculateSaju as (date: string, hour: number | null) => Record<string, unknown>)(birthDate, birthHour);
+                const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
                 const analysis = analyzeElements(saju);
                 const weights = sajuToWeights(saju);
 
@@ -391,7 +406,7 @@ export default function UserFlow() {
                 }
             }
 
-            const names = generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
+            const names = await generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
             const sortedNames = [...names].sort((a, b) => b.score - a.score);
             setAllNames(sortedNames);
 
@@ -424,7 +439,7 @@ export default function UserFlow() {
         if (newBatch.length > 0) {
             setCurrentBatch(newBatch);
             setUnlockedIndices(new Set()); // 모두 잠금 상태
-            setHasFreeChance(true); // 새 묶음에서 무료 기회 리셋
+            // hasFreeChance는 리셋하지 않음 - 전체 과정 중 1회만 무료
             setBatchIndex(prev => prev + 1);
         }
     };
@@ -432,6 +447,9 @@ export default function UserFlow() {
     // 무료로 카드 열기
     const handleFreeUnlock = (index: number) => {
         if (!hasFreeChance) return;
+        const name = currentBatch[index];
+        const key = 'hanjaName' in name ? name.hanjaName : String(name.fullName);
+        setFreeUnlockedKey(key); // 무료로 열린 이름 기록
         setUnlockedIndices(new Set([index]));
         setHasFreeChance(false);
     };
@@ -596,20 +614,24 @@ export default function UserFlow() {
 
                         <div className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
+                                <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
                                 <input
+                                    id="birthDate"
                                     type="date"
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
+                                    title="생년월일 선택"
                                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">태어난 시간</label>
+                                <label htmlFor="birthHour" className="block text-sm font-medium text-gray-700 mb-2">태어난 시간</label>
                                 <select
+                                    id="birthHour"
                                     value={birthHour ?? ''}
                                     onChange={(e) => setBirthHour(e.target.value === '' ? null : Number(e.target.value))}
+                                    title="태어난 시간 선택"
                                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
                                 >
                                     {hourOptions.map((opt) => (
@@ -755,7 +777,7 @@ export default function UserFlow() {
                                             {unlockedIndices.has(idx) ? (
                                                 <UnlockedNameCard
                                                     name={name}
-                                                    isFree={idx === [...unlockedIndices][0] && hasFreeChance === false}
+                                                    isFree={('hanjaName' in name ? name.hanjaName : String(name.fullName)) === freeUnlockedKey}
                                                     onViewReport={() => setSelectedReportName(name)}
                                                 />
                                             ) : (

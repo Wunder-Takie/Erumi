@@ -19,17 +19,13 @@ import commonWords from '../data/common_words.json' with { type: 'json' };
 import popularNgrams from '../data/popular_ngrams.json' with { type: 'json' };
 import bunpaCharacters from '../data/bunpa_characters.json' with { type: 'json' };
 import consonantElements from '../data/consonant_elements.json' with { type: 'json' };
+// 🆕 v3.0: 인기도 데이터 및 발음 규칙
+import namePopularity from '../data/name_popularity.json' with { type: 'json' };
+import phoneticRulesData from '../data/phonetic_rules.json' with { type: 'json' };
 import { checkGlobalName, romanize } from './globalNameCheck.js';
 import { isLuckyCombination } from './suriPatterns.js';
+import { evaluateNamesWithLLM, applyLLMScore } from './llmEvaluator.js';
 
-// 🆕 v2.4: 3계층 필터 시스템
-import filters, {
-  isHardBlocked,
-  isSoftBlocked,
-  getSoftPenalty,
-  checkSyllablePattern,
-  filterDiagnose
-} from '../data/filters/index.js';
 
 // ============================================
 // 1-1. 오행 상생/상극 테이블 (Elemental Harmony)
@@ -576,17 +572,17 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     }
   }
 
-  // 🆕 태 + 대부분 차단 (태현, 태솔, 태경, 태빈 등) - 올드함
+  // 🆕 태 + 모든 글자 차단 (태민, 태성, 태윤, 태환 등 - 올드함)
   if (hangul1 === '태') {
-    const allowedSecond = ['아', '오']; // 극히 일부만 허용
-    if (!allowedSecond.includes(hangul2)) {
-      return true;
-    }
+    return true;
   }
 
-  // 🆕 X + 나 패턴 차단 (광나, 경나, 영나 등)
+  // 🆕 완화: X + 나 패턴 (유나, 서나, 하나 등 인기 이름 허용)
   if (hangul2 === '나') {
-    return true;
+    const blocked = ['광', '경', '영', '근', '처', '처'];
+    if (blocked.includes(hangul1)) {
+      return true;
+    }
   }
 
   // 🆕 광 + 대부분 차단 (광지, 민광 등)
@@ -599,9 +595,13 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     return true;
   }
 
-  // 🆕 X + 결 패턴 차단 (윤결, 예결 등)
+  // 🆕 완화: X + 결 패턴 (조건부 허용)
+  // 최근 유결, 서결 등 사용 증가
   if (hangul2 === '결') {
-    return true;
+    const blocked = ['경', '광', '영', '덕'];
+    if (blocked.includes(hangul1)) {
+      return true;
+    }
   }
 
   // 🆕 X + 석 패턴 차단 (하석, 유석, 아석 등)
@@ -614,9 +614,12 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     return true;
   }
 
-  // 🆕 X + 환 패턴 차단 (아환 등)  
+  // 🆕 완화: X + 환 패턴 (지환, 시환, 도환 등 남아 인기 이름)
   if (hangul2 === '환') {
-    return true;
+    const blocked = ['아', '광', '경', '완'];
+    if (blocked.includes(hangul1)) {
+      return true;
+    }
   }
 
   // 🆕 X + 엽 패턴 차단 (민엽 등)
@@ -638,10 +641,10 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     }
   }
 
-  // 🆕 X + 건 패턴 (지건 등 - 어색함)
+  // 🆕 완화: X + 건 패턴 (서건, 하건, 예건 등 인기 이름 허용)
   if (hangul2 === '건') {
-    const allowedFirst = ['태', '도']; // 일부만 허용
-    if (!allowedFirst.includes(hangul1)) {
+    const blocked = ['경', '광', '성', '처'];
+    if (blocked.includes(hangul1)) {
       return true;
     }
   }
@@ -700,17 +703,20 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     return true;
   }
 
-  // 🆕 한 + X 패턴 차단 (한지, 한예 등 - 어색함)
+  // 🆕 완화: 한 + X 패턴 (한별, 한비, 한서, 한아 등 허용)
   if (hangul1 === '한') {
-    const allowedSecond = ['나', '별']; // 극히 일부만 허용
-    if (!allowedSecond.includes(hangul2)) {
+    const blocked = ['경', '희', '자', '옥'];
+    if (blocked.includes(hangul2)) {
       return true;
     }
   }
 
-  // 🆕 X + 한 패턴 차단 (지한, 유한 등 - 어색함)
+  // 🆕 완화: X + 한 패턴 (지한, 유한 등 - 일부 허용)
   if (hangul2 === '한') {
-    return true;
+    const blocked = ['경', '광', '영', '성'];
+    if (blocked.includes(hangul1)) {
+      return true;
+    }
   }
 
   // 🆕 자 + X 패턴 차단 (자민, 자성 등 - 올드함/어색함)
@@ -723,10 +729,9 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     return true;
   }
 
-  // 🆕 X + 예 패턴 (ㄴ받침 + ㅇ초성 + ㅖ = 발음 어려움: 진예, 준예, 환예 등)
-  if (hangul2 === '예' && d1.jong === 'ㄴ') {
-    return true;
-  }
+  // 🆕 완화: X + 예 패턴 (윤예, 민예, 은예 등 여아 인기 이름 허용)
+  // 발음이 자연스러운 ㄴ받침+예 패턴은 허용
+  // (점수 페널티로 전환: calculatePhoneticFlowScore에서 처리)
 
   // 🆕 X + 희 패턴 차단 (운희, 성희, 진희, 선희, 경희 등 - 올드함)
   if (hangul2 === '희') {
@@ -735,14 +740,14 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
 
   // === 기존 발음 규칙 기반 필터 ===
 
-  // 1. 모든 모음 반복 차단 (지리, 시리, 성리, 재리 등)
-  if (d1.jung === d2.jung) {
-    return true;
-  }
+  // 🆕 완화: 모음 반복은 점수 페널티로 전환 (하드 차단 X)
+  // 서아, 하아, 지이 등 현대적 이름도 있으므로 차단하지 않음
+  // (calculatePhoneticFlowScore에서 점수 감점으로 처리)
 
-  // 2. 대부분의 초성 반복 차단 (부드러운 초성 제외)
+  // 2. 초성 반복 차단 (🆕 완화: ㅇ, ㄴ, ㅁ, ㄹ, ㅅ, ㅎ, ㅈ 제외)
+  // 부드러운 초성과 인기 패턴은 허용
   if (d1.cho === d2.cho && d1.cho !== 'ㅇ') {
-    const softConsonants = ['ㄴ', 'ㅁ', 'ㄹ'];
+    const softConsonants = ['ㄴ', 'ㅁ', 'ㄹ', 'ㅅ', 'ㅎ', 'ㅈ']; // 🆕 확대
     if (!softConsonants.includes(d1.cho)) {
       return true;
     }
@@ -770,9 +775,11 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
     }
   }
 
-  // 6. 받침 + ㅇ초성의 아/어 모음 차단
+  // 6. 받침 + ㅇ초성의 아/어 모음 차단 (🆕 완화: ㄴ받침+아/우 허용)
+  // 윤아, 민아, 은아, 준아, 온아 등 인기 이름 허용
   if (d1.jong && d2.cho === 'ㅇ' && ['ㅏ', 'ㅓ'].includes(d2.jung)) {
-    if (!['ㅁ'].includes(d1.jong)) {
+    // ㅁ, ㄴ 받침은 허용 (발음이 자연스러움)
+    if (!['ㅁ', 'ㄴ'].includes(d1.jong)) {
       return true;
     }
   }
@@ -831,15 +838,13 @@ function calculatePhoneticFlowScore(hangul1, hangul2) {
   };
   if (smoothTransitions[d1.jong]?.includes(d2.cho)) score += 5;
 
-  // 3. 종성 밸런스 (🆕 Option A: 강화)
+  // 3. 종성 밸런스 (🆕 완화: 서아, 하윤 등 인기 패턴 고려)
   if (d1.jong && !d2.jong) score += 3;  // 준유, 민아 패턴 (좋음)
-  if (!d1.jong && !d2.jong) score -= 15; // 🆕 유아, 자예, 서아 패턴 (너무 가벼움) -3 → -15
+  if (!d1.jong && !d2.jong) score -= 5; // 🆕 완화: -15 → -5 (서아, 하유 등 현대적 이름)
   if (d1.jong && d2.jong) score += 1;   // 준혁, 민찬 (안정감)
 
-  // 🆕 Option A: 받침없음 → ㅇ초성 페널티 (자예, 유아 등 애매한 연결)
-  if (!d1.jong && d2.cho === 'ㅇ') {
-    score -= 10; // 받침없음 다음에 ㅇ초성은 어색
-  }
+  // 🆕 완화: 받침없음 → ㅇ초성 (서아, 유아 등 인기 이름 고려)
+  // 기존: -10점 → 삭제 (서아, 지아 등 2020년대 인기 이름)
 
   // 4. ㅣ 모음 연속 페널티 (지리, 시리 등)
   if (d1.jung === 'ㅣ' && d2.jung === 'ㅣ') score -= 8;
@@ -905,23 +910,154 @@ function calculatePhoneticFlowScore(hangul1, hangul2) {
 }
 
 /**
- * N-gram 인기도 점수
- * 2024년 인기 이름 데이터 기반
+ * N-gram 인기도 점수 (🆕 v3.0: 실제 통계 데이터 반영)
+ * 전자가족관계등록시스템 기반 2020-2025년 인기 이름 데이터 활용
  */
 function getPopularityScore(hangul1, hangul2) {
   const combination = hangul1 + hangul2;
+  let score = 0;
 
-  // 긍정 점수 (인기 이름)
+  // 1. 기존 N-gram 점수 (legacy)
   if (popularNgrams.positive && popularNgrams.positive[combination]) {
-    return popularNgrams.positive[combination];
+    score += popularNgrams.positive[combination];
   }
-
-  // 부정 점수 (문제 이름)
   if (popularNgrams.negative && popularNgrams.negative[combination]) {
-    return popularNgrams.negative[combination];
+    score += popularNgrams.negative[combination];
   }
 
-  return 0;
+  // 🆕 2. 실제 인기도 데이터 활용 (name_popularity.json)
+  if (namePopularity && namePopularity.syllablePopularity) {
+    const pop = namePopularity.syllablePopularity;
+
+    // 음절별 인기도 점수 (0-100 → 0-15 스케일)
+    const syl1Score = pop[hangul1]?.score || 0;
+    const syl2Score = pop[hangul2]?.score || 0;
+    score += (syl1Score + syl2Score) * 0.15; // 최대 +30점
+
+    // 트렌드 보너스/페널티
+    const trend1 = pop[hangul1]?.trend;
+    const trend2 = pop[hangul2]?.trend;
+    if (trend1 === 'rising') score += 5;
+    if (trend2 === 'rising') score += 5;
+    if (trend1 === 'declining') score -= 8;
+    if (trend2 === 'declining') score -= 8;
+  }
+
+  // 🆕 3. 트렌딩 조합 보너스/페널티
+  if (namePopularity && namePopularity.trendingCombinations) {
+    const rising = namePopularity.trendingCombinations.rising || [];
+    const declining = namePopularity.trendingCombinations.declining || [];
+
+    const isRising = rising.find(r => r.name === combination);
+    const isDeclining = declining.find(d => d.name === combination);
+
+    if (isRising) score += isRising.score * 0.3; // 인기 상승 조합
+    if (isDeclining) score += isDeclining.score * 0.5; // 하락 조합 페널티
+  }
+
+  // 🆕 4. 현대적 패턴 매칭
+  if (namePopularity && namePopularity.modernPatterns) {
+    const patterns = namePopularity.modernPatterns;
+
+    // 선호 시작 음절
+    if (patterns.preferredBeginnings?.M?.includes(hangul1) ||
+      patterns.preferredBeginnings?.F?.includes(hangul1)) {
+      score += 8;
+    }
+
+    // 선호 끝 음절
+    if (patterns.preferredEndings?.M?.includes(hangul2) ||
+      patterns.preferredEndings?.F?.includes(hangul2)) {
+      score += 8;
+    }
+
+    // 기피 시작/끝 음절
+    if (patterns.avoidedBeginnings?.includes(hangul1)) {
+      score -= 15;
+    }
+    if (patterns.avoidedEndings?.includes(hangul2)) {
+      score -= 20;
+    }
+  }
+
+  return score;
+}
+
+/**
+ * 🆕 v3.0: 발음 규칙 기반 점수 계산
+ * phonetic_rules.json 데이터 활용
+ */
+function calculatePhoneticsRuleScore(hangul1, hangul2) {
+  const d1 = decomposeHangul(hangul1);
+  const d2 = decomposeHangul(hangul2);
+  if (!d1 || !d2) return 0;
+
+  let score = 0;
+  const rules = phoneticRulesData;
+
+  // 1. 모음 조화 체크
+  if (rules.vowelHarmony) {
+    const vh = rules.vowelHarmony;
+    const isPos1 = vh.positive.includes(d1.jung);
+    const isPos2 = vh.positive.includes(d2.jung);
+    const isNeg1 = vh.negative.includes(d1.jung);
+    const isNeg2 = vh.negative.includes(d2.jung);
+
+    if ((isPos1 && isPos2) || (isNeg1 && isNeg2)) {
+      score += vh.harmonyBonus || 3; // 조화
+    }
+    if ((isPos1 && isNeg2) || (isNeg1 && isPos2)) {
+      score += vh.disharmonyPenalty || -5; // 부조화
+    }
+  }
+
+  // 2. 초성 흐름 체크
+  if (rules.onsetFlow) {
+    const onset = rules.onsetFlow;
+
+    // 부드러운 초성 연결
+    if (onset.smoothPairs?.pairs?.some(p => p[0] === d1.cho && p[1] === d2.cho)) {
+      score += onset.smoothPairs.bonus || 3;
+    }
+
+    // 거친 초성 연결
+    if (onset.roughPairs?.pairs?.some(p => p[0] === d1.cho && p[1] === d2.cho)) {
+      score += onset.roughPairs.penalty || -5;
+    }
+
+    // 같은 초성 반복
+    if (d1.cho === d2.cho && d1.cho !== 'ㅇ') {
+      score += onset.sameOnset?.penalty || -10;
+    }
+  }
+
+  // 3. 종성-초성 연결 체크
+  if (rules.codaFlow) {
+    const coda = rules.codaFlow;
+
+    // 부드러운 연결
+    coda.smoothConnections?.patterns?.forEach(p => {
+      if (d1.jong === p.coda &&
+        (p.onset === 'any' || p.onset.includes(d2.cho))) {
+        score += p.bonus || 2;
+      }
+    });
+
+    // 어색한 연결
+    coda.roughConnections?.patterns?.forEach(p => {
+      if (d1.jong === p.coda && d2.cho === p.onset) {
+        score += p.penalty || -10;
+      }
+    });
+  }
+
+  // 4. 끝 글자 종성 선호도
+  if (rules.endingPreferences?.scores) {
+    const endScore = rules.endingPreferences.scores[d2.jong] || 0;
+    score += endScore;
+  }
+
+  return score;
 }
 
 /**
@@ -977,6 +1113,11 @@ function calculateModernityScore(hanja1, hanja2) {
     return -999; // 자동 탈락
   }
 
+  // 🆕 올드한 이름 조합 페널티 (차단은 아니고 점수 감점)
+  if (modernPreferences.old_fashioned_combinations?.names?.includes(combination)) {
+    score += modernPreferences.old_fashioned_combinations.penalty || -35;
+  }
+
   // 🆕 Awkward combinations 체크
   if (modernPreferences.awkward_combinations?.combinations) {
     const found = modernPreferences.awkward_combinations.combinations.find(
@@ -988,9 +1129,9 @@ function calculateModernityScore(hanja1, hanja2) {
     }
   }
 
-  // 🆕 음운 규칙 체크
+  // 🆕 음운 규칙 체크 (완전 차단)
   if (hasAwkwardPhonetics(hanja1.hangul, hanja2.hangul)) {
-    score -= 25;
+    return -999; // 자동 탈락
   }
 
   // 1. 받침/모음 선호도
@@ -1209,7 +1350,7 @@ function normalizeScores(combinations) {
  * @param {object|null} storyWeights - 스토리 기반 오행 가중치
  * @param {object|null} yongsinWeights - 용신 기반 오행 가중치 (NEW)
  */
-export function generateNames(surnameInput, selectedTagIds = [], gender = null, storyWeights = null, yongsinWeights = null) {
+export async function generateNames(surnameInput, selectedTagIds = [], gender = null, storyWeights = null, yongsinWeights = null) {
   // === STEP 1: 기본 데이터 로드 ===
   const surname = surnameInput.trim();
   let hanjaList = hanjaDb;
@@ -1634,6 +1775,40 @@ export function generateNames(surnameInput, selectedTagIds = [], gender = null, 
     return { badCount, daegilCount };
   };
 
+  // === STEP 4.5: LLM 평가 (Top 50 후보만) ===
+  // 🆕 사전 필터링: old_fashioned 이름을 후순위로 밀기
+  filtered.sort((a, b) => {
+    const aIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(
+      a.hangul1 + a.hangul2
+    );
+    const bIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(
+      b.hangul1 + b.hangul2
+    );
+
+    // 올드한 이름은 후순위
+    if (aIsOld && !bIsOld) return 1;
+    if (!aIsOld && bIsOld) return -1;
+
+    // 같은 카테고리면 점수 기준
+    return b.score - a.score;
+  });
+
+  const topCandidates = filtered.slice(0, 50);
+  try {
+    const llmResults = await evaluateNamesWithLLM(topCandidates, surname);
+    topCandidates.forEach(name => {
+      const fullName = surname + (name.hangulName || name.hangul1 + name.hangul2);
+      const llmResult = llmResults.get(fullName);
+      if (llmResult) {
+        name.llmScore = llmResult;
+        name.score = applyLLMScore(name.score, llmResult);
+      }
+    });
+  } catch (error) {
+    console.warn('[LLM] Evaluation skipped:', error.message);
+  }
+
+  // === STEP 5: 최종 정렬 (점수 기준) ===
   filtered.sort((a, b) => {
     // 1차: 점수 (높을수록 앞)
     const scoreDiff = b.score - a.score;
