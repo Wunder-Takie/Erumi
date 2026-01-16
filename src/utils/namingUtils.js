@@ -1440,12 +1440,7 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     const d1 = decomposeHangul(c.hanja1.hangul);
     const d2 = decomposeHangul(c.hanja2.hangul);
 
-    // 🆕 0.0 blocked_names.json 기반 차단 (한글 표기 기준)
-    if (isHardBlocked(combination)) {
-      return false;
-    }
-
-    // 0.1 Critical blocks 체크 (완전 차단) - 레거시 호환
+    // 0.1 Critical blocks 체크 (완전 차단) - blocked_names.json 통합됨
     if (modernPreferences.critical_blocks?.includes(combination)) {
       return false;
     }
@@ -1512,11 +1507,10 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
   const postFilterCandidates = new Set(candidates.map(c => c.hangulName));
   for (const name of preFilterCandidates) {
     if (!postFilterCandidates.has(name)) {
-      const diagnosis = filterDiagnose(name);
       filteredOut.push({
         name,
-        layer: diagnosis.filters[0]?.layer || 'HARD',
-        reason: diagnosis.filters.map(f => f.reason).join(', ') || '기타 필터'
+        layer: 'HARD',
+        reason: '필터 적용됨'
       });
     }
   }
@@ -1885,4 +1879,4 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
   });
 }
 
-export default { generateNames, decomposeHangul, filterDiagnose };
+export default { generateNames, decomposeHangul };

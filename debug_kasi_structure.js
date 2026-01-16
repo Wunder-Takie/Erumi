@@ -1,7 +1,10 @@
 /**
  * KASI API 디버깅 스크립트
- * 실행: node debug_kasi_structure.js
+ * 실행: VITE_KASI_API_KEY=your_key node debug_kasi_structure.js
  */
+
+// Set environment variables explicitly for Node.js
+process.env.VITE_KASI_API_KEY = process.env.VITE_KASI_API_KEY || '4be512db2db6a7ae670f7932c77b9264b50a37e15c9a28b97bffce213cdb684c';
 
 import { fetchSajuFromKASI } from './src/utils/manselyeok/kasiAdapter.js';
 import { calculateSaju } from './src/utils/sajuUtils.js';
