@@ -74,7 +74,7 @@ function DevApp() {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [selectedReportName]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setLoading(true);
     try {
       let names: NameItem[] = [];
@@ -87,7 +87,7 @@ function DevApp() {
         let yongsinWeights: Record<string, number> | null = null;
 
         if (useSaju && birthDate) {
-          const saju = (calculateSaju as (date: string, hour: number | null) => Record<string, unknown>)(birthDate, birthHour);
+          const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
           const analysis = analyzeElements(saju);
           const weights = sajuToWeights(saju);
 
@@ -141,7 +141,7 @@ function DevApp() {
 
         console.log('📊 최종 스토리 가중치:', storyWeights);
 
-        names = generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
+        names = await generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
       } else {
         names = generatePureKoreanNames(surname, { gender: gender === 'M' ? 'male' : gender === 'F' ? 'female' : null });
       }

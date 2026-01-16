@@ -1,0 +1,262 @@
+{
+    "meta": {
+        "description": "한국어 발음 규칙 - 모음조화, 초성흐름, 받침연결",
+        "version": "1.0",
+        "lastUpdated": "2026-01-15"
+    },
+    "vowelHarmony": {
+        "description": "양성/음성 모음 조화 체크",
+        "positive": [
+            "ㅏ",
+            "ㅗ",
+            "ㅐ",
+            "ㅘ",
+            "ㅙ",
+            "ㅚ"
+        ],
+        "negative": [
+            "ㅓ",
+            "ㅜ",
+            "ㅔ",
+            "ㅝ",
+            "ㅞ",
+            "ㅟ"
+        ],
+        "neutral": [
+            "ㅡ",
+            "ㅣ",
+            "ㅢ"
+        ],
+        "harmonyBonus": 3,
+        "disharmonyPenalty": -5
+    },
+    "onsetFlow": {
+        "description": "초성 연결 흐름 평가",
+        "smoothPairs": {
+            "description": "부드러운 초성 연결 (가점)",
+            "pairs": [
+                [
+                    "ㅅ",
+                    "ㅈ"
+                ],
+                [
+                    "ㅅ",
+                    "ㅎ"
+                ],
+                [
+                    "ㅎ",
+                    "ㄴ"
+                ],
+                [
+                    "ㅎ",
+                    "ㅁ"
+                ],
+                [
+                    "ㅇ",
+                    "ㅎ"
+                ],
+                [
+                    "ㅇ",
+                    "ㄴ"
+                ],
+                [
+                    "ㅇ",
+                    "ㅁ"
+                ],
+                [
+                    "ㄴ",
+                    "ㅇ"
+                ],
+                [
+                    "ㅁ",
+                    "ㅇ"
+                ]
+            ],
+            "bonus": 3
+        },
+        "roughPairs": {
+            "description": "거친 초성 연결 (감점)",
+            "pairs": [
+                [
+                    "ㄱ",
+                    "ㅋ"
+                ],
+                [
+                    "ㄱ",
+                    "ㄲ"
+                ],
+                [
+                    "ㄷ",
+                    "ㅌ"
+                ],
+                [
+                    "ㄷ",
+                    "ㄸ"
+                ],
+                [
+                    "ㅂ",
+                    "ㅍ"
+                ],
+                [
+                    "ㅂ",
+                    "ㅃ"
+                ],
+                [
+                    "ㅈ",
+                    "ㅊ"
+                ],
+                [
+                    "ㅈ",
+                    "ㅉ"
+                ],
+                [
+                    "ㅅ",
+                    "ㅆ"
+                ]
+            ],
+            "penalty": -5
+        },
+        "sameOnset": {
+            "description": "같은 초성 반복 (감점)",
+            "penalty": -10
+        }
+    },
+    "codaFlow": {
+        "description": "종성-초성 연결 흐름",
+        "smoothConnections": {
+            "description": "자연스러운 종성-초성 연결",
+            "patterns": [
+                {
+                    "coda": "",
+                    "onset": "any",
+                    "bonus": 2
+                },
+                {
+                    "coda": "ㄴ",
+                    "onset": [
+                        "ㅇ",
+                        "ㅁ",
+                        "ㄴ"
+                    ],
+                    "bonus": 3
+                },
+                {
+                    "coda": "ㅁ",
+                    "onset": [
+                        "ㅇ",
+                        "ㄴ"
+                    ],
+                    "bonus": 3
+                },
+                {
+                    "coda": "ㅇ",
+                    "onset": [
+                        "ㅇ",
+                        "ㅎ"
+                    ],
+                    "bonus": 2
+                }
+            ]
+        },
+        "roughConnections": {
+            "description": "어색한 종성-초성 연결",
+            "patterns": [
+                {
+                    "coda": "ㄹ",
+                    "onset": "ㄴ",
+                    "penalty": -15,
+                    "reason": "ㄴ-ㄹ 역행동화"
+                },
+                {
+                    "coda": "ㄴ",
+                    "onset": "ㄹ",
+                    "penalty": -15,
+                    "reason": "ㄴ-ㄹ 역행동화"
+                },
+                {
+                    "coda": "ㅂ",
+                    "onset": "ㅁ",
+                    "penalty": -8,
+                    "reason": "발음 어려움"
+                },
+                {
+                    "coda": "ㄱ",
+                    "onset": "ㄴ",
+                    "penalty": -5,
+                    "reason": "비음화"
+                },
+                {
+                    "coda": "ㄱ",
+                    "onset": "ㅁ",
+                    "penalty": -5,
+                    "reason": "비음화"
+                },
+                {
+                    "coda": "ㅇ",
+                    "onset": "ㅇ",
+                    "penalty": -8,
+                    "reason": "연음 어색"
+                }
+            ]
+        }
+    },
+    "aspirationPattern": {
+        "description": "거센소리/된소리 패턴",
+        "aspirated": [
+            "ㅋ",
+            "ㅌ",
+            "ㅍ",
+            "ㅊ"
+        ],
+        "tense": [
+            "ㄲ",
+            "ㄸ",
+            "ㅃ",
+            "ㅆ",
+            "ㅉ"
+        ],
+        "consecutivePenalty": -8,
+        "mixedPenalty": -5
+    },
+    "endingPreferences": {
+        "description": "끝 글자 종성 선호도 (현대적 느낌)",
+        "scores": {
+            "": 10,
+            "ㄴ": 10,
+            "ㅁ": 8,
+            "ㅇ": 8,
+            "ㄹ": 5,
+            "ㄱ": 2,
+            "ㅂ": 0,
+            "ㄷ": -2,
+            "ㅅ": -3
+        }
+    },
+    "syllableBalance": {
+        "description": "음절 균형감",
+        "preferredStructures": [
+            {
+                "pattern": "CV-CV",
+                "description": "받침없음+받침없음",
+                "bonus": 5
+            },
+            {
+                "pattern": "CV-CVN",
+                "description": "받침없음+ㄴ받침",
+                "bonus": 4
+            },
+            {
+                "pattern": "CVN-CV",
+                "description": "ㄴ받침+받침없음",
+                "bonus": 3
+            }
+        ],
+        "avoidedStructures": [
+            {
+                "pattern": "CVC-CVC",
+                "description": "받침+받침",
+                "penalty": -5
+            }
+        ]
+    }
+}

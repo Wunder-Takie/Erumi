@@ -4,6 +4,7 @@
  */
 
 import sajuData from '../data/saju_data.json' with { type: 'json' };
+import { getSaju as getManselyeokSaju, isKASIAvailable } from './manselyeok/index.js';
 
 // ============================================
 // 1. 기본 데이터
@@ -193,9 +194,24 @@ export function getHourPillar(dayStem, hour) {
 // ============================================
 
 /**
- * 완전 사주팔자 계산
+ * 완전 사주팔자 계산 (KASI API 우선, 로컬 폴백)
  */
-export function calculateSaju(birthDate, birthHour = null) {
+export async function calculateSaju(birthDate, birthHour = null) {
+    // KASI API 활성화 (개선된 null 체크로 안전함)
+    const useKASI = true;
+
+    if (useKASI && isKASIAvailable()) {
+        try {
+            console.log('[Saju] Using KASI API for precise calculation');
+            const result = await getManselyeokSaju(birthDate, birthHour);
+            return result;
+        } catch (error) {
+            console.warn('[Saju] KASI API failed, using local fallback:', error.message);
+        }
+    }
+
+    // 로컬 폴백 계산
+    console.log('[Saju] Using local calculation');
     const date = new Date(birthDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -215,6 +231,7 @@ export function calculateSaju(birthDate, birthHour = null) {
         month: monthPillar,
         day: dayPillar,
         hour: hourPillar,
+        source: 'local_calculation',
         birthInfo: { year, month, day, hour: birthHour }
     };
 }
@@ -227,6 +244,11 @@ export function calculateSaju(birthDate, birthHour = null) {
  * 사주에서 오행 분포 분석
  */
 export function analyzeElements(saju) {
+    if (!saju) {
+        console.error('[analyzeElements] saju is null or undefined');
+        return { distribution: {}, neededElements: [], excessElements: [] };
+    }
+
     const counts = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
 
     // 천간 오행(4개 또는 3개)
@@ -234,6 +256,13 @@ export function analyzeElements(saju) {
     if (saju.hour) pillars.push(saju.hour);
 
     for (const pillar of pillars) {
+        if (!pillar) {
+            console.warn('[analyzeElements] Skipping null pillar');
+            continue; // null 체크
+        }
+        if (!pillar.stemElement || !pillar.branchElement) {
+            console.warn('[analyzeElements] Pillar missing elements:', pillar);
+        }
         if (pillar.stemElement) counts[pillar.stemElement]++;
         if (pillar.branchElement) counts[pillar.branchElement]++;
     }

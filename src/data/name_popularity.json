@@ -1,0 +1,442 @@
+{
+    "meta": {
+        "source": "전자가족관계등록시스템 + 언론보도 종합",
+        "lastUpdated": "2026-01-15",
+        "description": "한국 신생아 이름 인기 순위 데이터 (2020-2025)"
+    },
+    "yearlyTopNames": {
+        "2025": {
+            "M": [
+                "도윤",
+                "시우",
+                "서준",
+                "하준",
+                "이준",
+                "지호",
+                "주원",
+                "지우",
+                "서우",
+                "유준"
+            ],
+            "F": [
+                "서아",
+                "하윤",
+                "서윤",
+                "지유",
+                "서연",
+                "하은",
+                "이서",
+                "수아",
+                "지아",
+                "채원"
+            ]
+        },
+        "2024": {
+            "M": [
+                "시우",
+                "도윤",
+                "서준",
+                "하준",
+                "지호",
+                "이준",
+                "주원",
+                "지우",
+                "서우",
+                "유준"
+            ],
+            "F": [
+                "하윤",
+                "서아",
+                "서윤",
+                "지유",
+                "서연",
+                "하은",
+                "이서",
+                "지아",
+                "수아",
+                "채원"
+            ]
+        },
+        "2023": {
+            "M": [
+                "시우",
+                "서준",
+                "도윤",
+                "하준",
+                "지호",
+                "이준",
+                "지우",
+                "주원",
+                "건우",
+                "서우"
+            ],
+            "F": [
+                "서윤",
+                "서아",
+                "하윤",
+                "지유",
+                "서연",
+                "하은",
+                "수아",
+                "지아",
+                "이서",
+                "채원"
+            ]
+        },
+        "2022": {
+            "M": [
+                "서준",
+                "시우",
+                "도윤",
+                "하준",
+                "지호",
+                "이준",
+                "지우",
+                "건우",
+                "주원",
+                "서우"
+            ],
+            "F": [
+                "서윤",
+                "하윤",
+                "서아",
+                "지유",
+                "서연",
+                "하은",
+                "수아",
+                "지아",
+                "이서",
+                "채원"
+            ]
+        },
+        "2021": {
+            "M": [
+                "서준",
+                "도윤",
+                "하준",
+                "시우",
+                "이준",
+                "지호",
+                "지우",
+                "건우",
+                "주원",
+                "서우"
+            ],
+            "F": [
+                "서윤",
+                "하윤",
+                "지유",
+                "서아",
+                "서연",
+                "하은",
+                "수아",
+                "지아",
+                "이서",
+                "채원"
+            ]
+        },
+        "2020": {
+            "M": [
+                "서준",
+                "도윤",
+                "하준",
+                "시우",
+                "이준",
+                "지호",
+                "지우",
+                "건우",
+                "주원",
+                "서우"
+            ],
+            "F": [
+                "서윤",
+                "하윤",
+                "지유",
+                "서연",
+                "서아",
+                "하은",
+                "수아",
+                "지아",
+                "이서",
+                "채원"
+            ]
+        }
+    },
+    "syllablePopularity": {
+        "서": {
+            "rank": 1,
+            "frequency": 1250,
+            "trend": "stable",
+            "score": 100,
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025
+            ]
+        },
+        "준": {
+            "rank": 2,
+            "frequency": 1180,
+            "trend": "stable",
+            "score": 98,
+            "years": [
+                2020,
+                2021,
+                2022,
+                2023,
+                2024,
+                2025
+            ]
+        },
+        "윤": {
+            "rank": 3,
+            "frequency": 1100,
+            "trend": "stable",
+            "score": 95,
+            "genderPreference": "N"
+        },
+        "우": {
+            "rank": 4,
+            "frequency": 1050,
+            "trend": "stable",
+            "score": 93,
+            "genderPreference": "M"
+        },
+        "하": {
+            "rank": 5,
+            "frequency": 980,
+            "trend": "rising",
+            "score": 90
+        },
+        "도": {
+            "rank": 6,
+            "frequency": 920,
+            "trend": "rising",
+            "score": 88,
+            "genderPreference": "M"
+        },
+        "시": {
+            "rank": 7,
+            "frequency": 880,
+            "trend": "rising",
+            "score": 85,
+            "genderPreference": "M"
+        },
+        "지": {
+            "rank": 8,
+            "frequency": 850,
+            "trend": "stable",
+            "score": 83,
+            "genderPreference": "F"
+        },
+        "아": {
+            "rank": 9,
+            "frequency": 800,
+            "trend": "rising",
+            "score": 80,
+            "genderPreference": "F"
+        },
+        "이": {
+            "rank": 10,
+            "frequency": 780,
+            "trend": "rising",
+            "score": 78
+        },
+        "유": {
+            "rank": 11,
+            "frequency": 720,
+            "trend": "stable",
+            "score": 75
+        },
+        "수": {
+            "rank": 12,
+            "frequency": 680,
+            "trend": "stable",
+            "score": 72
+        },
+        "호": {
+            "rank": 13,
+            "frequency": 650,
+            "trend": "stable",
+            "score": 70,
+            "genderPreference": "M"
+        },
+        "은": {
+            "rank": 14,
+            "frequency": 620,
+            "trend": "declining",
+            "score": 68
+        },
+        "원": {
+            "rank": 15,
+            "frequency": 600,
+            "trend": "stable",
+            "score": 65
+        },
+        "채": {
+            "rank": 16,
+            "frequency": 580,
+            "trend": "rising",
+            "score": 63,
+            "genderPreference": "F"
+        },
+        "연": {
+            "rank": 17,
+            "frequency": 550,
+            "trend": "stable",
+            "score": 60
+        },
+        "건": {
+            "rank": 18,
+            "frequency": 520,
+            "trend": "declining",
+            "score": 58,
+            "genderPreference": "M"
+        },
+        "진": {
+            "rank": 19,
+            "frequency": 480,
+            "trend": "declining",
+            "score": 55
+        },
+        "민": {
+            "rank": 20,
+            "frequency": 450,
+            "trend": "declining",
+            "score": 52
+        },
+        "현": {
+            "rank": 25,
+            "frequency": 350,
+            "trend": "declining",
+            "score": 45
+        },
+        "영": {
+            "rank": 40,
+            "frequency": 180,
+            "trend": "declining",
+            "score": 25
+        },
+        "경": {
+            "rank": 50,
+            "frequency": 80,
+            "trend": "declining",
+            "score": 10
+        },
+        "희": {
+            "rank": 60,
+            "frequency": 30,
+            "trend": "declining",
+            "score": 0
+        }
+    },
+    "trendingCombinations": {
+        "rising": [
+            {
+                "name": "도윤",
+                "gender": "M",
+                "score": 100
+            },
+            {
+                "name": "시우",
+                "gender": "M",
+                "score": 98
+            },
+            {
+                "name": "하준",
+                "gender": "M",
+                "score": 95
+            },
+            {
+                "name": "서아",
+                "gender": "F",
+                "score": 98
+            },
+            {
+                "name": "하윤",
+                "gender": "F",
+                "score": 96
+            },
+            {
+                "name": "지유",
+                "gender": "F",
+                "score": 94
+            }
+        ],
+        "declining": [
+            {
+                "name": "민수",
+                "gender": "M",
+                "score": -30
+            },
+            {
+                "name": "영호",
+                "gender": "M",
+                "score": -50
+            },
+            {
+                "name": "영숙",
+                "gender": "F",
+                "score": -80
+            },
+            {
+                "name": "정희",
+                "gender": "F",
+                "score": -80
+            }
+        ]
+    },
+    "modernPatterns": {
+        "description": "2020년대 인기 이름에서 추출한 패턴",
+        "preferredEndings": {
+            "M": [
+                "준",
+                "우",
+                "호",
+                "원"
+            ],
+            "F": [
+                "아",
+                "윤",
+                "유",
+                "은",
+                "연"
+            ]
+        },
+        "preferredBeginnings": {
+            "M": [
+                "서",
+                "도",
+                "시",
+                "하",
+                "이",
+                "지"
+            ],
+            "F": [
+                "서",
+                "하",
+                "지",
+                "수",
+                "이",
+                "채"
+            ]
+        },
+        "avoidedEndings": [
+            "희",
+            "자",
+            "숙",
+            "순",
+            "옥"
+        ],
+        "avoidedBeginnings": [
+            "영",
+            "경",
+            "광",
+            "춘",
+            "봉"
+        ]
+    }
+}

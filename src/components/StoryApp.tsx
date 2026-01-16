@@ -100,7 +100,7 @@ export function StoryApp() {
     }, [selections.story, selections.vibe, selections.saju]);
 
     // Handle name generation
-    const handleGenerate = useCallback(() => {
+    const handleGenerate = useCallback(async () => {
         const storyWeights = calculateWeights();
 
         // 🆕 용신 가중치 계산 (Option A: 강화된 가중치, 완전 차단 X)
@@ -126,7 +126,7 @@ export function StoryApp() {
             console.log('🎯 용신 가중치:', yongsinWeights);
         }
 
-        const names = generateNames(
+        const names = await generateNames(
             selections.surname,
             [],
             selections.gender,
@@ -145,8 +145,8 @@ export function StoryApp() {
         setStep('saju'); // 🆕 Go to saju step
     };
 
-    const handleSajuComplete = (birthDate: string, birthHour: number | null) => {
-        const saju = (calculateSaju as (date: string, hour: number | null) => Record<string, unknown>)(birthDate, birthHour);
+    const handleSajuComplete = async (birthDate: string, birthHour: number | null) => {
+        const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
         const analysis = analyzeElements(saju);
         const weights = sajuToWeights(saju);
 
