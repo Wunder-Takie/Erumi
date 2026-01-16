@@ -153,7 +153,7 @@ function DevApp() {
       setFilteredOutNames(actualFiltered);
 
       // 콘솔에 상세 정보 출력
-      console.clear();
+      // console.clear(); // KASI API 로그를 보기 위해 주석 처리
       console.log(`✅ ${nameMode === 'hanja' ? '한자' : '순 우리말'} 이름 ${names.length}개 생성 완료`);
       console.log('\n📊 점수 분포:');
       const above90 = names.filter(n => n.score >= 90).length;
