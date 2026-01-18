@@ -57,6 +57,15 @@ export interface NameResult {
         final: number;
         // Hanja specific
     };
+    // 🆕 추가 필드 (generateNames 반환값)
+    modernityAvg?: number;
+    llmScore?: unknown;
+    genderTendency?: {
+        first: number;
+        second: number;
+        avg: number;
+    };
+    globalCheck?: unknown;
     warning: {
         reason: string;
         alternative: string;

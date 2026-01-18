@@ -3,7 +3,7 @@
  * 내러티브 생성 유틸리티 - 사주, 수리, 균형 스토리 생성
  */
 
-import sajuNarratives from '../data/saju_narratives.json' with { type: 'json' };
+import sajuNarratives from '../data/saju/saju_narratives.json' with { type: 'json' };
 
 /**
  * 사주 스토리 내러티브 생성

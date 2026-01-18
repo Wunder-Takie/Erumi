@@ -3,7 +3,7 @@
  * 수리 사전 필터 - 4격 길수 획수 조합 계산
  */
 
-import suri81 from '../data/suri_81.json' with { type: 'json' };
+import suri81 from '../data/saju/suri_81.json' with { type: 'json' };
 
 // 길수 목록 추출
 const LUCKY_NUMBERS = new Set(suri81.map(s => s.count));

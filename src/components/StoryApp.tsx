@@ -3,7 +3,7 @@ import { IntroStep, BasicsStep, StoryStep, VibeStep, LoadingStep, RevealStep, Sa
 import { NameReport } from './NameReport';
 import { generateNames } from '../utils/namingUtils';
 import { calculateSaju, sajuToWeights, analyzeElements, extractYongsin } from '../utils/sajuUtils';
-import storyFlow from '../data/story_flow.json';
+import storyFlow from '../data/ui/story_flow.json';
 
 type Step = 'intro' | 'basics' | 'saju' | 'story' | 'vibe' | 'loading' | 'reveal' | 'list';
 
@@ -101,7 +101,7 @@ export function StoryApp() {
 
     // Handle name generation
     const handleGenerate = useCallback(async () => {
-        const storyWeights = calculateWeights();
+        const preferenceWeights = calculateWeights();
 
         // 🆕 용신 가중치 계산 (Option A: 강화된 가중치, 완전 차단 X)
         let yongsinWeights: Record<string, number> | null = null;
@@ -130,7 +130,7 @@ export function StoryApp() {
             selections.surname,
             [],
             selections.gender,
-            storyWeights,
+            preferenceWeights,
             yongsinWeights  // 🆕 용신 가중치 전달
         );
 

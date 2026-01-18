@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { generateNames } from '../utils/namingUtils';
 import { generatePureKoreanNames } from '../utils/pureKoreanUtils';
 import { calculateSaju, sajuToWeights, analyzeElements, extractYongsin } from '../utils/sajuUtils';
-import storyFlow from '../data/story_flow.json';
+import storyFlow from '../data/ui/story_flow.json';
 import type { NameItem } from '../types';
 import { NameReport } from '../components/NameReport';
 
@@ -81,7 +81,7 @@ function DevApp() {
 
       if (nameMode === 'hanja') {
         // 스토리 가중치 계산
-        const storyWeights: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
+        const preferenceWeights: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
 
         // 사주 기반 가중치 (40%)
         let yongsinWeights: Record<string, number> | null = null;
@@ -97,7 +97,7 @@ function DevApp() {
 
           // 사주 가중치 추가
           for (const [element, value] of Object.entries(weights)) {
-            storyWeights[element as keyof typeof storyWeights] += (value as number) * 0.4;
+            preferenceWeights[element as keyof typeof preferenceWeights] += (value as number) * 0.4;
           }
 
           // 용신 가중치 계산
@@ -127,7 +127,7 @@ function DevApp() {
         const storyMultiplier = useSaju && birthDate ? 0.3 : 0.5;
         if (selectedStory && Object.keys(selectedStory.elements).length > 0) {
           for (const [element, ratio] of Object.entries(selectedStory.elements)) {
-            storyWeights[element as keyof typeof storyWeights] += 20 * (ratio as number) * storyMultiplier / 0.5;
+            preferenceWeights[element as keyof typeof preferenceWeights] += 20 * (ratio as number) * storyMultiplier / 0.5;
           }
         }
 
@@ -135,13 +135,13 @@ function DevApp() {
         const vibeMultiplier = useSaju && birthDate ? 0.3 : 0.5;
         if (selectedVibe) {
           for (const [element, ratio] of Object.entries(selectedVibe.elements)) {
-            storyWeights[element as keyof typeof storyWeights] += 20 * (ratio as number) * vibeMultiplier / 0.5;
+            preferenceWeights[element as keyof typeof preferenceWeights] += 20 * (ratio as number) * vibeMultiplier / 0.5;
           }
         }
 
-        console.log('📊 최종 스토리 가중치:', storyWeights);
+        console.log('📊 최종 스토리 가중치:', preferenceWeights);
 
-        names = await generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
+        names = await generateNames(surname, [], gender, preferenceWeights, yongsinWeights) as NameItem[];
       } else {
         names = generatePureKoreanNames(surname, { gender: gender === 'M' ? 'male' : gender === 'F' ? 'female' : null });
       }
@@ -557,6 +557,27 @@ function DevApp() {
                         </span>
                         {'hanjaName' in name && name.scoreBreakdown.penalty !== undefined && name.scoreBreakdown.penalty > 0 && (
                           <span className="text-red-600">페널티 -{name.scoreBreakdown.penalty}</span>
+                        )}
+                      </div>
+                    )}
+                    {/* 🆕 추가 정보 표시 */}
+                    {'hanjaName' in name && (
+                      <div className="mt-1 flex gap-2 text-xs">
+                        <span className="text-cyan-600">현대성Avg {((name as unknown as { modernityAvg?: number }).modernityAvg ?? 0).toFixed(1)}</span>
+                        {(() => {
+                          const llmVal = (name as unknown as { llmScore?: string | number }).llmScore;
+                          return llmVal ? <span className="text-indigo-600">AI {String(llmVal)}</span> : null;
+                        })()}
+                        {(name as unknown as { genderTendency?: { avg: number } }).genderTendency && (
+                          <span className={((name as unknown as { genderTendency?: { avg: number } }).genderTendency?.avg ?? 0) > 0 ? 'text-blue-500' : 'text-pink-500'}>
+                            {((name as unknown as { genderTendency?: { avg: number } }).genderTendency?.avg ?? 0) > 0 ? '♂' : '♀'} {((name as unknown as { genderTendency?: { avg: number } }).genderTendency?.avg ?? 0).toFixed(1)}
+                          </span>
+                        )}
+                        {/* 🆕 글로벌 이름 경고 표시 */}
+                        {(name as unknown as { globalCheck?: { hasWarning: boolean; primaryWarning?: { reason: string } } }).globalCheck?.hasWarning && (
+                          <span className="text-amber-500" title={(name as unknown as { globalCheck?: { primaryWarning?: { reason: string } } }).globalCheck?.primaryWarning?.reason}>
+                            🌐⚠️
+                          </span>
                         )}
                       </div>
                     )}

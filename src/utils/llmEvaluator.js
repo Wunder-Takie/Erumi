@@ -73,10 +73,11 @@ async function callLLM(fullName, hanjaName, gender, apiKey) {
 }
 
 /**
- * Gemini API 호출
+ * Gemini API 호출 (429 재시도 포함)
  */
-async function callGemini(prompt, apiKey) {
+async function callGemini(prompt, apiKey, retryCount = 0) {
     const { model, apiEndpoint, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
+    const maxRetries = 2; // 최대 2번 재시도
 
     const response = await fetch(
         `${apiEndpoint}/${model}:generateContent?key=${apiKey}`,
@@ -97,6 +98,14 @@ async function callGemini(prompt, apiKey) {
             })
         }
     );
+
+    // 429 Too Many Requests 처리
+    if (response.status === 429 && retryCount < maxRetries) {
+        const waitTime = Math.pow(2, retryCount + 1) * 1000; // 2s, 4s
+        console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
+        await delay(waitTime);
+        return callGemini(prompt, apiKey, retryCount + 1);
+    }
 
     if (!response.ok) {
         throw new Error(`Gemini API error: ${response.status}`);

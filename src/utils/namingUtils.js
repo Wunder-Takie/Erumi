@@ -6,25 +6,31 @@
 // ============================================
 // 1. Data Import
 // ============================================
-import hanjaDb from '../data/hanja_db.json' with { type: 'json' };
-import surnames from '../data/surnames.json' with { type: 'json' };
-import logicRules from '../data/logic_rules.json' with { type: 'json' };
-import valueTags from '../data/value_tags.json' with { type: 'json' };
-import suri81 from '../data/suri_81.json' with { type: 'json' };
-import globalRisk from '../data/global_risk.json' with { type: 'json' };
-import badCombinations from '../data/bad_combinations.json' with { type: 'json' };
-import homophoneRisks from '../data/homophone_risks.json' with { type: 'json' };
-import modernPreferences from '../data/modern_preferences.json' with { type: 'json' };
-import commonWords from '../data/common_words.json' with { type: 'json' };
-import popularNgrams from '../data/popular_ngrams.json' with { type: 'json' };
-import bunpaCharacters from '../data/bunpa_characters.json' with { type: 'json' };
-import consonantElements from '../data/consonant_elements.json' with { type: 'json' };
-// 🆕 v3.0: 인기도 데이터 및 발음 규칙
-import namePopularity from '../data/name_popularity.json' with { type: 'json' };
-import phoneticRulesData from '../data/phonetic_rules.json' with { type: 'json' };
+// Core data
+import hanjaDb from '../data/core/hanja_db.json' with { type: 'json' };
+import surnames from '../data/core/surnames.json' with { type: 'json' };
+import suri81 from '../data/saju/suri_81.json' with { type: 'json' };
+// Filter data
+import modernPreferences from '../data/filter/modern_preferences.json' with { type: 'json' };
+import bunpaCharacters from '../data/scoring/bunpa_characters.json' with { type: 'json' };
+import phoneticRulesData from '../data/filter/phonetic_rules.json' with { type: 'json' };
+// Saju data
+import consonantElements from '../data/saju/consonant_elements.json' with { type: 'json' };
+// Popularity data
+import namePopularity from '../data/popularity/name_popularity.json' with { type: 'json' };
+import popularNgrams from '../data/popularity/popular_ngrams.json' with { type: 'json' };
+// Korean & UI data
+import valueTags from '../data/ui/value_tags.json' with { type: 'json' };
+import logicRules from '../data/scoring/logic_rules.json' with { type: 'json' };
 import { checkGlobalName, romanize } from './globalNameCheck.js';
 import { isLuckyCombination } from './suriPatterns.js';
 import { evaluateNamesWithLLM, applyLLMScore } from './llmEvaluator.js';
+
+// 🆕 v4.0: 통합된 필터 데이터 별칭 (modern_preferences.json에서 가져옴)
+const globalRisk = modernPreferences.global_risk || [];
+const badCombinations = modernPreferences.bad_combinations || [];
+const homophoneRisks = modernPreferences.homophone_risks_legacy || [];
+const commonWords = { common_words: modernPreferences.common_words_list || [] };
 
 
 // ============================================
@@ -540,257 +546,116 @@ function isSameVowelFamily(vowel1, vowel2) {
 }
 
 /**
- * 음운 규칙 기반 어색한 발음 체크 (대폭 강화)
+ * 음운 규칙 기반 어색한 발음 체크 (데이터 기반 리팩토링)
+ * 모든 규칙은 phonetic_rules.json의 blocked_syllables, phonetic_patterns에서 로드
  */
 function hasAwkwardPhonetics(hangul1, hangul2) {
   const d1 = decomposeHangul(hangul1);
   const d2 = decomposeHangul(hangul2);
   if (!d1 || !d2) return false;
 
-  // === 올드한/어색한 음절 조합 패턴 (근본 차단) ===
+  // 데이터 로드 (phoneticRulesData에서)
+  const blocked = phoneticRulesData.blocked_syllables || {};
+  const patterns = phoneticRulesData.phonetic_patterns || {};
 
-  // 🆕 율 + 모든 글자 차단 (율경, 율린, 율리, 율민 등)
-  if (hangul1 === '율') {
-    return true;
+  // === 1. 첫째 글자 위치 차단 체크 ===
+  if (blocked.first_position) {
+    // 1.1 완전 차단 목록
+    if (blocked.first_position.block_all?.includes(hangul1)) {
+      return true;
+    }
+    // 1.2 예외 있는 차단
+    const firstExceptions = blocked.first_position.block_with_exceptions?.[hangul1];
+    if (firstExceptions) {
+      if (firstExceptions.allowed_second && !firstExceptions.allowed_second.includes(hangul2)) {
+        return true;
+      }
+      if (firstExceptions.blocked_second?.includes(hangul2)) {
+        return true;
+      }
+    }
   }
 
-  // 🆕 근 + 모든 글자 차단 (근지, 근유, 근예, 근수, 근희 등)
-  if (hangul1 === '근') {
-    return true;
+  // === 2. 둘째 글자 위치 차단 체크 ===
+  if (blocked.second_position) {
+    // 2.1 완전 차단 목록
+    if (blocked.second_position.block_all?.includes(hangul2)) {
+      return true;
+    }
+    // 2.2 예외 있는 차단
+    const secondExceptions = blocked.second_position.block_with_exceptions?.[hangul2];
+    if (secondExceptions) {
+      if (secondExceptions.allowed_first && !secondExceptions.allowed_first.includes(hangul1)) {
+        return true;
+      }
+      if (secondExceptions.blocked_first?.includes(hangul1)) {
+        return true;
+      }
+    }
   }
 
-  // 🆕 X + 근 패턴 차단 (시근, 유근, 재근, 서근, 하근 등) - 올드함
-  if (hangul2 === '근') {
-    return true;
+  // === 3. 특정 첫째+둘째 조합 차단 ===
+  if (blocked.specific_pairs?.pairs) {
+    for (const [first, second] of blocked.specific_pairs.pairs) {
+      if (hangul1 === first && hangul2 === second) {
+        return true;
+      }
+    }
   }
 
-  // 🆕 솔 + 대부분 차단 (솔리, 솔연, 솔린, 솔영, 솔현, 솔랑 등) - 어색함
-  if (hangul1 === '솔') {
-    const allowedSecond = ['아']; // 극히 일부만 허용
-    if (!allowedSecond.includes(hangul2)) {
+  // === 4. 받침 기반 차단 규칙 ===
+  if (blocked.jongseong_rules) {
+    // 혜 + ㄴ/ㄹ 받침
+    if (hangul2 === '혜' && blocked.jongseong_rules['혜_with_jong']?.includes(d1.jong)) {
+      return true;
+    }
+    // 성 + ㄴ/ㄹ 받침
+    if (hangul2 === '성' && blocked.jongseong_rules['성_with_jong']?.includes(d1.jong)) {
       return true;
     }
   }
 
-  // 🆕 태 + 모든 글자 차단 (태민, 태성, 태윤, 태환 등 - 올드함)
-  if (hangul1 === '태') {
+  // === 5. 발음 패턴 기반 차단 ===
+
+  // 5.1 초성 반복 차단 (부드러운 초성 제외)
+  const softConsonants = patterns.soft_consonants || ['ㄴ', 'ㅁ', 'ㄹ', 'ㅅ', 'ㅎ', 'ㅈ'];
+  if (d1.cho === d2.cho && d1.cho !== 'ㅇ' && !softConsonants.includes(d1.cho)) {
     return true;
   }
 
-  // 🆕 완화: X + 나 패턴 (유나, 서나, 하나 등 인기 이름 허용)
-  if (hangul2 === '나') {
-    const blocked = ['광', '경', '영', '근', '처', '처'];
-    if (blocked.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 광 + 대부분 차단 (광지, 민광 등)
-  if (hangul1 === '광') {
-    return true;
-  }
-
-  // 🆕 X + 광 패턴도 대부분 어색함 (민광, 예광, 지광, 연광)
-  if (hangul2 === '광') {
-    return true;
-  }
-
-  // 🆕 완화: X + 결 패턴 (조건부 허용)
-  // 최근 유결, 서결 등 사용 증가
-  if (hangul2 === '결') {
-    const blocked = ['경', '광', '영', '덕'];
-    if (blocked.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 X + 석 패턴 차단 (하석, 유석, 아석 등)
-  if (hangul2 === '석') {
-    return true;
-  }
-
-  // 🆕 X + 겸 패턴 차단 (유겸, 은겸 등)
-  if (hangul2 === '겸') {
-    return true;
-  }
-
-  // 🆕 완화: X + 환 패턴 (지환, 시환, 도환 등 남아 인기 이름)
-  if (hangul2 === '환') {
-    const blocked = ['아', '광', '경', '완'];
-    if (blocked.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 X + 엽 패턴 차단 (민엽 등)
-  if (hangul2 === '엽') {
-    return true;
-  }
-
-  // 🆕 X + 경 패턴 차단 (재경, 진경, 유경, 수경, 시경, 지경 등) - 올드함
-  if (hangul2 === '경') {
-    return true; // 전면 차단
-  }
-
-  // 🆕 X + 린 패턴 확장 차단 (도린, 재린, 석린 등) 
-  if (hangul2 === '린') {
-    // 현대적인 첫글자만 허용
-    const modernFirst = ['예', '유', '아', '하', '수', '시'];
-    if (!modernFirst.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 완화: X + 건 패턴 (서건, 하건, 예건 등 인기 이름 허용)
-  if (hangul2 === '건') {
-    const blocked = ['경', '광', '성', '처'];
-    if (blocked.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 현 + 유 (발음 어려움 - ㄴ받침 + ㅇ초성 + ㅠ)
-  if (hangul1 === '현' && hangul2 === '유') {
-    return true;
-  }
-
-  // 🆕 한 + 유 (발음 어려움 - ㄴ받침 + ㅇ초성 + ㅠ)
-  if (hangul1 === '한' && hangul2 === '유') {
-    return true;
-  }
-
-  // 🆕 석 + X 패턴 차단 (석린, 석영, 석지, 석현, 석원, 석준, 석우 등) - 올드함
-  if (hangul1 === '석') {
-    return true;
-  }
-
-  // 🆕 X + 도 패턴 차단 (경도, 현도, 성도 등) - 올드함
-  if (hangul2 === '도') {
-    const allowedFirst = ['태', '이']; // 극히 일부만 허용
-    if (!allowedFirst.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 운 + 성 (어색한 발음)
-  if (hangul1 === '운' && hangul2 === '성') {
-    return true;
-  }
-
-  // 🆕 찬 + 예 (발음 어려움 - ㄴ받침 + ㅇ초성 + ㅖ)
-  if (hangul1 === '찬' && hangul2 === '예') {
-    return true;
-  }
-
-  // 🆕 X + 혜 패턴 차단 (ㄴ받침 + ㅎ초성 연음 어려움: 연혜, 선혜 등)
-  if (hangul2 === '혜') {
-    // ㄴ 또는 ㄹ 받침과 결합시 어려움
-    if (d1.jong === 'ㄴ' || d1.jong === 'ㄹ') {
-      return true;
-    }
-  }
-
-  // 🆕 X + 성 패턴 (ㄴ/ㄹ받침 + ㅅ초성 연음: 환성, 완성, 진성 등)
-  if (hangul2 === '성') {
-    // 환, 완, 진, 선 등 ㄴ받침과 결합시 어색함
-    if (d1.jong === 'ㄴ' || d1.jong === 'ㄹ') {
-      return true;
-    }
-  }
-
-  // 🆕 진 + 채 (어색한 조합)
-  if (hangul1 === '진' && hangul2 === '채') {
-    return true;
-  }
-
-  // 🆕 완화: 한 + X 패턴 (한별, 한비, 한서, 한아 등 허용)
-  if (hangul1 === '한') {
-    const blocked = ['경', '희', '자', '옥'];
-    if (blocked.includes(hangul2)) {
-      return true;
-    }
-  }
-
-  // 🆕 완화: X + 한 패턴 (지한, 유한 등 - 일부 허용)
-  if (hangul2 === '한') {
-    const blocked = ['경', '광', '영', '성'];
-    if (blocked.includes(hangul1)) {
-      return true;
-    }
-  }
-
-  // 🆕 자 + X 패턴 차단 (자민, 자성 등 - 올드함/어색함)
-  if (hangul1 === '자') {
-    return true;
-  }
-
-  // 🆕 완 + X 패턴 차단 (완하 등 - 어색함)
-  if (hangul1 === '완') {
-    return true;
-  }
-
-  // 🆕 완화: X + 예 패턴 (윤예, 민예, 은예 등 여아 인기 이름 허용)
-  // 발음이 자연스러운 ㄴ받침+예 패턴은 허용
-  // (점수 페널티로 전환: calculatePhoneticFlowScore에서 처리)
-
-  // 🆕 X + 희 패턴 차단 (운희, 성희, 진희, 선희, 경희 등 - 올드함)
-  if (hangul2 === '희') {
-    return true;
-  }
-
-  // === 기존 발음 규칙 기반 필터 ===
-
-  // 🆕 완화: 모음 반복은 점수 페널티로 전환 (하드 차단 X)
-  // 서아, 하아, 지이 등 현대적 이름도 있으므로 차단하지 않음
-  // (calculatePhoneticFlowScore에서 점수 감점으로 처리)
-
-  // 2. 초성 반복 차단 (🆕 완화: ㅇ, ㄴ, ㅁ, ㄹ, ㅅ, ㅎ, ㅈ 제외)
-  // 부드러운 초성과 인기 패턴은 허용
-  if (d1.cho === d2.cho && d1.cho !== 'ㅇ') {
-    const softConsonants = ['ㄴ', 'ㅁ', 'ㄹ', 'ㅅ', 'ㅎ', 'ㅈ']; // 🆕 확대
-    if (!softConsonants.includes(d1.cho)) {
-      return true;
-    }
-  }
-
-  // 3. 모든 ㄴ/ㄹ 관련 패턴 차단
+  // 5.2 ㄴ/ㄹ 관련 패턴 차단
   if ((d1.jong === 'ㄴ' && d2.cho === 'ㄹ') ||
     (d1.jong === 'ㄹ' && d2.cho === 'ㄴ') ||
     (d1.jong === 'ㄴ' && d2.jong === 'ㄴ')) {
     return true;
   }
 
-  // 4. ㅇ받침 + ㅇ초성 연음 패턴 차단
+  // 5.3 ㅇ받침 + ㅇ초성 연음 패턴 차단
   if (d1.jong === 'ㅇ' && d2.cho === 'ㅇ') {
     return true;
   }
 
-  // 5. ㅇ초성 + ㄹ초성 패턴 차단
+  // 5.4 ㅇ초성/ㅇ받침/ㄴ받침 + ㄹ초성 패턴 차단
   if (d2.cho === 'ㄹ') {
-    if (d1.jong === 'ㅇ' || d1.jong === 'ㄴ') {
-      return true;
-    }
-    if (!d1.jong && d1.cho === 'ㅇ') {
-      return true;
-    }
+    if (d1.jong === 'ㅇ' || d1.jong === 'ㄴ') return true;
+    if (!d1.jong && d1.cho === 'ㅇ') return true;
   }
 
-  // 6. 받침 + ㅇ초성의 아/어 모음 차단 (🆕 완화: ㄴ받침+아/우 허용)
-  // 윤아, 민아, 은아, 준아, 온아 등 인기 이름 허용
+  // 5.5 받침 + ㅇ초성의 아/어 모음 차단 (ㅁ, ㄴ 허용)
+  const allowedJong = patterns.allowed_jong_with_ah || ['ㅁ', 'ㄴ'];
   if (d1.jong && d2.cho === 'ㅇ' && ['ㅏ', 'ㅓ'].includes(d2.jung)) {
-    // ㅁ, ㄴ 받침은 허용 (발음이 자연스러움)
-    if (!['ㅁ', 'ㄴ'].includes(d1.jong)) {
+    if (!allowedJong.includes(d1.jong)) {
       return true;
     }
   }
 
-  // 7. 발음 어려운 복합 종성
-  const difficultJong = ['ㄳ', 'ㄵ', 'ㄶ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅄ'];
+  // 5.6 발음 어려운 복합 종성
+  const difficultJong = patterns.difficult_jongseong || [];
   if (difficultJong.includes(d1.jong) || difficultJong.includes(d2.jong)) {
     return true;
   }
 
-  // 8. ㅜ + ㅣ 조합
+  // 5.7 ㅜ + ㅣ 조합
   if (d1.jung === 'ㅜ' && d2.jung === 'ㅣ') {
     return true;
   }
@@ -801,6 +666,156 @@ function hasAwkwardPhonetics(hangul1, hangul2) {
 // ============================================
 // 🆕 Advanced Scoring Functions (알고리즘 고도화)
 // ============================================
+
+// ============================================
+// 🆕 v5.0: 고급 발음 규칙 함수들
+// ============================================
+
+/**
+ * 성씨-이름 조합 발음 점수
+ * 성씨 종성과 이름 첫 글자 초성의 조화 평가
+ */
+function calculateSurnameNameFlowScore(surname, hangul1) {
+  const rules = phoneticRulesData.surnameCodaOnset;
+  if (!rules) return 0;
+
+  // 성씨 종성 가져오기
+  const surnameData = rules.commonSurnames?.[surname];
+  if (!surnameData) return 0;
+
+  const surnameCoda = surnameData.coda;
+  const d1 = decomposeHangul(hangul1);
+  if (!d1) return 0;
+
+  // 패턴 매칭하여 보너스/페널티 적용
+  for (const pattern of rules.patterns) {
+    if (pattern.surname_coda === surnameCoda && pattern.onset === d1.cho) {
+      return pattern.bonus || -(pattern.penalty || 0);
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * 3글자 발음 패턴 점수 (성+이름)
+ * CVC-CV-CV 등 음절 구조 평가
+ */
+function calculateThreeSyllablePatternScore(surname, hangul1, hangul2) {
+  const rules = phoneticRulesData.threeSyllablePatterns;
+  if (!rules) return 0;
+
+  const ds = decomposeHangul(surname);
+  const d1 = decomposeHangul(hangul1);
+  const d2 = decomposeHangul(hangul2);
+  if (!ds || !d1 || !d2) return 0;
+
+  // 음절 구조 문자열 생성
+  const getStructure = (d) => {
+    let s = 'CV';
+    if (d.jong === 'ㅇ') s += 'NG';  // ㅇ받침 특별 처리
+    else if (d.jong) s += 'C';
+    if (d.jong === 'ㄴ') s = 'CVN';  // ㄴ받침 특별 처리
+    return s;
+  };
+
+  const pattern = `${getStructure(ds)}-${getStructure(d1)}-${getStructure(d2)}`;
+
+  // 선호 패턴 매칭
+  for (const p of rules.preferred || []) {
+    if (p.pattern === pattern) return p.bonus || 0;
+  }
+
+  // 회피 패턴 매칭
+  for (const p of rules.avoided || []) {
+    if (p.pattern === pattern) return -(p.penalty || 0);
+  }
+
+  return 0;
+}
+
+/**
+ * 로마자 발음 호환성 점수
+ * 글로벌 친화적인 발음 평가
+ */
+function calculateRomanizationScore(hangul1, hangul2) {
+  const rules = phoneticRulesData.romanizationFlow;
+  if (!rules) return 0;
+
+  let score = 0;
+
+  // 쉬운 로마자 발음
+  if (rules.easyRoman?.syllables?.includes(hangul1)) score += rules.easyRoman.bonus || 0;
+  if (rules.easyRoman?.syllables?.includes(hangul2)) score += rules.easyRoman.bonus || 0;
+
+  // 어려운 로마자 발음
+  if (rules.difficultRoman?.syllables?.includes(hangul1)) score -= rules.difficultRoman.penalty || 0;
+  if (rules.difficultRoman?.syllables?.includes(hangul2)) score -= rules.difficultRoman.penalty || 0;
+
+  return score;
+}
+
+/**
+ * 이름 리듬/억양 점수
+ * 음절의 무게감 균형 평가
+ */
+function calculateRhythmScore(hangul1, hangul2) {
+  const rules = phoneticRulesData.rhythmPatterns;
+  if (!rules) return 0;
+
+  const weights = rules.syllableWeight;
+  if (!weights) return 0;
+
+  // 음절 무게 결정
+  const getWeight = (syllable) => {
+    if (weights.light?.includes(syllable)) return 'light';
+    if (weights.heavy?.includes(syllable)) return 'heavy';
+    return 'medium';
+  };
+
+  const w1 = getWeight(hangul1);
+  const w2 = getWeight(hangul2);
+
+  // 리듬 패턴 결정
+  let rhythmType = 'balanced';
+  if (w1 === 'light' && w2 === 'heavy') rhythmType = 'rising';
+  else if (w1 === 'heavy' && w2 === 'light') rhythmType = 'falling';
+  else if (w1 === 'heavy' && w2 === 'heavy') rhythmType = 'heavy';
+
+  // 패턴 점수 매칭
+  for (const p of rules.patterns || []) {
+    if (p.type === rhythmType) {
+      return p.bonus || -(p.penalty || 0);
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * 발음 난이도 점수
+ * 유아 친화, 공식 석상 명확성 평가
+ */
+function calculatePronunciationDifficultyScore(hangul1, hangul2) {
+  const rules = phoneticRulesData.pronunciationDifficulty;
+  if (!rules) return 0;
+
+  const d1 = decomposeHangul(hangul1);
+  const d2 = decomposeHangul(hangul2);
+  if (!d1 || !d2) return 0;
+
+  let score = 0;
+
+  // 유아 친화 초성
+  if (rules.childFriendly?.onsets?.includes(d1.cho)) score += (rules.childFriendly.bonus || 0) / 2;
+  if (rules.childFriendly?.onsets?.includes(d2.cho)) score += (rules.childFriendly.bonus || 0) / 2;
+
+  // 어려운 초성 (된소리)
+  if (rules.difficultOnsets?.onsets?.includes(d1.cho)) score -= rules.difficultOnsets.penalty || 0;
+  if (rules.difficultOnsets?.onsets?.includes(d2.cho)) score -= rules.difficultOnsets.penalty || 0;
+
+  return score;
+}
 
 /**
  * 음운 흐름 점수 계산 (강화 버전)
@@ -1129,10 +1144,8 @@ function calculateModernityScore(hanja1, hanja2) {
     }
   }
 
-  // 🆕 음운 규칙 체크 (완전 차단)
-  if (hasAwkwardPhonetics(hanja1.hangul, hanja2.hangul)) {
-    return -999; // 자동 탈락
-  }
+  // 이전: hasAwkwardPhonetics 중복 체크 (1660줄 필터에서 이미 수행됨 - 제거)
+  // 필터 단계에서 이미 완전 차단되므로 점수 계산에서 중복 체크 불필요
 
   // 1. 받침/모음 선호도
   const jong1Score = modernPreferences.jongseong_scores[d1.jong] || 0;
@@ -1156,11 +1169,16 @@ function calculateModernityScore(hanja1, hanja2) {
     if (archaic[hanja2.hangul]) score += archaic[hanja2.hangul];
   }
 
-  // 3. 2020년대 인기 음절 보너스/페널티
-  if (modernPreferences.popular_syllables_2020s) {
-    const pop = modernPreferences.popular_syllables_2020s;
-    if (pop[hanja1.hangul]) score += pop[hanja1.hangul];
-    if (pop[hanja2.hangul]) score += pop[hanja2.hangul];
+  // 3. 2020년대 인기 음절 보너스/페널티 (name_popularity.json 사용)
+  if (namePopularity.syllablePopularity) {
+    const pop = namePopularity.syllablePopularity;
+    // syllablePopularity의 score 값을 직접 사용 (0-100 범위를 점수로 변환)
+    if (pop[hanja1.hangul]?.score !== undefined) {
+      score += Math.round((pop[hanja1.hangul].score - 50) / 5); // 50 기준으로 정규화
+    }
+    if (pop[hanja2.hangul]?.score !== undefined) {
+      score += Math.round((pop[hanja2.hangul].score - 50) / 5);
+    }
   }
 
   // 4. 발음 흐름 체크
@@ -1235,11 +1253,26 @@ function calculateModernityScore(hanja1, hanja2) {
     score -= 30;
   }
 
-  // 6. 트렌디/단순성 보너스 (생략 또는 기존 유지)
+  // 6. 트렌디 패턴 보너스 (trendy_patterns)
+  if (modernPreferences.trendy_patterns) {
+    for (const pattern of modernPreferences.trendy_patterns) {
+      // 첫째 글자 모음 매칭
+      const char1Match = !pattern.char1_vowel || d1.jung === pattern.char1_vowel;
+      // 둘째 글자 받침 매칭
+      const char2Match = !pattern.char2_jongseong || pattern.char2_jongseong.includes(d2.jong);
+
+      if (char1Match && char2Match) {
+        score += pattern.bonus || 5;
+      }
+    }
+  }
+
+  // 7. 발음 단순성 보너스 (syllable_simplicity_bonus)
   if (modernPreferences.syllable_simplicity_bonus) {
     const easyList = modernPreferences.syllable_simplicity_bonus.easy_syllables || [];
-    if (easyList.includes(hanja1.hangul)) score += 2;
-    if (easyList.includes(hanja2.hangul)) score += 2;
+    const bonusPerMatch = modernPreferences.syllable_simplicity_bonus.bonus_per_match || 2;
+    if (easyList.includes(hanja1.hangul)) score += bonusPerMatch;
+    if (easyList.includes(hanja2.hangul)) score += bonusPerMatch;
   }
 
   return Math.max(-50, Math.min(40, score));
@@ -1347,10 +1380,10 @@ function normalizeScores(combinations) {
  * @param {string} surnameInput - 성씨
  * @param {Array} selectedTagIds - 선택된 태그
  * @param {string|null} gender - 성별
- * @param {object|null} storyWeights - 스토리 기반 오행 가중치
+ * @param {object|null} preferenceWeights - 스토리 기반 오행 가중치
  * @param {object|null} yongsinWeights - 용신 기반 오행 가중치 (NEW)
  */
-export async function generateNames(surnameInput, selectedTagIds = [], gender = null, storyWeights = null, yongsinWeights = null) {
+export async function generateNames(surnameInput, selectedTagIds = [], gender = null, preferenceWeights = null, yongsinWeights = null) {
   // === STEP 1: 기본 데이터 로드 ===
   const surname = surnameInput.trim();
   let hanjaList = hanjaDb;
@@ -1388,9 +1421,9 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
   }
 
   // 2순위: 스토리 가중치 (합산)
-  if (storyWeights) {
-    console.log('📖 스토리 기반 가중치 적용:', storyWeights);
-    for (const [element, weight] of Object.entries(storyWeights)) {
+  if (preferenceWeights) {
+    console.log('📖 스토리 기반 가중치 적용:', preferenceWeights);
+    for (const [element, weight] of Object.entries(preferenceWeights)) {
       elementWeights[element] = (elementWeights[element] || 0) + weight;
     }
   } else {
@@ -1440,10 +1473,7 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     const d1 = decomposeHangul(c.hanja1.hangul);
     const d2 = decomposeHangul(c.hanja2.hangul);
 
-    // 0.1 Critical blocks 체크 (완전 차단) - blocked_names.json 통합됨
-    if (modernPreferences.critical_blocks?.includes(combination)) {
-      return false;
-    }
+    // 0.1 Critical blocks 체크는 checkGlobalRisk()에서 이미 수행됨 (중복 제거)
 
     // 0.2 Awkward combinations (critical severity) 체크
     if (modernPreferences.awkward_combinations?.combinations) {
@@ -1492,14 +1522,13 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     if (hasRoundVowelConflict(c.hanja1.hangul, c.hanja2.hangul)) return false;
     if (hasJongChoConflict(surnameInput, c.hanja1.hangul)) return false;
     if (hasJongChoConflict(c.hanja1.hangul, c.hanja2.hangul)) return false;
-    return true;
-  });
 
-  candidates = candidates.filter(c => {
+    // 🆕 통합: 기존 두 번째 filter에서 이동 (성능 최적화)
     if (checkBadCombinations(surnameInput, c.hangulName)) return false;
     const riskResult = checkGlobalRisk(c.romanName);
     if (riskResult.isCritical) return false;
     if (riskResult.warning) c.warning = riskResult.warning;
+
     return true;
   });
 
@@ -1540,7 +1569,7 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     const elementScore = calculateAdvancedElementScore(c.hanja1, c.hanja2, surnameInfo, elementWeights);
     const suriScore = c.suri ? calculateWeightedSuriScore(c.suri) : 0;
     const bonusScore = calculateBonusScore(c.hanja1, c.hanja2);
-    const modernityScore = calculateModernityScore(c.hanja1, c.hanja2);
+    // 🆕 modernityScore 제거 - modernityPoints (avgMod 기반)로 통합됨
 
     const homophoneRisks = checkHomophoneRisks(c.hangulName);
     const commonWordConflicts = checkCommonWordConflict(c.hangulName); // 🆕 Tier 2
@@ -1600,7 +1629,16 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     // 🆕 Phase 5: 성씨-이름 발음 흐름 체크 (정+성 어색함 등)
     const surnameNameFlowPenalty = checkSurnameNameFlow(surname, c.hanja1.hangul);
 
-    // Modernity 점수 (55점 만점 - Mod 6 대응 확장)
+    // 🆕 v5.0: 고급 발음 규칙 점수 (phonetic_rules.json v2.0)
+    const surnameNameFlowScore = calculateSurnameNameFlowScore(surname, c.hanja1.hangul);
+    const threeSyllableScore = calculateThreeSyllablePatternScore(surname, c.hanja1.hangul, c.hanja2.hangul);
+    const romanizationScore = calculateRomanizationScore(c.hanja1.hangul, c.hanja2.hangul);
+    const rhythmScore = calculateRhythmScore(c.hanja1.hangul, c.hanja2.hangul);
+    const pronunciationScore = calculatePronunciationDifficultyScore(c.hanja1.hangul, c.hanja2.hangul);
+    const advancedPhoneticScore = surnameNameFlowScore + threeSyllableScore + romanizationScore + rhythmScore + pronunciationScore;
+
+    // Modernity 점수 (55점 만점 - avgMod 기반 직접 계산)
+    // 🆕 통합: calculateModernityScore()의 역할을 흡수 (중복 제거)
     let modernityPoints = 15; // 기본값 (6.0 조합)
     if (avgMod >= 9.5) modernityPoints = 55;
     else if (avgMod >= 9.0) modernityPoints = 52;
@@ -1611,32 +1649,35 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     else if (avgMod >= 6.5) modernityPoints = 24;  // 6+7 조합 (양호)
     else if (avgMod >= 6.0) modernityPoints = 15;  // 6+6 조합 (허용)
 
+    // 🆕 통합된 전통 점수 (modernityScore 중복 제거)
+    // 이전: baseScore + elementScore + suriScore + bonusScore + modernityScore*1.5 - penalty
+    // 현재: baseScore + elementScore + suriScore + bonusScore - penalty (modernityPoints에서 처리)
+    c.rawScore = baseScore + elementScore + suriScore + bonusScore - penaltyScore;
+    const traditionalScore = Math.round((c.rawScore / 120) * 45);  // 155→120 (modernityScore 제거)
 
-    // 전통 점수 (45점으로 축소)
-    // 🆕 modernityScore 가중치 강화 (1.5배) - 현대성 강조
-    const weightedModernityScore = modernityScore * 1.5;
-    c.rawScore = baseScore + elementScore + suriScore + bonusScore + weightedModernityScore - penaltyScore;
-    const traditionalScore = Math.round((c.rawScore / 155) * 45);
-
-    // 🆕 최종 rawScore 계산 (5가지 개선 적용)
-    // 공식: 기본점수 + 인기도 + 음운흐름 + 의미충돌 + 분파 + 성씨상생 + 성씨발음흐름
+    // 🆕 최종 rawScore 계산 (중복 제거된 통합 공식)
+    // 공식: 기본점수 + 인기도 + 음운흐름 + 의미충돌 + 분파 + 성씨상생 + 성씨발음흐름 + 고급발음규칙
     c.rawScore = modernityPoints + traditionalScore
       + (popularityScore * 0.3)       // 인기 이름 보너스 (최대 +30)
       + (phoneticFlowScore * 2)       // 음운 흐름 보너스 (최대 +26)
       + semanticRiskScore             // 의미 충돌 페널티 (최대 -20)
       + bunpaScore                    // 🆕 분파 페널티 (최대 -50)
       + surnameHarmonyBonus           // 🆕 성씨 상생 보너스 (최대 +25)
-      + surnameNameFlowPenalty;       // 🆕 성씨-이름 발음 페널티 (최대 -23)
+      + surnameNameFlowPenalty        // 🆕 성씨-이름 발음 페널티 (최대 -23)
+      + advancedPhoneticScore;        // 🆕 v5.0: 고급 발음 규칙 (최대 ±15)
 
     // 🆕 점수는 normalizeScores()에서 일괄 계산됨 (정규 분포 적용)
     c.score = c.rawScore; // 임시값, 나중에 정규화됨
+
+    // 🆕 avgMod 저장 (Step 10에서 재사용, 중복 계산 방지)
+    c.modernityAvg = avgMod;
 
     c.scoreBreakdown = {
       base: baseScore,
       element: elementScore,
       suri: suriScore,
       bonus: bonusScore,
-      modernity: modernityScore,
+      modernity: modernityPoints,  // 🆕 수정: modernityScore → modernityPoints
       penalty: penaltyScore,
       raw: c.rawScore,
       final: 0 // 정규화 후 업데이트됨
@@ -1735,14 +1776,9 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
     if (surnameInput === c.hanja1.hangul) return false;
 
     // 4.3 Modernity 조합 밸런스 필터
-    // Pre-Filter가 mod >= 6이므로, 임계값도 6.5로 조정
-    // - 6+6 (avg 6.0) → 낮은 점수로 하위 랭킹
-    // - 6+7 (avg 6.5) → OK (조화로움)
-    // - 6+8 (avg 7.0, diff 2) → 여전히 REJECT (부조화)
-    const mod1 = c.hanja1.modernity || 5;
-    const mod2 = c.hanja2.modernity || 5;
-    const avgMod = (mod1 + mod2) / 2;
-    const diffMod = Math.abs(mod1 - mod2);
+    // 🆕 개선: avgMod 재계산 대신 Step 9에서 저장한 modernityAvg 사용
+    const avgMod = c.modernityAvg || ((c.hanja1.modernity || 5) + (c.hanja2.modernity || 5)) / 2;
+    const diffMod = Math.abs((c.hanja1.modernity || 5) - (c.hanja2.modernity || 5));
 
     // 너무 낮은 조합은 차단 (5+5, 5+6 등)
     if (avgMod < 6.0) return false;
@@ -1772,12 +1808,11 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
   // === STEP 4.5: LLM 평가 (Top 50 후보만) ===
   // 🆕 사전 필터링: old_fashioned 이름을 후순위로 밀기
   filtered.sort((a, b) => {
-    const aIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(
-      a.hangul1 + a.hangul2
-    );
-    const bIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(
-      b.hangul1 + b.hangul2
-    );
+    const aName = a.hangulName || (a.hanja1?.hangul + a.hanja2?.hangul);
+    const bName = b.hangulName || (b.hanja1?.hangul + b.hanja2?.hangul);
+
+    const aIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(aName);
+    const bIsOld = modernPreferences.old_fashioned_combinations?.names?.includes(bName);
 
     // 올드한 이름은 후순위
     if (aIsOld && !bIsOld) return 1;
@@ -1873,6 +1908,14 @@ export async function generateNames(surnameInput, selectedTagIds = [], gender = 
       elements: c.elements,
       score: c.score,
       scoreBreakdown: c.scoreBreakdown,
+      // 🆕 추가 필드 (UI 표시용)
+      modernityAvg: c.modernityAvg,
+      llmScore: c.llmScore || null,
+      genderTendency: {
+        first: c.hanja1.gender_tendency || 0,
+        second: c.hanja2.gender_tendency || 0,
+        avg: ((c.hanja1.gender_tendency || 0) + (c.hanja2.gender_tendency || 0)) / 2
+      },
       warning: finalWarning,
       globalCheck: globalCheck.hasWarning ? globalCheck : null
     };

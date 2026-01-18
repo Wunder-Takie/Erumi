@@ -3,7 +3,7 @@
  * 사주팔자 계산 유틸리티
  */
 
-import sajuData from '../data/saju_data.json' with { type: 'json' };
+import sajuData from '../data/saju/saju_data.json' with { type: 'json' };
 import { getSaju as getManselyeokSaju, isKASIAvailable } from './manselyeok/index.js';
 
 // ============================================
@@ -360,6 +360,37 @@ const ELEMENT_DESTRUCTION = {
  * 왕상휴수사(旺相休囚死) 기준
  */
 function analyzeDayMasterStrength(saju) {
+    // Null 체크: 필수 pillars가 없으면 기본값 반환
+    if (!saju || !saju.day || !saju.month) {
+        console.warn('[analyzeDayMasterStrength] Missing required pillars (day or month)');
+        return {
+            dayElement: 'Wood',
+            monthElement: 'Wood',
+            seasonScore: 0,
+            sameElementCount: 0,
+            birthingCount: 0,
+            totalStrength: 0,
+            isStrong: false
+        };
+    }
+
+    // Pillar에 element 정보가 없는 경우도 체크
+    if (!saju.day.stemElement || !saju.month.branchElement) {
+        console.warn('[analyzeDayMasterStrength] Pillars missing element info:', {
+            day: saju.day,
+            month: saju.month
+        });
+        return {
+            dayElement: saju.day.stemElement || 'Wood',
+            monthElement: saju.month.branchElement || 'Wood',
+            seasonScore: 0,
+            sameElementCount: 0,
+            birthingCount: 0,
+            totalStrength: 0,
+            isStrong: false
+        };
+    }
+
     const dayElement = saju.day.stemElement;
     const monthElement = saju.month.branchElement;
     const distribution = analyzeElements(saju).distribution;

@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { generateNames } from '../utils/namingUtils';
 import { calculateSaju, sajuToWeights, analyzeElements, extractYongsin } from '../utils/sajuUtils';
-import storyFlow from '../data/story_flow.json';
+import storyFlow from '../data/ui/story_flow.json';
 import type { NameItem } from '../types';
 import { NameReport } from '../components/NameReport';
 
@@ -359,7 +359,7 @@ export default function UserFlow() {
     const generateNameResults = async () => {
         setLoading(true);
         try {
-            const storyWeights: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
+            const preferenceWeights: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
             let yongsinWeights: Record<string, number> | null = null;
 
             const useSaju = !!birthDate;
@@ -373,7 +373,7 @@ export default function UserFlow() {
                 setComputedAnalysis(analysis as any);
 
                 for (const [element, value] of Object.entries(weights)) {
-                    storyWeights[element as keyof typeof storyWeights] += (value as number) * 0.4;
+                    preferenceWeights[element as keyof typeof preferenceWeights] += (value as number) * 0.4;
                 }
 
                 const yongsinData = extractYongsin(saju);
@@ -395,18 +395,18 @@ export default function UserFlow() {
             const storyMultiplier = useSaju ? 0.3 : 0.5;
             if (selectedStory && Object.keys(selectedStory.elements).length > 0) {
                 for (const [element, ratio] of Object.entries(selectedStory.elements)) {
-                    storyWeights[element as keyof typeof storyWeights] += 20 * (ratio as number) * storyMultiplier / 0.5;
+                    preferenceWeights[element as keyof typeof preferenceWeights] += 20 * (ratio as number) * storyMultiplier / 0.5;
                 }
             }
 
             const vibeMultiplier = useSaju ? 0.3 : 0.5;
             if (selectedVibe) {
                 for (const [element, ratio] of Object.entries(selectedVibe.elements)) {
-                    storyWeights[element as keyof typeof storyWeights] += 20 * (ratio as number) * vibeMultiplier / 0.5;
+                    preferenceWeights[element as keyof typeof preferenceWeights] += 20 * (ratio as number) * vibeMultiplier / 0.5;
                 }
             }
 
-            const names = await generateNames(surname, [], gender, storyWeights, yongsinWeights) as NameItem[];
+            const names = await generateNames(surname, [], gender, preferenceWeights, yongsinWeights) as NameItem[];
             const sortedNames = [...names].sort((a, b) => b.score - a.score);
             setAllNames(sortedNames);
 

@@ -3,9 +3,26 @@
  * 순 우리말 이름 생성 및 평가 엔진
  */
 
-import pureKoreanDb from '../data/pure_korean_db.json' with { type: 'json' };
-import { decomposeHangul } from './naming/helpers.js';
+import pureKoreanDb from '../data/korean/pure_korean_db.json' with { type: 'json' };
 
+// 한글 자모 배열 (decomposeHangul용)
+const CHO_SEONG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+const JUNG_SEONG = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+const JONG_SEONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+/**
+ * 한글 음절을 초성/중성/종성으로 분해
+ */
+function decomposeHangul(char) {
+    if (!char || char.length !== 1) return null;
+    const code = char.charCodeAt(0);
+    if (code < 0xAC00 || code > 0xD7A3) return null;
+    const offset = code - 0xAC00;
+    const choIndex = Math.floor(offset / (21 * 28));
+    const jungIndex = Math.floor((offset % (21 * 28)) / 28);
+    const jongIndex = offset % 28;
+    return { cho: CHO_SEONG[choIndex], jung: JUNG_SEONG[jungIndex], jong: JONG_SEONG[jongIndex] };
+}
 
 /**
  * 성과 이름의 음운 충돌 감지
