@@ -1,0 +1,830 @@
+{
+    "meta": {
+        "description": "한국어 발음 규칙 - 모음조화, 초성흐름, 받침연결, 성씨조합, 로마자, 리듬",
+        "version": "2.0",
+        "lastUpdated": "2026-01-18"
+    },
+    "vowelHarmony": {
+        "description": "양성/음성 모음 조화 체크",
+        "positive": [
+            "ㅏ",
+            "ㅗ",
+            "ㅐ",
+            "ㅘ",
+            "ㅙ",
+            "ㅚ"
+        ],
+        "negative": [
+            "ㅓ",
+            "ㅜ",
+            "ㅔ",
+            "ㅝ",
+            "ㅞ",
+            "ㅟ"
+        ],
+        "neutral": [
+            "ㅡ",
+            "ㅣ",
+            "ㅢ"
+        ],
+        "harmonyBonus": 3,
+        "disharmonyPenalty": -5
+    },
+    "onsetFlow": {
+        "description": "초성 연결 흐름 평가",
+        "smoothPairs": {
+            "description": "부드러운 초성 연결 (가점)",
+            "pairs": [
+                [
+                    "ㅅ",
+                    "ㅈ"
+                ],
+                [
+                    "ㅅ",
+                    "ㅎ"
+                ],
+                [
+                    "ㅎ",
+                    "ㄴ"
+                ],
+                [
+                    "ㅎ",
+                    "ㅁ"
+                ],
+                [
+                    "ㅇ",
+                    "ㅎ"
+                ],
+                [
+                    "ㅇ",
+                    "ㄴ"
+                ],
+                [
+                    "ㅇ",
+                    "ㅁ"
+                ],
+                [
+                    "ㄴ",
+                    "ㅇ"
+                ],
+                [
+                    "ㅁ",
+                    "ㅇ"
+                ]
+            ],
+            "bonus": 3
+        },
+        "roughPairs": {
+            "description": "거친 초성 연결 (감점)",
+            "pairs": [
+                [
+                    "ㄱ",
+                    "ㅋ"
+                ],
+                [
+                    "ㄱ",
+                    "ㄲ"
+                ],
+                [
+                    "ㄷ",
+                    "ㅌ"
+                ],
+                [
+                    "ㄷ",
+                    "ㄸ"
+                ],
+                [
+                    "ㅂ",
+                    "ㅍ"
+                ],
+                [
+                    "ㅂ",
+                    "ㅃ"
+                ],
+                [
+                    "ㅈ",
+                    "ㅊ"
+                ],
+                [
+                    "ㅈ",
+                    "ㅉ"
+                ],
+                [
+                    "ㅅ",
+                    "ㅆ"
+                ]
+            ],
+            "penalty": -5
+        },
+        "sameOnset": {
+            "description": "같은 초성 반복 (감점)",
+            "penalty": -10
+        }
+    },
+    "codaFlow": {
+        "description": "종성-초성 연결 흐름",
+        "smoothConnections": {
+            "description": "자연스러운 종성-초성 연결",
+            "patterns": [
+                {
+                    "coda": "",
+                    "onset": "any",
+                    "bonus": 2
+                },
+                {
+                    "coda": "ㄴ",
+                    "onset": [
+                        "ㅇ",
+                        "ㅁ",
+                        "ㄴ"
+                    ],
+                    "bonus": 3
+                },
+                {
+                    "coda": "ㅁ",
+                    "onset": [
+                        "ㅇ",
+                        "ㄴ"
+                    ],
+                    "bonus": 3
+                },
+                {
+                    "coda": "ㅇ",
+                    "onset": [
+                        "ㅇ",
+                        "ㅎ"
+                    ],
+                    "bonus": 2
+                }
+            ]
+        },
+        "roughConnections": {
+            "description": "어색한 종성-초성 연결",
+            "patterns": [
+                {
+                    "coda": "ㄹ",
+                    "onset": "ㄴ",
+                    "penalty": -15,
+                    "reason": "ㄴ-ㄹ 역행동화"
+                },
+                {
+                    "coda": "ㄴ",
+                    "onset": "ㄹ",
+                    "penalty": -15,
+                    "reason": "ㄴ-ㄹ 역행동화"
+                },
+                {
+                    "coda": "ㅂ",
+                    "onset": "ㅁ",
+                    "penalty": -8,
+                    "reason": "발음 어려움"
+                },
+                {
+                    "coda": "ㄱ",
+                    "onset": "ㄴ",
+                    "penalty": -5,
+                    "reason": "비음화"
+                },
+                {
+                    "coda": "ㄱ",
+                    "onset": "ㅁ",
+                    "penalty": -5,
+                    "reason": "비음화"
+                },
+                {
+                    "coda": "ㅇ",
+                    "onset": "ㅇ",
+                    "penalty": -8,
+                    "reason": "연음 어색"
+                }
+            ]
+        }
+    },
+    "aspirationPattern": {
+        "description": "거센소리/된소리 패턴",
+        "aspirated": [
+            "ㅋ",
+            "ㅌ",
+            "ㅍ",
+            "ㅊ"
+        ],
+        "tense": [
+            "ㄲ",
+            "ㄸ",
+            "ㅃ",
+            "ㅆ",
+            "ㅉ"
+        ],
+        "consecutivePenalty": -8,
+        "mixedPenalty": -5
+    },
+    "endingPreferences": {
+        "description": "끝 글자 종성 선호도 (현대적 느낌)",
+        "scores": {
+            "": 10,
+            "ㄴ": 10,
+            "ㅁ": 8,
+            "ㅇ": 8,
+            "ㄹ": 5,
+            "ㄱ": 2,
+            "ㅂ": 0,
+            "ㄷ": -2,
+            "ㅅ": -3
+        }
+    },
+    "syllableBalance": {
+        "description": "음절 균형감",
+        "preferredStructures": [
+            {
+                "pattern": "CV-CV",
+                "description": "받침없음+받침없음",
+                "bonus": 5
+            },
+            {
+                "pattern": "CV-CVN",
+                "description": "받침없음+ㄴ받침",
+                "bonus": 4
+            },
+            {
+                "pattern": "CVN-CV",
+                "description": "ㄴ받침+받침없음",
+                "bonus": 3
+            }
+        ],
+        "avoidedStructures": [
+            {
+                "pattern": "CVC-CVC",
+                "description": "받침+받침",
+                "penalty": -5
+            }
+        ]
+    },
+    "surnameCodaOnset": {
+        "description": "성씨 종성 + 이름 첫글자 초성 조합 규칙",
+        "patterns": [
+            {
+                "surname_coda": "ㅁ",
+                "onset": "ㅇ",
+                "bonus": 3,
+                "example": "김영"
+            },
+            {
+                "surname_coda": "ㅁ",
+                "onset": "ㅎ",
+                "bonus": 2,
+                "example": "김하"
+            },
+            {
+                "surname_coda": "ㅁ",
+                "onset": "ㅁ",
+                "penalty": -5,
+                "example": "김민"
+            },
+            {
+                "surname_coda": "ㄱ",
+                "onset": "ㅇ",
+                "penalty": -3,
+                "example": "박우"
+            },
+            {
+                "surname_coda": "ㄱ",
+                "onset": "ㄴ",
+                "penalty": -5,
+                "example": "박나"
+            },
+            {
+                "surname_coda": "ㄱ",
+                "onset": "ㅁ",
+                "penalty": -5,
+                "example": "박민"
+            },
+            {
+                "surname_coda": "",
+                "onset": "ㄹ",
+                "penalty": -8,
+                "example": "이린"
+            },
+            {
+                "surname_coda": "ㄴ",
+                "onset": "ㅇ",
+                "bonus": 3,
+                "example": "윤아"
+            },
+            {
+                "surname_coda": "ㄴ",
+                "onset": "ㄹ",
+                "penalty": -10,
+                "example": "신라"
+            },
+            {
+                "surname_coda": "ㅇ",
+                "onset": "ㅇ",
+                "penalty": -5,
+                "example": "정우"
+            }
+        ],
+        "commonSurnames": {
+            "김": {
+                "coda": "ㅁ"
+            },
+            "이": {
+                "coda": ""
+            },
+            "박": {
+                "coda": "ㄱ"
+            },
+            "최": {
+                "coda": ""
+            },
+            "정": {
+                "coda": "ㅇ"
+            },
+            "강": {
+                "coda": "ㅇ"
+            },
+            "조": {
+                "coda": ""
+            },
+            "윤": {
+                "coda": "ㄴ"
+            },
+            "장": {
+                "coda": "ㅇ"
+            },
+            "임": {
+                "coda": "ㅁ"
+            },
+            "한": {
+                "coda": "ㄴ"
+            },
+            "오": {
+                "coda": ""
+            },
+            "서": {
+                "coda": ""
+            },
+            "신": {
+                "coda": "ㄴ"
+            },
+            "권": {
+                "coda": "ㄴ"
+            },
+            "황": {
+                "coda": "ㅇ"
+            },
+            "안": {
+                "coda": "ㄴ"
+            },
+            "송": {
+                "coda": "ㅇ"
+            },
+            "류": {
+                "coda": ""
+            },
+            "홍": {
+                "coda": "ㅇ"
+            }
+        }
+    },
+    "threeSyllablePatterns": {
+        "description": "성씨 + 이름 전체 3글자 발음 패턴",
+        "preferred": [
+            {
+                "pattern": "CVC-CV-CV",
+                "bonus": 5,
+                "example": "김서아"
+            },
+            {
+                "pattern": "CV-CV-CV",
+                "bonus": 4,
+                "example": "이하나"
+            },
+            {
+                "pattern": "CVC-CV-CVN",
+                "bonus": 3,
+                "example": "김하윤"
+            },
+            {
+                "pattern": "CV-CV-CVN",
+                "bonus": 3,
+                "example": "이서윤"
+            }
+        ],
+        "avoided": [
+            {
+                "pattern": "CVC-CVC-CVC",
+                "penalty": -8,
+                "example": "박성민"
+            },
+            {
+                "pattern": "CVNG-CVNG-CV",
+                "penalty": -5,
+                "example": "정영우"
+            }
+        ]
+    },
+    "romanizationFlow": {
+        "description": "영어 발음 호환성 (글로벌 친화)",
+        "easyRoman": {
+            "syllables": [
+                "서",
+                "하",
+                "지",
+                "수",
+                "유",
+                "아",
+                "나",
+                "미",
+                "소"
+            ],
+            "bonus": 2,
+            "reason": "외국인 발음 용이"
+        },
+        "difficultRoman": {
+            "syllables": [
+                "의",
+                "률",
+                "귀",
+                "뢰",
+                "뉘",
+                "쉬",
+                "춰"
+            ],
+            "penalty": -3,
+            "reason": "로마자 변환 시 발음 어려움"
+        },
+        "avoidedRomanPatterns": [
+            {
+                "roman": "Eui",
+                "hangul": "의",
+                "penalty": -5
+            },
+            {
+                "roman": "Ryul",
+                "hangul": "률",
+                "penalty": -5
+            },
+            {
+                "roman": "Gwi",
+                "hangul": "귀",
+                "penalty": -3
+            },
+            {
+                "roman": "Swi",
+                "hangul": "쉬",
+                "penalty": -3
+            }
+        ]
+    },
+    "rhythmPatterns": {
+        "description": "이름 억양/리듬 패턴",
+        "patterns": [
+            {
+                "type": "rising",
+                "structure": "short-long",
+                "bonus": 3,
+                "example": "서아"
+            },
+            {
+                "type": "falling",
+                "structure": "long-short",
+                "bonus": 2,
+                "example": "윤아"
+            },
+            {
+                "type": "balanced",
+                "structure": "equal-equal",
+                "bonus": 1,
+                "example": "하나"
+            },
+            {
+                "type": "heavy",
+                "structure": "long-long",
+                "penalty": -3,
+                "example": "성민"
+            }
+        ],
+        "syllableWeight": {
+            "light": [
+                "아",
+                "이",
+                "우",
+                "오",
+                "애",
+                "에"
+            ],
+            "medium": [
+                "하",
+                "나",
+                "서",
+                "지",
+                "유",
+                "수"
+            ],
+            "heavy": [
+                "성",
+                "영",
+                "민",
+                "현",
+                "준",
+                "진"
+            ]
+        }
+    },
+    "phoneticChanges": {
+        "description": "표준발음법 기반 실제 발음 변화 규칙",
+        "nasalization": {
+            "description": "비음화 (ㄱ,ㄷ,ㅂ + ㄴ,ㅁ → ㅇ,ㄴ,ㅁ)",
+            "patterns": [
+                {
+                    "written": "ㄱ+ㄴ",
+                    "spoken": "ㅇ+ㄴ",
+                    "example": "국민→[궁민]"
+                },
+                {
+                    "written": "ㄱ+ㅁ",
+                    "spoken": "ㅇ+ㅁ",
+                    "example": "학문→[항문]"
+                },
+                {
+                    "written": "ㅂ+ㄴ",
+                    "spoken": "ㅁ+ㄴ",
+                    "example": "입니다→[임니다]"
+                },
+                {
+                    "written": "ㅂ+ㅁ",
+                    "spoken": "ㅁ+ㅁ",
+                    "example": "밥물→[밤물]"
+                }
+            ],
+            "penalty": -3
+        },
+        "lateralization": {
+            "description": "설측음화/유음화 (ㄴ+ㄹ, ㄹ+ㄴ → ㄹ+ㄹ)",
+            "patterns": [
+                {
+                    "written": "ㄴ+ㄹ",
+                    "spoken": "ㄹ+ㄹ",
+                    "example": "신라→[실라]"
+                },
+                {
+                    "written": "ㄹ+ㄴ",
+                    "spoken": "ㄹ+ㄹ",
+                    "example": "칼날→[칼랄]"
+                }
+            ],
+            "penalty": -10
+        },
+        "palatalization": {
+            "description": "구개음화 (ㄷ,ㅌ + 이 → ㅈ,ㅊ)",
+            "patterns": [
+                {
+                    "written": "ㄷ+이",
+                    "spoken": "지",
+                    "example": "굳이→[구지]"
+                },
+                {
+                    "written": "ㅌ+이",
+                    "spoken": "치",
+                    "example": "같이→[가치]"
+                }
+            ],
+            "penalty": -2
+        },
+        "aspiration": {
+            "description": "격음화 (ㄱ,ㄷ,ㅂ,ㅈ + ㅎ → ㅋ,ㅌ,ㅍ,ㅊ)",
+            "patterns": [
+                {
+                    "written": "ㄱ+ㅎ",
+                    "spoken": "ㅋ",
+                    "example": "북한→[부칸]"
+                },
+                {
+                    "written": "ㄷ+ㅎ",
+                    "spoken": "ㅌ",
+                    "example": "못하다→[모타다]"
+                }
+            ],
+            "penalty": -2
+        }
+    },
+    "pronunciationDifficulty": {
+        "description": "연령/상황별 발음 난이도",
+        "childFriendly": {
+            "onsets": [
+                "ㅁ",
+                "ㅂ",
+                "ㅇ",
+                "ㅎ",
+                "ㄴ"
+            ],
+            "bonus": 2,
+            "reason": "유아 발음 용이 (양순음, 비음)"
+        },
+        "formalClarity": {
+            "onsets": [
+                "ㄱ",
+                "ㄴ",
+                "ㅅ",
+                "ㅈ"
+            ],
+            "bonus": 1,
+            "reason": "공식 석상 명확한 발음"
+        },
+        "difficultOnsets": {
+            "onsets": [
+                "ㄲ",
+                "ㄸ",
+                "ㅃ",
+                "ㅆ",
+                "ㅉ"
+            ],
+            "penalty": -2,
+            "reason": "된소리 연속 발음 어려움"
+        }
+    },
+    "blocked_syllables": {
+        "description": "조합 시 완전 차단되는 음절들 (hasAwkwardPhonetics 하드코딩 대체)",
+        "first_position": {
+            "description": "첫째 글자로 사용 시 완전 차단",
+            "block_all": [
+                "율",
+                "근",
+                "광",
+                "태",
+                "석",
+                "자",
+                "완"
+            ],
+            "block_with_exceptions": {
+                "솔": {
+                    "allowed_second": [
+                        "아"
+                    ]
+                },
+                "한": {
+                    "blocked_second": [
+                        "경",
+                        "희",
+                        "자",
+                        "옥"
+                    ]
+                }
+            }
+        },
+        "second_position": {
+            "description": "둘째 글자로 사용 시 완전 차단",
+            "block_all": [
+                "근",
+                "광",
+                "석",
+                "겸",
+                "엽",
+                "경",
+                "희"
+            ],
+            "block_with_exceptions": {
+                "도": {
+                    "allowed_first": [
+                        "태",
+                        "이"
+                    ]
+                },
+                "린": {
+                    "allowed_first": [
+                        "예",
+                        "유",
+                        "아",
+                        "하",
+                        "수",
+                        "시"
+                    ]
+                },
+                "나": {
+                    "blocked_first": [
+                        "광",
+                        "경",
+                        "영",
+                        "근",
+                        "처"
+                    ]
+                },
+                "결": {
+                    "blocked_first": [
+                        "경",
+                        "광",
+                        "영",
+                        "덕"
+                    ]
+                },
+                "건": {
+                    "blocked_first": [
+                        "경",
+                        "광",
+                        "성",
+                        "처"
+                    ]
+                },
+                "환": {
+                    "blocked_first": [
+                        "아",
+                        "광",
+                        "경",
+                        "완"
+                    ]
+                },
+                "한": {
+                    "blocked_first": [
+                        "경",
+                        "광",
+                        "영",
+                        "성"
+                    ]
+                }
+            }
+        },
+        "specific_pairs": {
+            "description": "특정 첫째+둘째 조합 차단",
+            "pairs": [
+                [
+                    "현",
+                    "유"
+                ],
+                [
+                    "한",
+                    "유"
+                ],
+                [
+                    "운",
+                    "성"
+                ],
+                [
+                    "찬",
+                    "예"
+                ],
+                [
+                    "진",
+                    "채"
+                ]
+            ]
+        },
+        "jongseong_rules": {
+            "description": "받침 기반 차단 규칙",
+            "혜_with_jong": [
+                "ㄴ",
+                "ㄹ"
+            ],
+            "성_with_jong": [
+                "ㄴ",
+                "ㄹ"
+            ]
+        }
+    },
+    "aspirated_exceptions": {
+        "description": "격음(ㅋ,ㅌ,ㅍ,ㅊ) 허용 예외 음절",
+        "first_position": [
+            "태",
+            "찬",
+            "채",
+            "철",
+            "천",
+            "탁"
+        ],
+        "second_position": [
+            "찬",
+            "철",
+            "태",
+            "탁",
+            "채",
+            "천"
+        ]
+    },
+    "phonetic_patterns": {
+        "description": "발음 기반 차단 패턴",
+        "soft_consonants": [
+            "ㄴ",
+            "ㅁ",
+            "ㄹ",
+            "ㅅ",
+            "ㅎ",
+            "ㅈ"
+        ],
+        "difficult_jongseong": [
+            "ㄳ",
+            "ㄵ",
+            "ㄶ",
+            "ㄺ",
+            "ㄻ",
+            "ㄼ",
+            "ㄽ",
+            "ㄾ",
+            "ㄿ",
+            "ㅀ",
+            "ㅄ"
+        ],
+        "allowed_jong_with_ah": [
+            "ㅁ",
+            "ㄴ"
+        ]
+    }
+}

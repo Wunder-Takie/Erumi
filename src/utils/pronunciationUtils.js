@@ -3,7 +3,7 @@
  * 발음오행 및 발음음양 분석 유틸리티
  */
 
-import consonantElements from '../data/consonant_elements.json' with { type: 'json' };
+import consonantElements from '../data/saju/consonant_elements.json' with { type: 'json' };
 
 // 한글 자모 분해용 상수
 const CHO_SEONG = [

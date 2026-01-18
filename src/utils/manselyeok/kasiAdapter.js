@@ -4,6 +4,11 @@
  * 공공데이터포털: data.go.kr
  */
 
+import sajuData from '../../data/saju/saju_data.json' with { type: 'json' };
+
+// 🆕 순환 import 제거 - 월주 계산 로직을 여기에 직접 구현
+// (sajuUtils.js에서 가져올 경우 순환 의존성 발생)
+
 /**
  * @typedef {Object} PillarInfo
  * @property {string} pillar - 간지 (예: "갑자")
@@ -33,20 +38,76 @@ const API_ENDPOINTS = {
     solarTerm: 'http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/get24DivisionsInfo'
 };
 
-// 천간/지지 오행 매핑
-const STEM_ELEMENTS = {
-    '갑': 'Wood', '을': 'Wood',
-    '병': 'Fire', '정': 'Fire',
-    '무': 'Earth', '기': 'Earth',
-    '경': 'Metal', '신': 'Metal',
-    '임': 'Water', '계': 'Water'
-};
+// 🆕 v4.0: saju_data.json에서 천간/지지 오행 매핑 동적 생성 (중복 제거)
+const STEM_ELEMENTS = Object.fromEntries(
+    Object.entries(sajuData.천간).map(([key, value]) => [key, value.element])
+);
 
-const BRANCH_ELEMENTS = {
-    '자': 'Water', '축': 'Earth', '인': 'Wood', '묘': 'Wood',
-    '진': 'Earth', '사': 'Fire', '오': 'Fire', '미': 'Earth',
-    '신': 'Metal', '유': 'Metal', '술': 'Earth', '해': 'Water'
-};
+const BRANCH_ELEMENTS = Object.fromEntries(
+    Object.entries(sajuData.지지).map(([key, value]) => [key, value.element])
+);
+
+// ============================================
+// 🆕 로컬 월주 계산 (순환 import 방지)
+// ============================================
+
+const STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+const BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+
+/**
+ * 절기 기준 월 계산 (대략적)
+ */
+function getSolarMonth(month, day) {
+    const boundaries = [
+        { month: 1, day: 5 },   // 소한 → 1월
+        { month: 2, day: 4 },   // 입춘 → 2월
+        { month: 3, day: 6 },   // 경칩 → 3월
+        { month: 4, day: 5 },   // 청명 → 4월
+        { month: 5, day: 6 },   // 입하 → 5월
+        { month: 6, day: 6 },   // 망종 → 6월
+        { month: 7, day: 7 },   // 소서 → 7월
+        { month: 8, day: 8 },   // 입추 → 8월
+        { month: 9, day: 8 },   // 백로 → 9월
+        { month: 10, day: 8 },  // 한로 → 10월
+        { month: 11, day: 7 },  // 입동 → 11월
+        { month: 12, day: 7 }   // 대설 → 12월
+    ];
+    const boundary = boundaries[month - 1];
+    return day >= boundary.day ? month : (month === 1 ? 12 : month - 1);
+}
+
+/**
+ * 년주 계산 (로컬)
+ */
+function getLocalYearPillar(year) {
+    const stemIndex = (year - 4) % 10;
+    const branchIndex = (year - 4) % 12;
+    const stem = STEMS[stemIndex];
+    const branch = BRANCHES[branchIndex];
+    return { stem, branch, pillar: stem + branch };
+}
+
+/**
+ * 월주 계산 (로컬 - 순환 import 방지용)
+ */
+function getLocalMonthPillar(year, month, day) {
+    const yearPillar = getLocalYearPillar(year);
+    const solarMonth = getSolarMonth(month, day);
+    const yearStem = yearPillar.stem;
+    const monthPillars = sajuData['월건표'][yearStem];
+    const pillar = monthPillars[solarMonth - 1];
+    const stem = pillar[0];
+    const branch = pillar[1];
+
+    return {
+        pillar,
+        stem,
+        branch,
+        stemElement: STEM_ELEMENTS[stem] || 'Earth',
+        branchElement: BRANCH_ELEMENTS[branch] || 'Earth',
+        solarMonth
+    };
+}
 
 /**
  * 간지 문자열을 PillarInfo로 파싱
@@ -102,6 +163,13 @@ export async function fetchLunarInfo(year, month, day) {
         throw new Error('No data from KASI API');
     }
 
+    // 🆕 디버그 로깅: KASI API 응답 확인
+    console.log('[KASI] API Response fields:', {
+        lunSecha: item.lunSecha,
+        lunWolgeon: item.lunWolgeon,
+        lunIljin: item.lunIljin
+    });
+
     return {
         solarDate: { year, month, day },
         lunarDate: {
@@ -112,7 +180,7 @@ export async function fetchLunarInfo(year, month, day) {
         },
         ganji: {
             year: item.lunSecha,    // 년주 (세차)
-            month: item.lunWolgeon, // 월주 (월건)
+            month: item.lunWolgeon || null, // 월주 (월건) - API가 제공하지 않을 수 있음
             day: item.lunIljin      // 일주 (일진)
         }
     };
@@ -180,8 +248,14 @@ export async function fetchSajuFromKASI(birthDate, birthHour = null) {
 
     // 년주, 월주, 일주 파싱
     const yearPillar = parsePillar(lunarInfo.ganji.year);
-    const monthPillar = parsePillar(lunarInfo.ganji.month);
+    let monthPillar = parsePillar(lunarInfo.ganji.month);
     const dayPillar = parsePillar(lunarInfo.ganji.day);
+
+    // 🆕 월주 fallback: KASI API가 월주(lunWolgeon)를 제공하지 않는 경우 로컬 계산
+    if (!monthPillar) {
+        console.warn('[KASI] lunWolgeon not provided, using local month pillar calculation');
+        monthPillar = getLocalMonthPillar(year, month, day);
+    }
 
     // 시주는 로컬에서 계산 (API 미제공)
     let hourPillar = null;

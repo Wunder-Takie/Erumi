@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erumi 엔진 아키텍처</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        .mermaid {
+            background: #fff;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .legend {
+            max-width: 1400px;
+            margin: 30px auto 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .legend-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .legend-item h3 {
+            margin: 0 0 5px;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+        .legend-item p {
+            margin: 0;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Erumi 이름 추천 엔진 아키텍처</h1>
+    
+    <div class="mermaid">
+flowchart TB
+    subgraph UI["🖥️ UI Layer"]
+        A["UserFlow.tsx<br/>StoryApp.tsx<br/>DevApp.tsx"]
+    end
+    
+    subgraph MAIN["⚙️ 메인 엔진"]
+        B["namingUtils.js<br/><b>generateNames()</b><br/>~2,050줄"]
+    end
+    
+    subgraph SAJU["🔮 사주 계산"]
+        C1["sajuUtils.js<br/>calculateSaju()"]
+        C2["kasiAdapter.js<br/>KASI API"]
+        C3["saju_data.json<br/>로컬 폴백"]
+    end
+    
+    subgraph SCORING["📊 점수 계산"]
+        D1["suriPatterns.js<br/>4격 수리"]
+        D2["pronunciationUtils.js<br/>발음 오행/음양"]
+        D3["globalNameCheck.js<br/>영어 발음"]
+    end
+    
+    subgraph FILTER["🚫 필터링"]
+        E1["modern_preferences.json<br/>차단/감점"]
+        E2["phonetic_rules.json<br/>발음 규칙 v2.0"]
+        E3["bunpa_characters.json<br/>분파 한자"]
+    end
+    
+    subgraph DATA["💾 데이터"]
+        F1["hanja_db.json<br/>한자 DB"]
+        F2["surnames.json<br/>성씨"]
+        F3["name_popularity.json<br/>인기도"]
+    end
+    
+    subgraph OUTPUT["📤 출력"]
+        G1["narrativeUtils.js<br/>스토리"]
+        G2["llmEvaluator.js<br/>LLM 평가"]
+        G3["NameReport<br/>UI 컴포넌트"]
+    end
+    
+    A -->|"사용자 입력"| B
+    B -->|"생년월일"| C1
+    C1 -->|"API 호출"| C2
+    C2 -.->|"실패 시"| C3
+    B --> D1 & D2 & D3
+    B --> E1 & E2 & E3
+    B --> F1 & F2 & F3
+    B -->|"결과"| G1 & G2
+    G1 & G2 --> G3
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <h3>UI 진입점</h3>
+            <p>UserFlow, StoryApp, DevApp</p>
+        </div>
+        <div class="legend-item">
+            <h3>핵심 엔진</h3>
+            <p>namingUtils.js (2,050줄)</p>
+        </div>
+        <div class="legend-item">
+            <h3>사주 계산</h3>
+            <p>KASI API + 로컬 폴백</p>
+        </div>
+        <div class="legend-item">
+            <h3>점수 요소</h3>
+            <p>9개 요소 합산</p>
+        </div>
+        <div class="legend-item">
+            <h3>필터링</h3>
+            <p>7단계 필터</p>
+        </div>
+        <div class="legend-item">
+            <h3>데이터 파일</h3>
+            <p>15개 JSON 파일</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
+</body>
+</html>
