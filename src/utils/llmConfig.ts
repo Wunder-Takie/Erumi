@@ -47,7 +47,7 @@ export const LLM_CONFIG: LLMConfigType = {
 
     // Gemini 설정
     gemini: {
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-2.0-flash',
         apiEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
         temperature: 0.3,
         maxOutputTokens: 500,
