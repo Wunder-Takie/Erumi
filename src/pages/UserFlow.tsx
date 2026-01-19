@@ -305,12 +305,8 @@ export default function UserFlow() {
     // 사주
     const [birthDate, setBirthDate] = useState('');
     const [birthHour, setBirthHour] = useState<number | null>(null);
-    const [computedSaju, setComputedSaju] = useState<Record<string, unknown> | null>(null);
-    const [computedAnalysis, setComputedAnalysis] = useState<{
-        distribution: Record<string, number>;
-        neededElements: string[];
-        excessElements: string[];
-    } | null>(null);
+    const [computedSaju, setComputedSaju] = useState<any>(null);
+    const [computedAnalysis, setComputedAnalysis] = useState<any>(null);
 
     // 5개 묶음 시스템
     const [currentBatch, setCurrentBatch] = useState<NameItem[]>([]);
@@ -365,18 +361,18 @@ export default function UserFlow() {
             const useSaju = !!birthDate;
 
             if (useSaju) {
-                const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
-                const analysis = analyzeElements(saju);
-                const weights = sajuToWeights(saju);
+                const saju = await calculateSaju(birthDate, birthHour) as any;
+                const analysis = analyzeElements(saju as any);
+                const weights = sajuToWeights(saju as any);
 
                 setComputedSaju(saju);
-                setComputedAnalysis(analysis as any);
+                setComputedAnalysis(analysis);
 
                 for (const [element, value] of Object.entries(weights)) {
                     preferenceWeights[element as keyof typeof preferenceWeights] += (value as number) * 0.4;
                 }
 
-                const yongsinData = extractYongsin(saju);
+                const yongsinData = extractYongsin(saju as any);
                 yongsinWeights = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
                 for (const el of yongsinData.yongsin) {
                     yongsinWeights[el as keyof typeof yongsinWeights] += 40;
@@ -406,7 +402,7 @@ export default function UserFlow() {
                 }
             }
 
-            const names = await generateNames(surname, [], gender, preferenceWeights, yongsinWeights) as NameItem[];
+            const names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights) as unknown as NameItem[];
             const sortedNames = [...names].sort((a, b) => b.score - a.score);
             setAllNames(sortedNames);
 

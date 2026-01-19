@@ -41,8 +41,8 @@ interface NameResult {
 interface SajuData {
     birthDate: string;
     birthHour: number | null;
-    saju: Record<string, unknown>;
-    analysis: Record<string, unknown>;
+    saju: any;
+    analysis: any;
     weights: Record<string, number>;
 }
 
@@ -106,7 +106,7 @@ export function StoryApp() {
         // 🆕 용신 가중치 계산 (Option A: 강화된 가중치, 완전 차단 X)
         let yongsinWeights: Record<string, number> | null = null;
         if (selections.saju) {
-            const yongsinData = extractYongsin(selections.saju.saju);
+            const yongsinData = extractYongsin(selections.saju.saju as any);
             yongsinWeights = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
 
             // 용신: +40점 (가장 필요한 오행)
@@ -129,9 +129,9 @@ export function StoryApp() {
         const names = await generateNames(
             selections.surname,
             [],
-            selections.gender,
+            selections.gender as any,
             preferenceWeights,
-            yongsinWeights  // 🆕 용신 가중치 전달
+            yongsinWeights as any
         );
 
         setResults(names);
@@ -146,9 +146,9 @@ export function StoryApp() {
     };
 
     const handleSajuComplete = async (birthDate: string, birthHour: number | null) => {
-        const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
-        const analysis = analyzeElements(saju);
-        const weights = sajuToWeights(saju);
+        const saju = await calculateSaju(birthDate, birthHour) as any;
+        const analysis = analyzeElements(saju as any);
+        const weights = sajuToWeights(saju as any);
 
         setSelections(prev => ({
             ...prev,

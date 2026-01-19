@@ -54,14 +54,9 @@ function DevApp() {
 
   // 🆕 상세 리포트 모달
   const [selectedReportName, setSelectedReportName] = useState<NameItem | null>(null);
-
   // 🆕 사주 계산 결과 저장 (NameReport에 전달용)
-  const [computedSaju, setComputedSaju] = useState<Record<string, unknown> | null>(null);
-  const [computedAnalysis, setComputedAnalysis] = useState<{
-    distribution: Record<string, number>;
-    neededElements: string[];
-    excessElements: string[];
-  } | null>(null);
+  const [computedSaju, setComputedSaju] = useState<any>(null);
+  const [computedAnalysis, setComputedAnalysis] = useState<any>(null);
 
   // 🆕 ESC 키로 모달 닫기
   useEffect(() => {
@@ -87,13 +82,13 @@ function DevApp() {
         let yongsinWeights: Record<string, number> | null = null;
 
         if (useSaju && birthDate) {
-          const saju = await (calculateSaju as (date: string, hour: number | null) => Promise<Record<string, unknown>>)(birthDate, birthHour);
+          const saju = await calculateSaju(birthDate, birthHour);
           const analysis = analyzeElements(saju);
           const weights = sajuToWeights(saju);
 
           // 🆕 사주 결과 저장 (NameReport용)
           setComputedSaju(saju);
-          setComputedAnalysis(analysis as any);
+          setComputedAnalysis(analysis);
 
           // 사주 가중치 추가
           for (const [element, value] of Object.entries(weights)) {
@@ -141,7 +136,7 @@ function DevApp() {
 
         console.log('📊 최종 스토리 가중치:', preferenceWeights);
 
-        names = await generateNames(surname, [], gender, preferenceWeights, yongsinWeights) as NameItem[];
+        names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights as any) as unknown as NameItem[];
       } else {
         names = generatePureKoreanNames(surname, { gender: gender === 'M' ? 'male' : gender === 'F' ? 'female' : null });
       }

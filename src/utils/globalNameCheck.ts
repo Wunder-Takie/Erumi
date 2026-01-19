@@ -1,4 +1,5 @@
 /**
+ * globalNameCheck.ts
  * Global Name Check Utility
  * Checks Korean names for:
  * 1. Problematic English pronunciations
@@ -6,8 +7,54 @@
  * 3. Phonetic compatibility issues
  */
 
-// 영어권에서 부정적 의미가 있는 발음 패턴
-const NEGATIVE_SOUND_PATTERNS = [
+// ==========================================
+// Types
+// ==========================================
+
+interface NegativeSoundPattern {
+    pattern: RegExp;
+    reason: string;
+}
+
+interface DecomposedHangul {
+    initial: string;
+    medial: string;
+    final: string;
+}
+
+interface PronunciationWarning {
+    type: 'pronunciation';
+    severity: 'warning';
+    romanized: string;
+    reason: string;
+}
+
+interface ComplexityWarning {
+    type: 'complexity';
+    severity: 'info';
+    reason: string;
+}
+
+type NameWarning = PronunciationWarning | ComplexityWarning;
+
+export interface GlobalCheckResult {
+    romanized: string;
+    hasWarning: boolean;
+    warnings: NameWarning[];
+    primaryWarning: NameWarning | null;
+}
+
+export interface FormattedWarning {
+    reason: string;
+    romanized: string;
+    severity: 'warning' | 'info';
+}
+
+// ==========================================
+// Constants
+// ==========================================
+
+const NEGATIVE_SOUND_PATTERNS: NegativeSoundPattern[] = [
     { pattern: /die/i, reason: '영어 "die"(죽다)와 유사한 발음' },
     { pattern: /kill/i, reason: '영어 "kill"(죽이다)와 유사한 발음' },
     { pattern: /dead/i, reason: '영어 "dead"(죽은)와 유사한 발음' },
@@ -22,8 +69,7 @@ const NEGATIVE_SOUND_PATTERNS = [
     { pattern: /butt/i, reason: '영어 "butt"(엉덩이)와 유사한 발음' }
 ];
 
-// 한글 → 로마자 변환 (Revised Romanization)
-const ROMANIZATION_MAP = {
+const ROMANIZATION_MAP: Record<string, string> = {
     // 초성
     'ㄱ': 'g', 'ㄲ': 'kk', 'ㄴ': 'n', 'ㄷ': 'd', 'ㄸ': 'tt',
     'ㄹ': 'r', 'ㅁ': 'm', 'ㅂ': 'b', 'ㅃ': 'pp', 'ㅅ': 's',
@@ -47,8 +93,11 @@ const INITIALS = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
 const MEDIALS = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
 const FINALS = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
 
-// 한글 음절 분해
-function decomposeHangul(char) {
+// ==========================================
+// Internal Functions
+// ==========================================
+
+function decomposeHangul(char: string): DecomposedHangul | null {
     const code = char.charCodeAt(0);
     if (code < 0xAC00 || code > 0xD7A3) return null;
 
@@ -64,8 +113,22 @@ function decomposeHangul(char) {
     };
 }
 
-// 한글 → 로마자 변환
-export function romanize(korean) {
+function generateRomanizationVariants(korean: string): string[] {
+    const base = romanize(korean);
+    const variants = [base];
+
+    variants.push(base.replace(/eo/g, 'o').replace(/eu/g, 'u'));
+    variants.push(base.replace(/ae/g, 'e'));
+    variants.push(base.replace(/wo/g, 'o'));
+
+    return [...new Set(variants)];
+}
+
+// ==========================================
+// Exported Functions
+// ==========================================
+
+export function romanize(korean: string): string {
     let result = '';
 
     for (let i = 0; i < korean.length; i++) {
@@ -73,11 +136,8 @@ export function romanize(korean) {
         const decomposed = decomposeHangul(char);
 
         if (decomposed) {
-            // 초성
             result += ROMANIZATION_MAP[decomposed.initial] || '';
-            // 중성
             result += ROMANIZATION_MAP[decomposed.medial] || '';
-            // 종성 (있는 경우)
             if (decomposed.final) {
                 result += ROMANIZATION_MAP[decomposed.final + '_f'] || '';
             }
@@ -89,25 +149,8 @@ export function romanize(korean) {
     return result.toLowerCase();
 }
 
-// 여러 로마자 표기 변형 생성
-function generateRomanizationVariants(korean) {
-    const base = romanize(korean);
-    const variants = [base];
-
-    // 일반적인 변형 추가
-    // eo → o, eu → u 변형 (영어권에서 흔한 단순화)
-    variants.push(base.replace(/eo/g, 'o').replace(/eu/g, 'u'));
-    // ae → e 변형
-    variants.push(base.replace(/ae/g, 'e'));
-    // wo → o 변형
-    variants.push(base.replace(/wo/g, 'o'));
-
-    return [...new Set(variants)];
-}
-
-// 영어 발음 문제 검사
-export function checkEnglishPronunciation(koreanName) {
-    const warnings = [];
+export function checkEnglishPronunciation(koreanName: string): PronunciationWarning[] {
+    const warnings: PronunciationWarning[] = [];
     const variants = generateRomanizationVariants(koreanName);
 
     for (const variant of variants) {
@@ -119,7 +162,7 @@ export function checkEnglishPronunciation(koreanName) {
                     romanized: variant,
                     reason
                 });
-                break; // 한 변형에서 하나의 경고만
+                break;
             }
         }
     }
@@ -127,12 +170,10 @@ export function checkEnglishPronunciation(koreanName) {
     return warnings;
 }
 
-// 발음 가능성 검사 (자음 연속 등)
-export function checkPhoneticComplexity(koreanName) {
+export function checkPhoneticComplexity(koreanName: string): ComplexityWarning[] {
     const romanized = romanize(koreanName);
-    const warnings = [];
+    const warnings: ComplexityWarning[] = [];
 
-    // 3개 이상의 연속 자음
     if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(romanized)) {
         warnings.push({
             type: 'complexity',
@@ -141,7 +182,6 @@ export function checkPhoneticComplexity(koreanName) {
         });
     }
 
-    // 특수 발음 조합 경고
     if (/ng[gk]/i.test(romanized)) {
         warnings.push({
             type: 'complexity',
@@ -153,26 +193,23 @@ export function checkPhoneticComplexity(koreanName) {
     return warnings;
 }
 
-// 종합 글로벌 이름 검사
-export function checkGlobalName(koreanName) {
+export function checkGlobalName(koreanName: string): GlobalCheckResult {
     const romanized = romanize(koreanName);
     const pronunciationWarnings = checkEnglishPronunciation(koreanName);
     const complexityWarnings = checkPhoneticComplexity(koreanName);
 
-    const allWarnings = [...pronunciationWarnings, ...complexityWarnings];
+    const allWarnings: NameWarning[] = [...pronunciationWarnings, ...complexityWarnings];
 
     return {
         romanized,
         hasWarning: allWarnings.length > 0,
         warnings: allWarnings,
-        // 가장 심각한 경고 추출
         primaryWarning: allWarnings.length > 0 ? allWarnings[0] : null
     };
 }
 
-// 이름 생성 시 사용할 경고 메시지 포맷
-export function formatGlobalWarning(globalCheck) {
-    if (!globalCheck.hasWarning) return null;
+export function formatGlobalWarning(globalCheck: GlobalCheckResult): FormattedWarning | null {
+    if (!globalCheck.hasWarning || !globalCheck.primaryWarning) return null;
 
     return {
         reason: globalCheck.primaryWarning.reason,

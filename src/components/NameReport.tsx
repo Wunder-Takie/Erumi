@@ -1,6 +1,13 @@
+// NOTE: 이 파일의 인라인 스타일은 동적 오행 색상 값을 위한 것입니다
 import { useMemo } from 'react';
 import { analyzeFullPronunciation } from '../utils/pronunciationUtils';
-import { generateSajuNarrative, generateSuriNarrative, generateBalanceNarrative } from '../utils/narrativeUtils';
+import {
+    generateSajuNarrative,
+    generateSuriNarrative,
+    generateBalanceNarrative,
+    type SajuData,
+    type SajuAnalysis
+} from '../utils/narrativeUtils';
 
 interface PillarInfo {
     label: string;
@@ -108,17 +115,8 @@ interface NameReportProps {
         elements: string[];
         score: number;
     };
-    saju?: {
-        year: { stem: string; branch: string; reading: string; element: string };
-        month: { stem: string; branch: string; reading: string; element: string };
-        day: { stem: string; branch: string; reading: string; element: string };
-        hour: { stem: string; branch: string; reading: string; element: string };
-    };
-    analysis?: {
-        distribution: Record<string, number>;
-        neededElements: string[];
-        excessElements: string[];
-    };
+    saju?: SajuData;
+    analysis?: SajuAnalysis;
     onClose: () => void;
 }
 
@@ -141,18 +139,18 @@ const ELEMENT_INFO: Record<string, { emoji: string; korean: string; color: strin
 export function NameReport({ name, saju, analysis, onClose }: NameReportProps) {
     // 데이터 준비
     const pronunciationAnalysis = useMemo(() =>
-        analyzeFullPronunciation(name.hangulName) as PronunciationResult, [name.hangulName]);
+        analyzeFullPronunciation(name.hangulName) as unknown as PronunciationResult, [name.hangulName]);
 
     const sajuNarrative = useMemo(() =>
-        (saju ? generateSajuNarrative(saju, analysis ?? { distribution: {}, neededElements: [], excessElements: [] }) : null) as SajuNarrativeType | null, [saju, analysis]);
+        (saju ? generateSajuNarrative(saju, analysis ?? null) : null) as SajuNarrativeType | null, [saju, analysis]);
 
     const suriNarrative = useMemo(() =>
         generateSuriNarrative(name.suri) as SuriStage[] | null, [name.suri]);
 
     const balanceNarrative = useMemo(() =>
         generateBalanceNarrative(
-            saju ?? { year: { stem: '', branch: '', reading: '', element: '' }, month: { stem: '', branch: '', reading: '', element: '' }, day: { stem: '', branch: '', reading: '', element: '' }, hour: { stem: '', branch: '', reading: '', element: '' } },
-            analysis ?? { distribution: {}, neededElements: [], excessElements: [] },
+            saju ?? null,
+            analysis ?? null,
             name.elements,
             name.score
         ) as BalanceNarrativeType,
@@ -242,7 +240,7 @@ export function NameReport({ name, saju, analysis, onClose }: NameReportProps) {
                         {/* 오행 비교 차트 */}
                         <div className="space-y-3">
                             {(['Wood', 'Fire', 'Earth', 'Metal', 'Water'] as const).map((element) => {
-                                const sajuCount = analysis.distribution[element] || 0;
+                                const sajuCount = analysis.distribution?.[element] || 0;
                                 const nameHas = name.elements.includes(element);
                                 const info = ELEMENT_INFO[element];
                                 const isNeeded = analysis.neededElements?.includes(element);
@@ -298,7 +296,7 @@ export function NameReport({ name, saju, analysis, onClose }: NameReportProps) {
                             <div className="mt-4 pt-4 border-t border-slate-700">
                                 <p className="text-sm text-slate-300">
                                     💡 사주에 부족한 <span className="text-cyan-400">
-                                        {analysis.neededElements.map(e => ELEMENT_INFO[e]?.korean || e).join(', ')}
+                                        {analysis.neededElements.map((e: string) => ELEMENT_INFO[e]?.korean || e).join(', ')}
                                     </span> 기운을 이름이 채워줘요!
                                 </p>
                             </div>

@@ -1,11 +1,49 @@
 /**
- * llmConfig.js
+ * llmConfig.ts
  * LLM 기반 이름 평가 설정
  */
 
-export const LLM_CONFIG = {
+// ==========================================
+// Types
+// ==========================================
+
+interface GeminiConfig {
+    model: string;
+    apiEndpoint: string;
+    temperature: number;
+    maxOutputTokens: number;
+}
+
+interface OpenAIConfig {
+    model: string;
+    apiEndpoint: string;
+    temperature: number;
+    maxTokens: number;
+}
+
+interface EvaluationConfig {
+    enabled: boolean;
+    maxCandidates: number;
+    scoreWeight: number;
+    cacheEnabled: boolean;
+    cacheTTL: number;
+}
+
+export interface LLMConfigType {
+    provider: 'gemini' | 'openai';
+    gemini: GeminiConfig;
+    openai: OpenAIConfig;
+    evaluation: EvaluationConfig;
+    getApiKey: () => string;
+}
+
+// ==========================================
+// Configuration
+// ==========================================
+
+export const LLM_CONFIG: LLMConfigType = {
     // LLM 제공자 선택
-    provider: 'gemini', // 'gemini' | 'openai'
+    provider: 'gemini',
 
     // Gemini 설정
     gemini: {
@@ -26,14 +64,14 @@ export const LLM_CONFIG = {
     // 평가 설정
     evaluation: {
         enabled: true,
-        maxCandidates: 20, // LLM 평가할 최대 후보 수
-        scoreWeight: 0.15, // 최종 점수에서 LLM 평가 비중 (15%)
-        cacheEnabled: true, // 동일 이름 캐싱
-        cacheTTL: 86400000, // 24시간 (밀리초)
+        maxCandidates: 20,
+        scoreWeight: 0.15,
+        cacheEnabled: true,
+        cacheTTL: 86400000,
     },
 
     // API 키 (환경변수에서 로드)
-    getApiKey: () => {
+    getApiKey: (): string => {
         if (typeof import.meta !== 'undefined' && import.meta.env) {
             return import.meta.env.VITE_GEMINI_API_KEY ||
                 import.meta.env.VITE_OPENAI_API_KEY ||

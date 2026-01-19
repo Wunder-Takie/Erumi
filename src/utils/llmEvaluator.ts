@@ -1,65 +1,62 @@
 /**
- * llmEvaluator.js
+ * llmEvaluator.ts
  * LLM 기반 이름 평가 모듈
  */
 
-import { LLM_CONFIG, EVALUATION_PROMPT } from './llmConfig.js';
+import { LLM_CONFIG, EVALUATION_PROMPT } from './llmConfig.ts';
 
-// 평가 결과 캐시
-const evaluationCache = new Map();
+// ==========================================
+// Types
+// ==========================================
 
-/**
- * LLM으로 이름 평가
- * @param {string} fullName - 성+이름 (예: "김서준")
- * @param {string} hanjaName - 한자 이름 (예: "金瑞俊")
- * @param {string} gender - 성별 ('M' | 'F' | 'N')
- * @returns {Promise<EvaluationResult | null>}
- */
-export async function evaluateNameWithLLM(fullName, hanjaName, gender = 'N') {
-    // 비활성화 체크
-    if (!LLM_CONFIG.evaluation.enabled) {
-        return null;
-    }
+type Gender = 'M' | 'F' | 'N';
 
-    // API 키 체크
-    const apiKey = LLM_CONFIG.getApiKey();
-    if (!apiKey) {
-        console.warn('[LLM] API key not configured');
-        return null;
-    }
-
-    // 캐시 체크
-    const cacheKey = `${fullName}:${hanjaName}`;
-    if (LLM_CONFIG.evaluation.cacheEnabled && evaluationCache.has(cacheKey)) {
-        const cached = evaluationCache.get(cacheKey);
-        if (Date.now() - cached.timestamp < LLM_CONFIG.evaluation.cacheTTL) {
-            return cached.result;
-        }
-        evaluationCache.delete(cacheKey);
-    }
-
-    try {
-        const result = await callLLM(fullName, hanjaName, gender, apiKey);
-
-        // 캐시 저장
-        if (LLM_CONFIG.evaluation.cacheEnabled && result) {
-            evaluationCache.set(cacheKey, {
-                result,
-                timestamp: Date.now()
-            });
-        }
-
-        return result;
-    } catch (error) {
-        console.error('[LLM] Evaluation failed:', error);
-        return null;
-    }
+export interface EvaluationResult {
+    modernityScore: number;
+    pronunciationScore: number;
+    isOldFashioned: boolean;
+    imageKeywords: string[];
+    briefComment: string;
 }
 
-/**
- * LLM API 호출
- */
-async function callLLM(fullName, hanjaName, gender, apiKey) {
+interface CachedEvaluation {
+    result: EvaluationResult;
+    timestamp: number;
+}
+
+interface NameCandidate {
+    hangulName?: string;
+    hangul1?: string;
+    hangul2?: string;
+    hanjaName?: string;
+    hanja1?: string;
+    hanja2?: string;
+    gender?: Gender;
+}
+
+// ==========================================
+// Internal State
+// ==========================================
+
+const evaluationCache = new Map<string, CachedEvaluation>();
+
+// ==========================================
+// Utility Functions
+// ==========================================
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.max(min, Math.min(max, value));
+}
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ==========================================
+// Internal Functions
+// ==========================================
+
+async function callLLM(fullName: string, hanjaName: string, gender: Gender, apiKey: string): Promise<EvaluationResult | null> {
     const prompt = EVALUATION_PROMPT
         .replace('{fullName}', fullName)
         .replace('{hanjaName}', hanjaName)
@@ -72,12 +69,9 @@ async function callLLM(fullName, hanjaName, gender, apiKey) {
     }
 }
 
-/**
- * Gemini API 호출 (429 재시도 포함)
- */
-async function callGemini(prompt, apiKey, retryCount = 0) {
+async function callGemini(prompt: string, apiKey: string, retryCount = 0): Promise<EvaluationResult | null> {
     const { model, apiEndpoint, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
-    const maxRetries = 2; // 최대 2번 재시도
+    const maxRetries = 2;
 
     const response = await fetch(
         `${apiEndpoint}/${model}:generateContent?key=${apiKey}`,
@@ -99,9 +93,8 @@ async function callGemini(prompt, apiKey, retryCount = 0) {
         }
     );
 
-    // 429 Too Many Requests 처리
     if (response.status === 429 && retryCount < maxRetries) {
-        const waitTime = Math.pow(2, retryCount + 1) * 1000; // 2s, 4s
+        const waitTime = Math.pow(2, retryCount + 1) * 1000;
         console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
         await delay(waitTime);
         return callGemini(prompt, apiKey, retryCount + 1);
@@ -121,10 +114,7 @@ async function callGemini(prompt, apiKey, retryCount = 0) {
     return parseEvaluationResponse(text);
 }
 
-/**
- * OpenAI API 호출 (대안)
- */
-async function callOpenAI(prompt, apiKey) {
+async function callOpenAI(prompt: string, apiKey: string): Promise<EvaluationResult | null> {
     const { model, apiEndpoint, temperature, maxTokens } = LLM_CONFIG.openai;
 
     const response = await fetch(apiEndpoint, {
@@ -159,12 +149,8 @@ async function callOpenAI(prompt, apiKey) {
     return parseEvaluationResponse(text);
 }
 
-/**
- * LLM 응답 파싱
- */
-function parseEvaluationResponse(text) {
+function parseEvaluationResponse(text: string): EvaluationResult | null {
     try {
-        // JSON 블록 추출
         let jsonStr = text;
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -173,7 +159,6 @@ function parseEvaluationResponse(text) {
 
         const parsed = JSON.parse(jsonStr);
 
-        // 유효성 검증
         return {
             modernityScore: clamp(parsed.modernityScore || 5, 1, 10),
             pronunciationScore: clamp(parsed.pronunciationScore || 5, 1, 10),
@@ -187,70 +172,92 @@ function parseEvaluationResponse(text) {
     }
 }
 
-/**
- * LLM 점수를 최종 점수에 반영
- * @param {number} baseScore - 기존 점수 (0-100)
- * @param {EvaluationResult} llmResult - LLM 평가 결과
- * @returns {number} - 조정된 점수
- */
-export function applyLLMScore(baseScore, llmResult) {
+// ==========================================
+// Exported Functions
+// ==========================================
+
+export async function evaluateNameWithLLM(
+    fullName: string,
+    hanjaName: string,
+    gender: Gender = 'N'
+): Promise<EvaluationResult | null> {
+    if (!LLM_CONFIG.evaluation.enabled) {
+        return null;
+    }
+
+    const apiKey = LLM_CONFIG.getApiKey();
+    if (!apiKey) {
+        console.warn('[LLM] API key not configured');
+        return null;
+    }
+
+    const cacheKey = `${fullName}:${hanjaName}`;
+    if (LLM_CONFIG.evaluation.cacheEnabled && evaluationCache.has(cacheKey)) {
+        const cached = evaluationCache.get(cacheKey)!;
+        if (Date.now() - cached.timestamp < LLM_CONFIG.evaluation.cacheTTL) {
+            return cached.result;
+        }
+        evaluationCache.delete(cacheKey);
+    }
+
+    try {
+        const result = await callLLM(fullName, hanjaName, gender, apiKey);
+
+        if (LLM_CONFIG.evaluation.cacheEnabled && result) {
+            evaluationCache.set(cacheKey, {
+                result,
+                timestamp: Date.now()
+            });
+        }
+
+        return result;
+    } catch (error) {
+        console.error('[LLM] Evaluation failed:', error);
+        return null;
+    }
+}
+
+export function applyLLMScore(baseScore: number, llmResult: EvaluationResult | null): number {
     if (!llmResult) {
         return baseScore;
     }
 
-    const weight = LLM_CONFIG.evaluation.scoreWeight; // 0.15
+    const weight = LLM_CONFIG.evaluation.scoreWeight;
 
-    // LLM 점수 계산 (0-100 스케일)
     const llmScore = (
-        (llmResult.modernityScore * 5) +  // 현대성 50%
-        (llmResult.pronunciationScore * 3) + // 발음 30%
-        (llmResult.isOldFashioned ? -30 : 10) // 올드함 페널티 강화 (-20 → -30)
+        (llmResult.modernityScore * 5) +
+        (llmResult.pronunciationScore * 3) +
+        (llmResult.isOldFashioned ? -30 : 10)
     );
 
-    // 가중 평균
     const adjustedScore = (baseScore * (1 - weight)) + (llmScore * weight);
 
     return Math.round(clamp(adjustedScore, 0, 100));
 }
 
-/**
- * 여러 이름 일괄 평가
- * @param {Array} names - 이름 배열
- * @param {string} surname - 성씨
- * @returns {Promise<Map>} - 이름별 평가 결과
- */
-export async function evaluateNamesWithLLM(names, surname) {
-    const results = new Map();
+export async function evaluateNamesWithLLM(
+    names: NameCandidate[],
+    surname: string
+): Promise<Map<string, EvaluationResult>> {
+    const results = new Map<string, EvaluationResult>();
     const maxCandidates = LLM_CONFIG.evaluation.maxCandidates;
 
-    // 상위 후보만 평가
     const candidates = names.slice(0, maxCandidates);
 
-    // 순차 처리 (API 제한 고려)
     for (const name of candidates) {
-        const fullName = surname + (name.hangulName || name.hangul1 + name.hangul2);
-        const hanjaName = name.hanjaName || (name.hanja1 + name.hanja2);
-        const gender = name.gender || 'N';
+        const fullName = surname + (name.hangulName || (name.hangul1 || '') + (name.hangul2 || ''));
+        const hanjaName = name.hanjaName || ((name.hanja1 || '') + (name.hanja2 || ''));
+        const gender: Gender = name.gender || 'N';
 
         const result = await evaluateNameWithLLM(fullName, hanjaName, gender);
         if (result) {
             results.set(fullName, result);
         }
 
-        // Rate limiting (200ms 딜레이)
         await delay(200);
     }
 
     return results;
-}
-
-// 유틸리티 함수
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default {
