@@ -17,7 +17,7 @@ import valueTags from '../data/ui/value_tags.json' with { type: 'json' };
 import logicRules from '../data/scoring/logic_rules.json' with { type: 'json' };
 import { checkGlobalName } from './globalNameCheck.ts';
 import { isLuckyCombination } from './suriPatterns.ts';
-import { evaluateNamesWithLLM, applyLLMScore } from './llmEvaluator.ts';
+import { evaluateNamesWithLLM, applyLLMScore, shouldExcludeAsOldFashioned } from './llmEvaluator.ts';
 
 // 🆕 모듈 분리: 새로 생성된 유틸리티 모듈들 (직접 사용)
 import { decomposeHangul, getInitialSound } from './hangulUtils.ts';
@@ -49,6 +49,7 @@ import {
   getSemanticRiskScore,
   normalizeScores
 } from './scoringUtils.ts';
+import { getModernityPenalty } from './nameModernityAnalyzer.ts';
 
 // ============================================
 // 2. Type Definitions
@@ -398,7 +399,8 @@ export async function generateNames(
       + bunpaScore                    // 🆕 분파 페널티 (최대 -50)
       + surnameHarmonyBonus           // 🆕 성씨 상생 보너스 (최대 +25)
       + surnameNameFlowPenalty        // 🆕 성씨-이름 발음 페널티 (최대 -23)
-      + advancedPhoneticScore;        // 🆕 v5.0: 고급 발음 규칙 (최대 ±15)
+      + advancedPhoneticScore         // 🆕 v5.0: 고급 발음 규칙 (최대 ±15)
+      - getModernityPenalty(c.hanja1.hangul + c.hanja2.hangul);  // 🆕 v6.0: 로컬 현대성 분석 페널티
 
     // 🆕 점수는 normalizeScores()에서 일괄 계산됨 (정규 분포 적용)
     c.score = c.rawScore; // 임시값, 나중에 정규화됨
@@ -566,6 +568,12 @@ export async function generateNames(
       if (llmResult) {
         name.llmScore = llmResult;
         name.score = applyLLMScore(name.score, llmResult);
+
+        // 🆕 하이브리드 필터: 확실히 올드한 이름은 대폭 감점
+        if (shouldExcludeAsOldFashioned(llmResult)) {
+          name.score = Math.max(0, name.score - 50); // 추가 50점 감점
+          name.isExcludedAsOld = true;
+        }
       }
     });
   } catch (error) {

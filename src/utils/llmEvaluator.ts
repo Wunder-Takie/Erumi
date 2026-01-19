@@ -235,6 +235,20 @@ export function applyLLMScore(baseScore: number, llmResult: EvaluationResult | n
     return Math.round(clamp(adjustedScore, 0, 100));
 }
 
+/**
+ * 하이브리드 필터: 올드한 이름 판정 강화
+ * isOldFashioned=true → 무조건 제외 (LLM 판단 신뢰)
+ * modernityScore <= 5 → 제외
+ */
+export function shouldExcludeAsOldFashioned(llmResult: EvaluationResult | null): boolean {
+    if (!llmResult) {
+        return false;
+    }
+
+    // isOldFashioned=true면 무조건 제외, 또는 modernityScore가 5 이하면 제외
+    return llmResult.isOldFashioned || llmResult.modernityScore <= 5;
+}
+
 export async function evaluateNamesWithLLM(
     names: NameCandidate[],
     surname: string
