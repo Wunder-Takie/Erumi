@@ -19,25 +19,84 @@ export interface ModernityAnalysis {
 }
 
 // ============================================
-// 1단계: 패턴 데이터
+// 1단계: 위치별 음절 점수 시스템 (고도화)
+// - 양수: 트렌디, 음수: 올드, 0: 중립
+// - 한자 DB 72개 음절 전체 커버
 // ============================================
 
-// 올드한 돌림자 (이 글자가 포함되면 올드한 느낌)
-const OLD_SYLLABLES = new Set([
-    // 70-80년대 남자 돌림자
-    '철', '호', '석', '용', '수', '근', '현', '진', '준', '성',
-    // 70-80년대 여자 돌림자  
-    '순', '옥', '자', '숙', '희', '영', '정', '미', '경', '선',
-    // 매우 올드한 느낌
-    '복', '갑', '을', '병', '정', '무', '기', '임', '계',
-    '말', '춘', '분', '난', '점', '돌',
-]);
+// 첫 번째 음절 점수 (이름의 첫 글자)
+const FIRST_SYLLABLE_SCORE: Record<string, number> = {
+    // === 강한 트렌디 (+3) ===
+    '서': 3, '하': 3, '시': 3, '이': 3,
 
-// 특정 위치에서 올드한 패턴 (이름 끝자리)
-const OLD_ENDING_PATTERNS = new Set([
-    '수', '민', '주', '영', '호', '석', '철', '근',
-    '자', '순', '옥', '숙', '희', '경', '정',
-]);
+    // === 트렌디 (+2) ===
+    '도': 2, '지': 2, '유': 2, '온': 2, '로': 2,
+    '채': 2, '소': 2, '나': 2,
+
+    // === 약한 트렌디 (+1) ===
+    '수': 1, '예': 1, '라': 1, '리': 1, '린': 1,
+    '태': 1, '준': 1, '우': 1, '윤': 1, '은': 1,
+
+    // === 중립 (0) ===
+    '건': 0, '결': 0, '겸': 0, '광': 0, '규': 0,
+    '단': 0, '랑': 0, '미': 0, '비': 0, '빈': 0,
+    '석': 0, '선': 0, '성': 0, '솔': 0, '안': 0,
+    '애': 0, '연': 0, '엽': 0, '완': 0, '원': 0,
+    '율': 0, '의': 0, '인': 0, '일': 0, '재': 0,
+    '찬': 0, '창': 0, '천': 0, '택': 0, '평': 0,
+    '한': 0, '혁': 0, '형': 0, '혜': 0, '화': 0, '환': 0, '훈': 0,
+
+    // === 약한 올드 (-1) ===
+    '민': -1, '현': -1, '진': -1,
+
+    // === 올드 (-2) ===
+    '영': -2, '경': -2, '정': -2,
+
+    // === 강한 올드 (-3) ===
+    '철': -3, '근': -3, '희': -3, '자': -3, '호': -3,
+};
+
+// 두 번째 음절 점수 (이름의 끝 글자) - 끝자리가 느낌에 더 큰 영향
+const SECOND_SYLLABLE_SCORE: Record<string, number> = {
+    // === 강한 트렌디 (+4) ===
+    '아': 4, '온': 4, '율': 4, '린': 4,
+
+    // === 트렌디 (+3) ===
+    '윤': 3, '우': 3, '안': 3, '은': 3, '서': 3,
+    '유': 3, '준': 3, '운': 3,
+
+    // === 약한 트렌디 (+2) ===
+    '빈': 2, '원': 2, '연': 2, '나': 2, '진': 2,
+    '현': 2, '민': 2, '호': 2,  // 현, 민, 호는 끝자리에서는 중립~트렌디
+
+    // === 중립 (+1) ===
+    '하': 1, '결': 1, '겸': 1, '광': 1, '규': 1,
+    '라': 1, '랑': 1, '로': 1, '리': 1, '미': 1,
+    '비': 1, '솔': 1, '애': 1, '엽': 1, '완': 1,
+    '의': 1, '인': 1, '일': 1, '재': 1, '찬': 1,
+    '창': 1, '채': 1, '천': 1, '택': 1, '평': 1,
+    '한': 1, '혁': 1, '형': 1, '혜': 1, '화': 1, '환': 1, '훈': 1,
+
+    // === 중립 (0) ===
+    '건': 0, '단': 0, '도': 0, '석': 0, '선': 0,
+    '성': 0, '소': 0, '시': 0, '예': 0, '이': 0, '태': 0,
+
+    // === 약한 올드 (-1) ===
+    '근': -1, '지': -1,  // 지는 끝자리에서 올드
+
+    // === 올드 (-2) ===
+    '영': -2, '경': -2, '정': -2, '주': -2,
+
+    // === 강한 올드 (-3) ===
+    '수': -3, '철': -3, '희': -3, '자': -3, '숙': -3,
+};
+
+// 음절 점수 계산 함수 (🆕 export 추가)
+export function getSyllableScore(char1: string, char2: string): number {
+    const score1 = FIRST_SYLLABLE_SCORE[char1] ?? 0;
+    const score2 = SECOND_SYLLABLE_SCORE[char2] ?? 0;
+    return score1 + score2;
+}
 
 // 올드한 조합 (첫글자 + 끝글자)
 const OLD_COMBINATIONS = new Set([
@@ -165,43 +224,54 @@ export function analyzeNameModernity(name: string): ModernityAnalysis {
     const char2 = name.length > 1 ? name.charAt(1) : '';
 
     // =====================================
-    // 1단계: 패턴 분석
+    // 1단계: 음절 점수 분석 (신규 통합 시스템)
     // =====================================
 
-    // 1-1. 올드한 돌림자 체크
-    if (OLD_SYLLABLES.has(char1)) {
-        score -= 1;
-        reasons.push(`첫 글자 '${char1}'가 올드한 돌림자`);
-    }
-    if (char2 && OLD_SYLLABLES.has(char2)) {
-        score -= 1;
-        reasons.push(`끝 글자 '${char2}'가 올드한 돌림자`);
-    }
+    // 1-1. 위치별 음절 점수 계산
+    const syllableScore = getSyllableScore(char1, char2);
 
-    // 1-2. 올드한 끝자리 패턴
-    if (char2 && OLD_ENDING_PATTERNS.has(char2)) {
-        score -= 0.5;
-    }
-
-    // 1-3. 올드한 조합 (정확히 일치)
-    if (OLD_COMBINATIONS.has(name)) {
+    if (syllableScore >= 5) {
+        // 매우 트렌디
+        score += 2;
+        penalty -= 25;
+        reasons.push(`'${char1}+${char2}' 조합은 매우 트렌디 (점수: ${syllableScore})`);
+    } else if (syllableScore >= 2) {
+        // 트렌디
+        score += 1;
+        penalty -= 15;
+        reasons.push(`'${char1}+${char2}' 조합은 트렌디 (점수: ${syllableScore})`);
+    } else if (syllableScore <= -4) {
+        // 매우 올드
         score -= 3;
-        penalty += 30;
+        penalty += 40;
+        reasons.push(`'${char1}+${char2}' 조합은 매우 올드 (점수: ${syllableScore})`);
+    } else if (syllableScore <= -2) {
+        // 올드
+        score -= 2;
+        penalty += 25;
+        reasons.push(`'${char1}+${char2}' 조합은 올드 (점수: ${syllableScore})`);
+    }
+    // syllableScore가 -1 ~ +1 이면 중립 (변화 없음)
+
+    // 1-2. 올드한 조합 목록 (추가 페널티 - 목록에 명시된 경우)
+    if (OLD_COMBINATIONS.has(name)) {
+        score -= 2;
+        penalty += 20;
         reasons.push(`'${name}'는 70-90년대에 흔했던 이름`);
     }
 
-    // 1-4. 어색한 동음이의어
+    // 1-3. 어색한 동음이의어 (블랙리스트)
     if (AWKWARD_HOMOPHONE_NAMES.has(name)) {
         score -= 3;
-        penalty += 40;  // 20 → 40으로 증가
+        penalty += 45;
         reasons.push(`'${name}'는 '${AWKWARD_HOMOPHONE_NAMES.get(name)}'와 혼동됨`);
     }
 
-    // 1-5. 어색한 발음 패턴
+    // 1-4. 어색한 발음 패턴
     for (const pattern of AWKWARD_PHONETIC_PATTERNS) {
         if (pattern.test(name)) {
             score -= 2;
-            penalty += 25;  // 10 → 25로 증가
+            penalty += 25;
             reasons.push('발음이 어색한 조합');
             break;
         }
@@ -264,8 +334,25 @@ export function getModernityPenalty(name: string): number {
     return analyzeNameModernity(name).penalty;
 }
 
+/**
+ * 🆕 v6.0: 트렌디 이름 보너스 계산 (1000점 시스템용)
+ * 음절 점수 기반으로 트렌디한 이름에 보너스 부여
+ */
+export function getModernityBonus(name: string): number {
+    const char1 = name.charAt(0);
+    const char2 = name.charAt(1) || '';
+    const syllableScore = getSyllableScore(char1, char2);
+
+    if (syllableScore >= 5) return 80;   // 매우 트렌디 (서윤, 하린 등)
+    if (syllableScore >= 2) return 50;   // 트렌디 (지아, 도윤 등)
+    if (syllableScore >= 0) return 20;   // 중립
+    return 0;  // 올드 (보너스 없음)
+}
+
 export default {
     analyzeNameModernity,
     shouldFilterName,
     getModernityPenalty,
+    getModernityBonus,
+    getSyllableScore,
 };

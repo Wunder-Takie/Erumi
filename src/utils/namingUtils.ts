@@ -49,7 +49,8 @@ import {
   getSemanticRiskScore,
   normalizeScores
 } from './scoringUtils.ts';
-import { getModernityPenalty } from './nameModernityAnalyzer.ts';
+import { getModernityPenalty, getModernityBonus, getSyllableScore } from './nameModernityAnalyzer.ts';
+import criminalNames from '../data/filter/criminal_names.json' with { type: 'json' };
 
 // ============================================
 // 2. Type Definitions
@@ -400,7 +401,8 @@ export async function generateNames(
       + surnameHarmonyBonus           // 🆕 성씨 상생 보너스 (최대 +25)
       + surnameNameFlowPenalty        // 🆕 성씨-이름 발음 페널티 (최대 -23)
       + advancedPhoneticScore         // 🆕 v5.0: 고급 발음 규칙 (최대 ±15)
-      - getModernityPenalty(c.hanja1.hangul + c.hanja2.hangul);  // 🆕 v6.0: 로컬 현대성 분석 페널티
+      - getModernityPenalty(c.hanja1.hangul + c.hanja2.hangul)  // 🆕 v6.0: 로컬 현대성 분석 페널티
+      + getModernityBonus(c.hanja1.hangul + c.hanja2.hangul);   // 🆕 v6.0: 트렌디 이름 보너스 (1000점 시스템)
 
     // 🆕 점수는 normalizeScores()에서 일괄 계산됨 (정규 분포 적용)
     c.score = c.rawScore; // 임시값, 나중에 정규화됨
@@ -447,25 +449,32 @@ export async function generateNames(
       const el2 = c.hanja2.element;
       let postBonus = 0;
 
-      // 용신 오행 보너스 (큰 보너스)
-      if (yongsinElements.includes(el1)) postBonus += 12;
-      if (yongsinElements.includes(el2)) postBonus += 12;
+      // 🆕 v6.1: 점진적 용신 보너스 (현대성 연동)
+      // 트렌디할수록 용신 보너스 지급, 올드한 이름은 작은 보너스만
+      const hangulName = c.hanja1.hangul + c.hanja2.hangul;
+      const syllableScore = getSyllableScore(hangulName.charAt(0), hangulName.charAt(1));
+      // 음절점수 -3 → 0.2배, +5 → 1.0배 (부드러운 전환)
+      const modernityMultiplier = Math.max(0.2, Math.min(1.0, (syllableScore + 3) / 8));
 
-      // 희신 오행 보너스 (중간 보너스)
-      if (huisinElements.includes(el1)) postBonus += 6;
-      if (huisinElements.includes(el2)) postBonus += 6;
+      // 용신 오행 보너스 (현대성 배율 적용)
+      if (yongsinElements.includes(el1)) postBonus += Math.round(100 * modernityMultiplier);
+      if (yongsinElements.includes(el2)) postBonus += Math.round(100 * modernityMultiplier);
 
-      // 기신 오행 페널티
-      if (gisinElements.includes(el1)) postBonus -= 10;
-      if (gisinElements.includes(el2)) postBonus -= 10;
+      // 희신 오행 보너스 (현대성 배율 적용)
+      if (huisinElements.includes(el1)) postBonus += Math.round(50 * modernityMultiplier);
+      if (huisinElements.includes(el2)) postBonus += Math.round(50 * modernityMultiplier);
+
+      // 기신 오행 페널티 (배율 적용 안함 - 페널티는 동일)
+      if (gisinElements.includes(el1)) postBonus -= 40;
+      if (gisinElements.includes(el2)) postBonus -= 40;
 
       // 양쪽 모두 용신이면 추가 시너지 보너스
       if (yongsinElements.includes(el1) && yongsinElements.includes(el2)) {
-        postBonus += 8; // 시너지
+        postBonus += Math.round(50 * modernityMultiplier); // 시너지
       }
 
-      // 점수 적용 (40~120 범위 유지)
-      c.score = Math.max(40, Math.min(120, c.score + postBonus));
+      // 🆕 v6.0: Cap 제거 - 최소 200점, 상한 없음
+      c.score = Math.max(200, c.score + postBonus);
     });
 
     console.log('✅ 용신 후처리 완료');
@@ -526,6 +535,17 @@ export async function generateNames(
     return true;
   });
 
+  // 🆕 v6.1: 범죄자 이름 필터링 (성+이름 완전 일치 시 제외)
+  const blockedFullNames = new Set((criminalNames as any).blockedFullNames || []);
+  filtered = filtered.filter((c: any) => {
+    const fullName = surnameInput + c.hanja1.hangul + c.hanja2.hangul;
+    if (blockedFullNames.has(fullName)) {
+      console.log(`⛔ 범죄자 이름 필터링: ${fullName}`);
+      return false;
+    }
+    return true;
+  });
+
   // 배율 시스템 제거 (새로운 점수 체계에 통합됨)
   // Modernity는 이미 45점으로 직접 반영됨
 
@@ -571,7 +591,7 @@ export async function generateNames(
 
         // 🆕 하이브리드 필터: 확실히 올드한 이름은 대폭 감점
         if (shouldExcludeAsOldFashioned(llmResult)) {
-          name.score = Math.max(0, name.score - 50); // 추가 50점 감점
+          name.score = Math.max(0, name.score - 25); // 🆕 v6.0: 25점 감점 (로컬 분석과 역할 분담)
           name.isExcludedAsOld = true;
         }
       }
@@ -596,6 +616,15 @@ export async function generateNames(
 
     // 4차 (동점): 현대성
     return (b.modernityAvg || 0) - (a.modernityAvg || 0);
+  });
+
+  // 🆕 v6.0: 같은 발음(hangul) 이름 중 최고 점수만 유지 (한자 조합 중복 제거)
+  const seenHangul = new Set<string>();
+  filtered = filtered.filter((c: any) => {
+    const hangulName = c.hanja1?.hangul + c.hanja2?.hangul || c.hangulName;
+    if (seenHangul.has(hangulName)) return false;
+    seenHangul.add(hangulName);
+    return true;
   });
 
   // 순위 재할당

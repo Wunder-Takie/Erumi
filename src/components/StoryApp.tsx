@@ -283,7 +283,7 @@ export function StoryApp() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {name.warning && <span className="text-amber-400">⚠️</span>}
-                                                <span className="text-xl">{name.score}점</span>
+                                                <span className="text-xl">{Math.round(name.score / 10)}점</span>
                                             </div>
                                         </div>
                                     ))}

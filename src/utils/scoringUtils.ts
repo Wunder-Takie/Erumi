@@ -208,10 +208,7 @@ export function calculateModernityScore(hanja1: HanjaInfo, hanja2: HanjaInfo): n
         return -999;
     }
 
-    // 올드한 이름 조합 페널티
-    if (prefs.old_fashioned_combinations?.names?.includes(combination)) {
-        score += prefs.old_fashioned_combinations.penalty || -35;
-    }
+    // 🆕 v6.0: 올드한 이름 조합 페널티는 nameModernityAnalyzer.ts로 일원화됨
 
     // Awkward combinations 체크
     if (prefs.awkward_combinations?.combinations) {
@@ -311,16 +308,7 @@ export function calculateModernityScore(hanja1: HanjaInfo, hanja2: HanjaInfo): n
         score -= 30;
     }
 
-    // 트렌디 패턴 보너스
-    if (prefs.trendy_patterns) {
-        for (const pattern of prefs.trendy_patterns) {
-            const char1Match = !pattern.char1_vowel || d1.jung === pattern.char1_vowel;
-            const char2Match = !pattern.char2_jongseong || pattern.char2_jongseong.includes(d2.jong);
-            if (char1Match && char2Match) {
-                score += pattern.bonus || 5;
-            }
-        }
-    }
+    // 🆕 v6.0: 트렌디 패턴 보너스는 nameModernityAnalyzer.ts로 일원화됨
 
     // 발음 단순성 보너스
     if (prefs.syllable_simplicity_bonus) {
@@ -389,7 +377,8 @@ export function normalizeScores<T extends NameCombinationForNormalize>(combinati
         return { badCount, daegilCount };
     };
 
-    const TIER_MULTIPLIER: Record<string, number> = { 'S': 1.3, 'A': 1.0, 'B': 0.75, 'C': 0.55, 'D': 0.35 };
+    // 🆕 v6.0: 1000점 시스템 - 배율 확대
+    const TIER_MULTIPLIER: Record<string, number> = { 'S': 5.0, 'A': 4.0, 'B': 3.0, 'C': 2.0, 'D': 1.0 };
 
     combinations.forEach((c: NameCombinationForNormalize) => {
         const tier = getSuriTier(c.suri);
@@ -401,9 +390,11 @@ export function normalizeScores<T extends NameCombinationForNormalize>(combinati
 
         const multiplier = TIER_MULTIPLIER[tier];
         let adjustedScore = (c.rawScore || 50) * multiplier;
-        adjustedScore += quality.daegilCount * 3;
-        adjustedScore -= quality.badCount * 5;
-        c.score = Math.round(Math.max(40, Math.min(120, adjustedScore)));
+        // 🆕 v6.0: 수리 보너스/페널티 확대
+        adjustedScore += quality.daegilCount * 15;
+        adjustedScore -= quality.badCount * 25;
+        // 🆕 v6.0: Cap 제거 - 최소 200점, 상한 없음
+        c.score = Math.round(Math.max(200, adjustedScore));
 
         c.passesGate = (tier === 'S' || tier === 'A');
         c.gateInfo = {

@@ -3,7 +3,7 @@
  * 실행: node test_kasi_api.js
  */
 
-const API_KEY = '***REMOVED***';
+const API_KEY = '4be512db2db6a7ae670f7932c77b9264b50a37e15c9a28b97bffce213cdb684c';
 const API_ENDPOINT = 'http://apis.data.go.kr/B090041/openapi/service/LrsrCldInfoService/getLunCalInfo';
 
 async function testKASI() {

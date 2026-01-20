@@ -4,7 +4,7 @@
  */
 
 // Set environment variables explicitly for Node.js
-process.env.VITE_KASI_API_KEY = process.env.VITE_KASI_API_KEY || '***REMOVED***';
+process.env.VITE_KASI_API_KEY = process.env.VITE_KASI_API_KEY || '4be512db2db6a7ae670f7932c77b9264b50a37e15c9a28b97bffce213cdb684c';
 
 import { fetchSajuFromKASI } from './src/utils/manselyeok/kasiAdapter.js';
 import { calculateSaju } from './src/utils/sajuUtils.js';
