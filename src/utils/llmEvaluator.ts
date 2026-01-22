@@ -70,25 +70,22 @@ async function callLLM(fullName: string, hanjaName: string, gender: Gender, apiK
 }
 
 async function callGemini(prompt: string, apiKey: string, retryCount = 0): Promise<EvaluationResult | null> {
-    const { model, apiEndpoint, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
+    const { model, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
     const maxRetries = 2;
 
+    // Firebase Functions 프록시 호출
     const response = await fetch(
-        `${apiEndpoint}/${model}:generateContent?key=${apiKey}`,
+        'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
         {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }],
-                generationConfig: {
-                    temperature,
-                    maxOutputTokens,
-                    responseMimeType: 'application/json'
-                }
+                prompt,
+                model,
+                temperature,
+                maxOutputTokens
             })
         }
     );

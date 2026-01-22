@@ -70,14 +70,9 @@ export const LLM_CONFIG: LLMConfigType = {
         cacheTTL: 86400000,
     },
 
-    // API 키 (환경변수에서 로드)
+    // Firebase Functions 프록시 사용 - 클라이언트에서 API 키 불필요
     getApiKey: (): string => {
-        if (typeof import.meta !== 'undefined' && import.meta.env) {
-            return import.meta.env.VITE_GEMINI_API_KEY ||
-                import.meta.env.VITE_OPENAI_API_KEY ||
-                '';
-        }
-        return '';
+        return 'proxy';
     },
 };
 

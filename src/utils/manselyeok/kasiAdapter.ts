@@ -84,11 +84,6 @@ const getApiKey = (): string => {
     return '';
 };
 
-const API_ENDPOINTS = {
-    lunarDate: 'http://apis.data.go.kr/B090041/openapi/service/LrsrCldInfoService/getLunCalInfo',
-    solarTerm: 'http://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/get24DivisionsInfo'
-};
-
 const typedSajuData = sajuData as SajuDataJson;
 
 const STEM_ELEMENTS: Record<string, ElementType> = Object.fromEntries(
@@ -219,20 +214,22 @@ function calculateHourPillar(dayStem: string, hour: number): PillarInfo {
 // ==========================================
 
 export async function fetchLunarInfo(year: number, month: number, day: number): Promise<LunarInfo> {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        throw new Error('KASI API key not configured');
-    }
-
-    const params = new URLSearchParams({
-        serviceKey: apiKey,
-        solYear: String(year),
-        solMonth: String(month).padStart(2, '0'),
-        solDay: String(day).padStart(2, '0'),
-        _type: 'json'
+    // Firebase Functions 프록시 호출
+    const response = await fetch('https://us-central1-erumi-a312b.cloudfunctions.net/kasi', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            endpoint: 'B090041/openapi/service/LrsrCldInfoService/getLunCalInfo',
+            params: {
+                solYear: String(year),
+                solMonth: String(month).padStart(2, '0'),
+                solDay: String(day).padStart(2, '0'),
+                _type: 'json'
+            }
+        })
     });
-
-    const response = await fetch(`${API_ENDPOINTS.lunarDate}?${params}`);
 
     if (!response.ok) {
         throw new Error(`KASI API error: ${response.status}`);
@@ -268,19 +265,21 @@ export async function fetchLunarInfo(year: number, month: number, day: number): 
 }
 
 export async function fetchSolarTerms(year: number, month: number): Promise<SolarTermInfo[]> {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        throw new Error('KASI API key not configured');
-    }
-
-    const params = new URLSearchParams({
-        serviceKey: apiKey,
-        solYear: String(year),
-        solMonth: String(month).padStart(2, '0'),
-        _type: 'json'
+    // Firebase Functions 프록시 호출
+    const response = await fetch('https://us-central1-erumi-a312b.cloudfunctions.net/kasi', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            endpoint: 'B090041/openapi/service/SpcdeInfoService/get24DivisionsInfo',
+            params: {
+                solYear: String(year),
+                solMonth: String(month).padStart(2, '0'),
+                _type: 'json'
+            }
+        })
     });
-
-    const response = await fetch(`${API_ENDPOINTS.solarTerm}?${params}`);
 
     if (!response.ok) {
         throw new Error(`KASI API error: ${response.status}`);
