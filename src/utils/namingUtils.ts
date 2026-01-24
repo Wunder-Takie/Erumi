@@ -546,6 +546,17 @@ export async function generateNames(
     return true;
   });
 
+  // 🆕 v6.2: critical_blocks 완전 필터링 (이름 조합 기준, 성씨 무관)
+  const criticalBlocks = new Set((modernPreferences as any).critical_blocks || []);
+  filtered = filtered.filter((c: any) => {
+    const hangulName = c.hanja1.hangul + c.hanja2.hangul;
+    if (criticalBlocks.has(hangulName)) {
+      console.log(`⛔ Critical block 필터링: ${hangulName}`);
+      return false;
+    }
+    return true;
+  });
+
   // 배율 시스템 제거 (새로운 점수 체계에 통합됨)
   // Modernity는 이미 45점으로 직접 반영됨
 
