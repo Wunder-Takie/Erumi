@@ -1,0 +1,1588 @@
+{
+  "jongseong_scores": {
+    "": 8,
+    "ㄴ": 10,
+    "ㄹ": 7,
+    "ㅁ": 9,
+    "ㅇ": 10
+  },
+  "vowel_scores": {
+    "ㅏ": 10,
+    "ㅓ": 10,
+    "ㅗ": 9,
+    "ㅜ": 9,
+    "ㅡ": 8,
+    "ㅣ": 9,
+    "ㅐ": 7,
+    "ㅔ": 7
+  },
+  "archaic_hanja": [
+    {
+      "hanja": "夏",
+      "hangul": "하",
+      "penalty": 3
+    }
+  ],
+  "homophone_words": {
+    "웃어": {
+      "syllables": [
+        "우서"
+      ],
+      "severity": "warning"
+    },
+    "가서": {
+      "syllables": [
+        "가서"
+      ],
+      "severity": "warning"
+    },
+    "사서": {
+      "syllables": [
+        "사서"
+      ],
+      "severity": "warning"
+    },
+    "서로": {
+      "syllables": [
+        "서로",
+        "서도"
+      ],
+      "severity": "warning"
+    },
+    "지하": {
+      "syllables": [
+        "지하"
+      ],
+      "severity": "critical"
+    },
+    "수하": {
+      "syllables": [
+        "수하"
+      ],
+      "severity": "critical"
+    },
+    "노예": {
+      "syllables": [
+        "노예"
+      ],
+      "severity": "critical"
+    },
+    "하인": {
+      "syllables": [
+        "하인"
+      ],
+      "severity": "critical"
+    },
+    "아지": {
+      "syllables": [
+        "아지"
+      ],
+      "severity": "critical"
+    },
+    "운지": {
+      "syllables": [
+        "운지"
+      ],
+      "severity": "critical",
+      "reason": "부적절한 연상"
+    },
+    "우아": {
+      "syllables": [
+        "우아"
+      ],
+      "severity": "warning"
+    },
+    "부자": {
+      "syllables": [
+        "부자"
+      ],
+      "severity": "warning"
+    },
+    "모자": {
+      "syllables": [
+        "모자"
+      ],
+      "severity": "warning"
+    },
+    "하자": {
+      "syllables": [
+        "하자"
+      ],
+      "severity": "warning"
+    },
+    "석유": {
+      "syllables": [
+        "석유"
+      ],
+      "severity": "critical",
+      "reason": "석유(石油) 연상"
+    },
+    "평안": {
+      "syllables": [
+        "평안"
+      ],
+      "severity": "critical",
+      "reason": "평안도 연상"
+    },
+    "영지": {
+      "syllables": [
+        "영지"
+      ],
+      "severity": "critical",
+      "reason": "영지버섯 연상"
+    },
+    "선원": {
+      "syllables": [
+        "선원"
+      ],
+      "severity": "critical",
+      "reason": "선원(船員) 연상"
+    },
+    "지평": {
+      "syllables": [
+        "지평"
+      ],
+      "severity": "critical",
+      "reason": "지평선 연상"
+    },
+    "성리": {
+      "syllables": [
+        "성리"
+      ],
+      "severity": "critical",
+      "reason": "ㅣ 모음 반복"
+    },
+    "재리": {
+      "syllables": [
+        "재리"
+      ],
+      "severity": "critical",
+      "reason": "ㅣ 모음 반복"
+    },
+    "유린": {
+      "syllables": [
+        "유린"
+      ],
+      "severity": "critical",
+      "reason": "유린(蹂躪) 연상, ㄴ-ㄹ"
+    },
+    "운나": {
+      "syllables": [
+        "운나"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "원민": {
+      "syllables": [
+        "원민"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "진유": {
+      "syllables": [
+        "진유"
+      ],
+      "severity": "warning",
+      "reason": "올드한 느낌"
+    },
+    "진예": {
+      "syllables": [
+        "진예"
+      ],
+      "severity": "warning",
+      "reason": "올드한 느낌"
+    },
+    "시자": {
+      "syllables": [
+        "시자"
+      ],
+      "severity": "critical",
+      "reason": "어색한 발음"
+    },
+    "성지": {
+      "syllables": [
+        "성지"
+      ],
+      "severity": "critical",
+      "reason": "'성지(聖地)' 연상"
+    }
+  },
+  "critical_blocks": [
+    "하아",
+    "지이",
+    "지린",
+    "운지",
+    "시발",
+    "개새",
+    "병신",
+    "씨발",
+    "좆",
+    "지랄",
+    "성자",
+    "성인",
+    "영성",
+    "경솔",
+    "유지",
+    "선비",
+    "한지",
+    "환서",
+    "시지",
+    "시주",
+    "시린",
+    "우린",
+    "환지",
+    "찬지",
+    "성린",
+    "진지",
+    "준지",
+    "선지",
+    "우지",
+    "지랄",
+    "태비",
+    "태라",
+    "아소",
+    "시인",
+    "경현",
+    "예혜",
+    "성결",
+    "운하",
+    "경주",
+    "시라",
+    "태랑",
+    "도랑",
+    "시민",
+    "경성",
+    "하리",
+    "진유",
+    "진비",
+    "지비",
+    "지랑",
+    "자린",
+    "율경",
+    "율린",
+    "율리",
+    "율민",
+    "아환",
+    "아석",
+    "환채",
+    "석영",
+    "연광",
+    "경지",
+    "시단",
+    "경혜",
+    "예건",
+    "성채",
+    "솔경",
+    "경채",
+    "영찬",
+    "예경",
+    "서경",
+    "은겸",
+    "찬수",
+    "찬주",
+    "미현",
+    "현예",
+    "예근",
+    "윤결",
+    "예결",
+    "연미",
+    "현율",
+    "유겸",
+    "도린",
+    "재린",
+    "석린",
+    "경도",
+    "현도",
+    "석지",
+    "지솔",
+    "환일",
+    "경하",
+    "경찬",
+    "환예",
+    "지한",
+    "유한",
+    "한예",
+    "지찬",
+    "자민",
+    "자성",
+    "완하",
+    "진하",
+    "원하",
+    "선유",
+    "원지",
+    "민유",
+    "아수",
+    "채자",
+    "예수",
+    "우하",
+    "채로",
+    "유자",
+    "미윤",
+    "하채",
+    "시로",
+    "시채",
+    "지로",
+    "미안",
+    "채지",
+    "서리",
+    "하원",
+    "시화",
+    "하주",
+    "유혜",
+    "유채",
+    "아서",
+    "하일",
+    "우서",
+    "하지",
+    "유아",
+    "자아",
+    "자예",
+    "연소",
+    "연비",
+    "진소",
+    "찬소",
+    "현소",
+    "하완",
+    "하소",
+    "영비",
+    "소지",
+    "성비",
+    "소일",
+    "하비",
+    "수예",
+    "경소",
+    "채수",
+    "채소",
+    "아비",
+    "예자",
+    "주라",
+    "혜아",
+    "소채",
+    "채우",
+    "주채",
+    "재비",
+    "혜유",
+    "태아",
+    "미예",
+    "미아",
+    "도예",
+    "미유",
+    "하우",
+    "도서",
+    "채일",
+    "도리",
+    "예채",
+    "도라",
+    "채혜",
+    "채라",
+    "서비",
+    "아주",
+    "재소",
+    "도지",
+    "환비",
+    "경비",
+    "영소",
+    "예비",
+    "채비",
+    "시의",
+    "재예",
+    "도하",
+    "시애",
+    "재라",
+    "소비",
+    "하유",
+    "지결",
+    "연결",
+    "현결",
+    "영건",
+    "서지",
+    "수나",
+    "혜예",
+    "예미",
+    "우나",
+    "하찬",
+    "하라",
+    "미지",
+    "주서",
+    "시정",
+    "도나",
+    "아찬",
+    "아나",
+    "소건",
+    "선나",
+    "미리",
+    "재채",
+    "시진",
+    "서민",
+    "서나",
+    "시일",
+    "환아",
+    "유결",
+    "시혜"
+  ],
+  "old_fashioned_combinations": {
+    "penalty": -45,
+    "names": [
+      "영민",
+      "소리",
+      "재윤",
+      "진율",
+      "채영",
+      "재영",
+      "혜연",
+      "성민",
+      "서일",
+      "주영",
+      "주성",
+      "준영",
+      "민수",
+      "태현",
+      "현우",
+      "민준",
+      "동현",
+      "지훈",
+      "준호",
+      "동욱",
+      "민석",
+      "상우",
+      "지원",
+      "민지",
+      "민우",
+      "수빈",
+      "지혜",
+      "예은",
+      "다은",
+      "수현",
+      "서현",
+      "예린",
+      "채원",
+      "지은",
+      "수진",
+      "민서",
+      "경자",
+      "민경",
+      "경민",
+      "영수",
+      "영진",
+      "성진",
+      "재진",
+      "재성",
+      "성수",
+      "재일",
+      "주일",
+      "영호",
+      "성호",
+      "은희",
+      "근희",
+      "완희",
+      "수근",
+      "영근",
+      "율경",
+      "광나",
+      "경나",
+      "영나",
+      "근지",
+      "근유",
+      "근예",
+      "근수",
+      "광지",
+      "민광",
+      "성경",
+      "선영",
+      "경수",
+      "경서",
+      "경진",
+      "경주",
+      "영주",
+      "경미",
+      "시근",
+      "시경",
+      "유근",
+      "재근",
+      "서근",
+      "경성",
+      "하근",
+      "경도",
+      "성도",
+      "완성",
+      "운희",
+      "영준",
+      "경준",
+      "성희",
+      "진희",
+      "선희",
+      "경희",
+      "경선",
+      "성주",
+      "진영",
+      "성환",
+      "성현",
+      "유선",
+      "진수",
+      "지환",
+      "윤자",
+      "준하",
+      "태환",
+      "태주",
+      "지현",
+      "태원",
+      "재우",
+      "현지",
+      "태유",
+      "현영",
+      "태민",
+      "태성",
+      "태윤",
+      "성준",
+      "재민",
+      "지영",
+      "민영",
+      "서영",
+      "영서",
+      "현서",
+      "윤미",
+      "혜성",
+      "영현",
+      "지율",
+      "선결",
+      "미연",
+      "선예",
+      "현미",
+      "시환",
+      "현일",
+      "재운",
+      "서환",
+      "찬서",
+      "예환",
+      "현솔",
+      "채환",
+      "진일"
+    ]
+  },
+  "awkward_combinations": {
+    "combinations": [
+      {
+        "name": "시지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅅ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "시주",
+        "severity": "critical",
+        "reason": "시주(施主) 연상"
+      },
+      {
+        "name": "시린",
+        "severity": "critical",
+        "reason": "'시리다' 연상, 부정적 의미"
+      },
+      {
+        "name": "우린",
+        "severity": "critical",
+        "reason": "'우리는' 연상, 대명사처럼 들림"
+      },
+      {
+        "name": "환지",
+        "severity": "critical",
+        "reason": "환지(換地) 연상, 전문용어"
+      },
+      {
+        "name": "찬지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅊ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "성린",
+        "severity": "critical",
+        "reason": "어색한 조합, 발음 어려움"
+      },
+      {
+        "name": "진지",
+        "severity": "critical",
+        "reason": "'진지(먹다)' 연상"
+      },
+      {
+        "name": "준지",
+        "severity": "critical",
+        "reason": "어색한 발음 (ㅈ-ㅈ 초성 반복)"
+      },
+      {
+        "name": "선지",
+        "severity": "critical",
+        "reason": "선지(血) 연상"
+      },
+      {
+        "name": "우지",
+        "severity": "critical",
+        "reason": "어색한 발음"
+      },
+      {
+        "name": "주지",
+        "severity": "critical",
+        "reason": "'주지(住持)' 연상"
+      },
+      {
+        "name": "성예",
+        "severity": "warning",
+        "reason": "받침 있는 첫 글자로 발음 어색"
+      },
+      {
+        "name": "성안",
+        "severity": "warning",
+        "reason": "받침 있는 첫 글자로 발음 어색"
+      },
+      {
+        "name": "영희",
+        "severity": "critical",
+        "reason": "매우 올드한 이름"
+      },
+      {
+        "name": "윤희",
+        "severity": "critical",
+        "reason": "매우 올드한 이름"
+      },
+      {
+        "name": "정희",
+        "severity": "critical",
+        "reason": "매우 올드한 이름"
+      },
+      {
+        "name": "순자",
+        "severity": "critical",
+        "reason": "매우 올드한 이름"
+      },
+      {
+        "name": "영자",
+        "severity": "critical",
+        "reason": "매우 올드한 이름"
+      },
+      {
+        "name": "성운",
+        "severity": "critical",
+        "reason": "ㅇ받침+ㅇ초성 연음, 어색한 발음"
+      },
+      {
+        "name": "성윤",
+        "severity": "critical",
+        "reason": "ㅇ받침+ㅇ초성 연음, 어색한 발음"
+      },
+      {
+        "name": "성유",
+        "severity": "critical",
+        "reason": "ㅇ받침+ㅇ초성 연음, 어색한 발음"
+      },
+      {
+        "name": "성영",
+        "severity": "critical",
+        "reason": "ㅇ받침+ㅇ초성 연음, 어색한 발음"
+      }
+    ]
+  },
+  "difficult_pronunciation": [
+    {
+      "jong1": "ㄹ",
+      "cho2": "ㅈ",
+      "penalty": 15
+    },
+    {
+      "jong1": "ㄹ",
+      "cho2": "ㄱ",
+      "penalty": 15
+    },
+    {
+      "jong1": "ㅂ",
+      "cho2": "ㄱ",
+      "penalty": 10
+    },
+    {
+      "jong1": "ㄱ",
+      "cho2": "ㅁ",
+      "penalty": 10
+    },
+    {
+      "jong1": "ㄱ",
+      "cho2": "ㄴ",
+      "penalty": 10
+    }
+  ],
+  "awkward_phonetic_patterns": [],
+  "global_risk_penalty_multiplier": {
+    "warning": 5,
+    "critical": 30
+  },
+  "overused_combinations": [
+    "나하",
+    "도우",
+    "미선",
+    "민수",
+    "민준",
+    "사랑",
+    "선미",
+    "성애",
+    "성우",
+    "성진",
+    "수지",
+    "아수",
+    "아아",
+    "아우",
+    "애성",
+    "우아",
+    "우유",
+    "우하",
+    "유우",
+    "유지",
+    "유진",
+    "은지",
+    "의리",
+    "지수",
+    "지은",
+    "진우",
+    "진혜",
+    "천사",
+    "태지",
+    "평화",
+    "하우",
+    "하하",
+    "하히",
+    "한우",
+    "한진",
+    "현빈"
+  ],
+  "trendy_patterns": [
+    {
+      "description": "서 + 받침없음/ㄴ받침",
+      "char1_vowel": "ㅓ",
+      "char2_jongseong": [
+        "",
+        "ㄴ"
+      ],
+      "bonus": 5
+    }
+  ],
+  "syllable_simplicity_bonus": {
+    "easy_syllables": [
+      "서",
+      "우",
+      "지",
+      "유",
+      "수",
+      "주",
+      "진",
+      "은"
+    ],
+    "bonus_per_match": 2
+  },
+  "bad_combinations": [
+    {
+      "word": "수건",
+      "reason": "사물 명칭(Towel) 연상",
+      "category": "object"
+    },
+    {
+      "word": "하수",
+      "reason": "부정적 의미(하수구/실력 부족)",
+      "category": "negative"
+    },
+    {
+      "word": "유서",
+      "reason": "불길한 의미(죽음)",
+      "category": "death"
+    },
+    {
+      "word": "가수",
+      "reason": "특정 직업 명칭(Singer)",
+      "category": "profession"
+    },
+    {
+      "word": "대수",
+      "reason": "수학 용어 등 혼동",
+      "category": "academic"
+    },
+    {
+      "word": "사건",
+      "reason": "성씨 조합 주의 - Incident",
+      "category": "negative"
+    },
+    {
+      "word": "재수",
+      "reason": "재수없다 등 부정적 의미",
+      "category": "homophone"
+    },
+    {
+      "word": "호구",
+      "reason": "이용당하는 사람",
+      "category": "negative"
+    },
+    {
+      "word": "왕따",
+      "reason": "따돌림",
+      "category": "negative"
+    },
+    {
+      "word": "하녀",
+      "reason": "신분적 비하",
+      "category": "negative"
+    },
+    {
+      "word": "임신",
+      "reason": "Pregnancy",
+      "category": "negative"
+    },
+    {
+      "word": "생리",
+      "reason": "신체 현상",
+      "category": "negative"
+    },
+    {
+      "word": "발기",
+      "reason": "성적 연상",
+      "category": "negative"
+    },
+    {
+      "word": "변태",
+      "reason": "성적 비하",
+      "category": "negative"
+    },
+    {
+      "word": "고자",
+      "reason": "신체적 비하",
+      "category": "negative"
+    },
+    {
+      "word": "부도",
+      "reason": "파산",
+      "category": "negative"
+    },
+    {
+      "word": "사기",
+      "reason": "범죄",
+      "category": "negative"
+    },
+    {
+      "word": "살인",
+      "reason": "범죄",
+      "category": "negative"
+    },
+    {
+      "word": "자살",
+      "reason": "죽음",
+      "category": "death"
+    },
+    {
+      "word": "주범",
+      "reason": "범죄자",
+      "category": "negative"
+    },
+    {
+      "word": "도둑",
+      "reason": "범죄",
+      "category": "negative"
+    },
+    {
+      "word": "치매",
+      "reason": "질병 비하",
+      "category": "negative"
+    },
+    {
+      "word": "기생",
+      "reason": "의존적인 삶",
+      "category": "negative"
+    },
+    {
+      "word": "노예",
+      "reason": "구속된 삶",
+      "category": "negative"
+    },
+    {
+      "word": "무당",
+      "reason": "특정 직업 비하 가능성",
+      "category": "profession"
+    },
+    {
+      "word": "걸레",
+      "reason": "심한 비속어",
+      "category": "negative"
+    },
+    {
+      "word": "마약",
+      "reason": "범죄",
+      "category": "negative"
+    },
+    {
+      "word": "구타",
+      "reason": "폭력",
+      "category": "negative"
+    },
+    {
+      "word": "시비",
+      "reason": "다툼",
+      "category": "negative"
+    },
+    {
+      "word": "화냥",
+      "reason": "역사적 여성 비하 표현",
+      "category": "negative"
+    },
+    {
+      "word": "유흥",
+      "reason": "향락",
+      "category": "negative"
+    },
+    {
+      "word": "조폭",
+      "reason": "폭력 조직",
+      "category": "negative"
+    },
+    {
+      "word": "강도",
+      "reason": "범죄",
+      "category": "negative"
+    },
+    {
+      "word": "사망",
+      "reason": "죽음",
+      "category": "death"
+    },
+    {
+      "word": "이혼",
+      "reason": "가정불화",
+      "category": "negative"
+    },
+    {
+      "word": "재앙",
+      "reason": "재난",
+      "category": "negative"
+    },
+    {
+      "word": "고아",
+      "reason": "부모 없음",
+      "category": "negative"
+    },
+    {
+      "word": "무직",
+      "reason": "실업",
+      "category": "negative"
+    },
+    {
+      "word": "피해",
+      "reason": "손해",
+      "category": "negative"
+    },
+    {
+      "word": "허접",
+      "reason": "능력 부족",
+      "category": "negative"
+    },
+    {
+      "word": "지옥",
+      "reason": "Hell",
+      "category": "negative"
+    },
+    {
+      "word": "천치",
+      "reason": "바보",
+      "category": "negative"
+    },
+    {
+      "word": "방화",
+      "reason": "불지름",
+      "category": "negative"
+    },
+    {
+      "word": "배신",
+      "reason": "믿음 저버림",
+      "category": "negative"
+    },
+    {
+      "word": "안대",
+      "reason": "부정어(안돼)",
+      "category": "negative"
+    },
+    {
+      "word": "장애",
+      "reason": "신체 비하 가능성",
+      "category": "negative"
+    },
+    {
+      "word": "국물",
+      "reason": "음식/놀림감",
+      "category": "object"
+    }
+  ],
+  "homophone_risks_legacy": [
+    {
+      "word": "재수",
+      "reason": "재수없다 등 부정적 의미 연상",
+      "severity": "warning"
+    },
+    {
+      "word": "수저",
+      "reason": "금수저/흙수저 등 계급 연상",
+      "severity": "warning"
+    },
+    {
+      "word": "유리",
+      "reason": "사물(Glass) 연상",
+      "severity": "warning"
+    },
+    {
+      "word": "철수",
+      "reason": "철수하다(撤收) 부정적 의미",
+      "severity": "warning"
+    },
+    {
+      "word": "민수",
+      "reason": "과도하게 흔한 이름",
+      "severity": "info"
+    },
+    {
+      "word": "가방",
+      "reason": "사물 명칭(Bag)",
+      "severity": "warning"
+    },
+    {
+      "word": "연필",
+      "reason": "사물 명칭(Pencil)",
+      "severity": "warning"
+    },
+    {
+      "word": "사과",
+      "reason": "사물/과일 명칭",
+      "severity": "warning"
+    },
+    {
+      "word": "판사",
+      "reason": "특정 직업 명칭(Judge)",
+      "severity": "warning"
+    },
+    {
+      "word": "의사",
+      "reason": "특정 직업 명칭(Doctor)",
+      "severity": "warning"
+    },
+    {
+      "word": "실패",
+      "reason": "부정적 동사(失敗)",
+      "severity": "warning"
+    },
+    {
+      "word": "병약",
+      "reason": "부정적 형용사(病弱)",
+      "severity": "warning"
+    },
+    {
+      "word": "고독",
+      "reason": "부정적 감정(孤獨)",
+      "severity": "warning"
+    },
+    {
+      "word": "슬픔",
+      "reason": "부정적 감정",
+      "severity": "warning"
+    },
+    {
+      "word": "걱정",
+      "reason": "부정적 명사",
+      "severity": "warning"
+    },
+    {
+      "word": "불안",
+      "reason": "부정적 명사(不安)",
+      "severity": "warning"
+    },
+    {
+      "word": "고민",
+      "reason": "부정적 명사(苦悶)",
+      "severity": "warning"
+    },
+    {
+      "word": "책상",
+      "reason": "일상 가구",
+      "severity": "warning"
+    },
+    {
+      "word": "의자",
+      "reason": "일상 가구",
+      "severity": "warning"
+    },
+    {
+      "word": "컴퓨터",
+      "reason": "전자제품",
+      "severity": "warning"
+    }
+  ],
+  "common_words_list": [
+    {
+      "word": "예수",
+      "category": "religious",
+      "severity": "critical",
+      "reason": "종교적 민감성"
+    },
+    {
+      "word": "예민",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (예민하다)"
+    },
+    {
+      "word": "지도",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (地圖)"
+    },
+    {
+      "word": "방법",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (方法)"
+    },
+    {
+      "word": "문제",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (問題)"
+    },
+    {
+      "word": "계획",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (計劃)"
+    },
+    {
+      "word": "사진",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (寫眞)"
+    },
+    {
+      "word": "기록",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (記錄)"
+    },
+    {
+      "word": "준비",
+      "category": "verb",
+      "severity": "warning",
+      "reason": "동사형 (準備하다)"
+    },
+    {
+      "word": "도전",
+      "category": "verb",
+      "severity": "warning",
+      "reason": "동사형 (挑戰하다)"
+    },
+    {
+      "word": "성공",
+      "category": "verb",
+      "severity": "warning",
+      "reason": "동사형 (成功하다)"
+    },
+    {
+      "word": "실패",
+      "category": "verb",
+      "severity": "warning",
+      "reason": "동사형 (失敗하다, 부정적)"
+    },
+    {
+      "word": "완벽",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (完璧하다)"
+    },
+    {
+      "word": "정확",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (正確하다)"
+    },
+    {
+      "word": "특별",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (特別하다)"
+    },
+    {
+      "word": "평범",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (平凡하다)"
+    },
+    {
+      "word": "순진",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (純眞하다)"
+    },
+    {
+      "word": "다정",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (多情하다)"
+    },
+    {
+      "word": "재미",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사"
+    },
+    {
+      "word": "고민",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (苦悶, 부정적)"
+    },
+    {
+      "word": "걱정",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (부정적)"
+    },
+    {
+      "word": "불안",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (不安, 부정적)"
+    },
+    {
+      "word": "슬픔",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "감정 명사 (부정적)"
+    },
+    {
+      "word": "고독",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "감정 명사 (孤獨, 부정적)"
+    },
+    {
+      "word": "병약",
+      "category": "adjective",
+      "severity": "warning",
+      "reason": "형용사 (病弱, 부정적)"
+    },
+    {
+      "word": "신앙",
+      "category": "religious",
+      "severity": "warning",
+      "reason": "종교적 용어"
+    },
+    {
+      "word": "불교",
+      "category": "religious",
+      "severity": "warning",
+      "reason": "종교명"
+    },
+    {
+      "word": "천주",
+      "category": "religious",
+      "severity": "critical",
+      "reason": "종교적 민감성 (天主)"
+    },
+    {
+      "word": "시험",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (試驗)"
+    },
+    {
+      "word": "학교",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (學校)"
+    },
+    {
+      "word": "회사",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (會社)"
+    },
+    {
+      "word": "정부",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (政府)"
+    },
+    {
+      "word": "군대",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (軍隊)"
+    },
+    {
+      "word": "전쟁",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (戰爭, 부정적)"
+    },
+    {
+      "word": "평화",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "추상 개념 (平和)"
+    },
+    {
+      "word": "자유",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "추상 개념 (自由)"
+    },
+    {
+      "word": "정의",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "추상 개념 (正義)"
+    },
+    {
+      "word": "진리",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "추상 개념 (眞理)"
+    },
+    {
+      "word": "진실",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "추상 개념 (眞實)"
+    },
+    {
+      "word": "거짓",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일상 명사 (부정적)"
+    },
+    {
+      "word": "성인",
+      "category": "noun",
+      "severity": "critical",
+      "reason": "일반명사 (成人, 聖人) 충돌"
+    },
+    {
+      "word": "성자",
+      "category": "noun",
+      "severity": "critical",
+      "reason": "일반명사 (聖者) 충돌"
+    },
+    {
+      "word": "환아",
+      "category": "medical",
+      "severity": "critical",
+      "reason": "환아(患兒) 의료용어"
+    },
+    {
+      "word": "영성",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일반명사 (靈性)"
+    },
+    {
+      "word": "원성",
+      "category": "noun",
+      "severity": "warning",
+      "reason": "일반명사 (怨聲, 원성을 사다)"
+    },
+    {
+      "word": "영린",
+      "category": "old",
+      "severity": "warning",
+      "reason": "올드한 느낌 + 연음 어색"
+    },
+    {
+      "word": "의린",
+      "category": "old",
+      "severity": "warning",
+      "reason": "올드한 느낌 + 연음 어색"
+    }
+  ],
+  "global_risk": [
+    {
+      "bad_word": "Suck",
+      "related_hangul": "석",
+      "reason": "빨다, 형편없다(Slang)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Fuk",
+      "related_hangul": "복",
+      "reason": "영어 욕설(Fuck) 연상",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Hell",
+      "related_hangul": "해",
+      "reason": "지옥(Hell)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Kill",
+      "related_hangul": "길",
+      "reason": "죽이다(Kill)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Cock",
+      "related_hangul": "각",
+      "reason": "남성 성기 비속어",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Gang",
+      "related_hangul": "강",
+      "reason": "범죄 조직(Gang)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Ho",
+      "related_hangul": "호",
+      "reason": "매춘부 비속어(Hoe)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Bum",
+      "related_hangul": "범",
+      "reason": "거지, 엉덩이",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Gun",
+      "related_hangul": "건",
+      "reason": "총(Gun)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Sin",
+      "related_hangul": "신",
+      "reason": "죄(Sin)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "No",
+      "related_hangul": "노",
+      "reason": "부정어(No)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Job",
+      "related_hangul": "잡",
+      "reason": "직업, 일",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "War",
+      "related_hangul": "워",
+      "reason": "전쟁(War)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Bin",
+      "related_hangul": "빈",
+      "reason": "쓰레기통(Trash Bin)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Moo",
+      "related_hangul": "무",
+      "reason": "소 울음소리",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Pee",
+      "related_hangul": "피",
+      "reason": "소변",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Rim",
+      "related_hangul": "림",
+      "reason": "가장자리, 성적 은어 가능성",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Dong",
+      "related_hangul": "동",
+      "reason": "남성 성기 비속어",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Wang",
+      "related_hangul": "왕",
+      "reason": "남성 성기 비속어",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Sew",
+      "related_hangul": "수",
+      "reason": "바느질/고소(Sue)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Young",
+      "related_hangul": "영",
+      "reason": "어리다(Young)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Soon",
+      "related_hangul": "순",
+      "reason": "곧(Soon)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Rob",
+      "related_hangul": "랍",
+      "reason": "강도질하다(Rob)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Ban",
+      "related_hangul": "반",
+      "reason": "금지하다(Ban)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Dam",
+      "related_hangul": "담",
+      "reason": "저주(Damn) 연상",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Gil",
+      "related_hangul": "길",
+      "reason": "생선 아가미(Gill)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Lee",
+      "related_hangul": "이",
+      "reason": "피하다(Lee side)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Gag",
+      "related_hangul": "객",
+      "reason": "구역질(Gag)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Boon",
+      "related_hangul": "분",
+      "reason": "시골뜨기(Boon)",
+      "severity": "warning"
+    },
+    {
+      "bad_word": "Dung",
+      "related_hangul": "덩",
+      "reason": "똥/거름(Dung)",
+      "severity": "critical"
+    },
+    {
+      "bad_word": "Geon",
+      "related_hangul": "건",
+      "reason": "총(Gun) 발음 유사",
+      "severity": "warning"
+    }
+  ]
+}

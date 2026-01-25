@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erumi 유저 플로우 다이어그램</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 30px;
+            color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1rem;
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .mermaid {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 0 auto;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            overflow-x: auto;
+        }
+
+        .section {
+            margin-top: 40px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #60a5fa;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        td:first-child {
+            font-family: monospace;
+            color: #fbbf24;
+        }
+
+        .step-num {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #6366f1;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚀 Erumi 유저 플로우 다이어그램</h1>
+    <h2>왼쪽에서 오른쪽으로 흐르는 이름 생성 과정</h2>
+
+    <div class="mermaid">
+        flowchart LR
+        subgraph STEP1["1️⃣ 사용자 입력"]
+        A1["👤 성씨 입력"]
+        A2["📅 생년월일"]
+        A3["⏰ 태어난 시"]
+        A4["✨ 선호 스타일"]
+        end
+
+        subgraph STEP2["2️⃣ 사주 계산"]
+        B1["sajuUtils.js<br />calculateSaju()"]
+        B2["kasiAdapter.js<br />KASI API"]
+        B3["saju_data.json<br />로컬 폴백"]
+        end
+
+        subgraph STEP3["3️⃣ 후보 생성"]
+        C1["namingUtils.js<br />generateNames()"]
+        C2["hanja_db.json<br />한자 DB"]
+        C3["surnames.json<br />성씨 획수"]
+        end
+
+        subgraph STEP4["4️⃣ 필터링"]
+        D1["critical_blocks<br />완전 차단"]
+        D2["bunpa_characters<br />분파 체크"]
+        D3["phonetic_rules<br />발음 규칙"]
+        D4["modern_preferences<br />현대성 필터"]
+        end
+
+        subgraph STEP5["5️⃣ 점수 계산"]
+        E1["suriPatterns.js<br />4격 수리"]
+        E2["pronunciationUtils.js<br />발음 오행"]
+        E3["globalNameCheck.js<br />영어 발음"]
+        E4["name_popularity.json<br />인기도"]
+        end
+
+        subgraph STEP6["6️⃣ 결과 출력"]
+        F1["narrativeUtils.js<br />스토리 생성"]
+        F2["llmEvaluator.js<br />LLM 평가"]
+        F3["NameReport.tsx<br />UI 렌더링"]
+        end
+
+        A1 & A2 & A3 & A4 --> B1
+        B1 --> B2
+        B2 -.->|"API 실패"| B3
+        B1 & B2 & B3 --> C1
+        C1 --> C2 & C3
+        C2 & C3 --> D1 & D2 & D3 & D4
+        D1 & D2 & D3 & D4 --> E1 & E2 & E3 & E4
+        E1 & E2 & E3 & E4 --> F1 & F2
+        F1 & F2 --> F3
+    </div>
+
+    <div class="section">
+        <h3>📋 단계별 상세 설명</h3>
+        <table>
+            <tr>
+                <th>단계</th>
+                <th>파일</th>
+                <th>역할</th>
+            </tr>
+            <tr>
+                <td><span class="step-num">1</span> 입력</td>
+                <td>UserFlow.tsx, StoryApp.tsx</td>
+                <td>사용자로부터 성씨, 생년월일, 시간, 스타일 선호도 수집</td>
+            </tr>
+            <tr>
+                <td><span class="step-num">2</span> 사주</td>
+                <td>sajuUtils.js → kasiAdapter.js</td>
+                <td>KASI API로 정밀 사주 계산, 실패 시 로컬 계산 폴백</td>
+            </tr>
+            <tr>
+                <td><span class="step-num">3</span> 후보</td>
+                <td>namingUtils.js + hanja_db.json</td>
+                <td>한자 DB에서 조건에 맞는 이름 후보 ~800개 생성</td>
+            </tr>
+            <tr>
+                <td><span class="step-num">4</span> 필터</td>
+                <td>modern_preferences.json, phonetic_rules.json</td>
+                <td>부적절한 이름 차단, 발음 규칙 적용, 분파 체크</td>
+            </tr>
+            <tr>
+                <td><span class="step-num">5</span> 점수</td>
+                <td>suriPatterns.js, pronunciationUtils.js</td>
+                <td>9개 요소 기반 종합 점수 계산 (0~100점)</td>
+            </tr>
+            <tr>
+                <td><span class="step-num">6</span> 출력</td>
+                <td>narrativeUtils.js → NameReport.tsx</td>
+                <td>스토리 텍스트 생성 + UI 렌더링</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                curve: 'basis',
+                padding: 15,
+                nodeSpacing: 30,
+                rankSpacing: 50
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+{
+    "name": "erumi-core",
+    "version": "1.0.0",
+    "description": "Erumi 작명 엔진 - 공유 로직",
+    "main": "index.ts",
+    "types": "index.ts",
+    "scripts": {
+        "build": "tsc",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
+}

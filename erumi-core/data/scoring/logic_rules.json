@@ -1,0 +1,43 @@
+[
+  {
+    "id": "rule_wood",
+    "keyword": "Creative",
+    "display_name": "창의적이고 맑은",
+    "target_element": "Wood",
+    "weight": 5,
+    "desc": "나무(Wood) 기운은 쑥쑥 자라나는 성장과 순수함을 상징합니다."
+  },
+  {
+    "id": "rule_fire",
+    "keyword": "Passion",
+    "display_name": "밝고 열정적인",
+    "target_element": "Fire",
+    "weight": 5,
+    "desc": "불(Fire) 기운은 화려한 명예와 리더십을 상징합니다."
+  },
+  {
+    "id": "rule_earth",
+    "keyword": "Trust",
+    "display_name": "따뜻하고 든든한",
+    "target_element": "Earth",
+    "weight": 5,
+    "desc": "흙(Earth) 기운은 포용력과 안정을 상징합니다."
+  },
+  {
+    "id": "rule_metal",
+    "keyword": "Smart",
+    "display_name": "세련되고 명석한",
+    "target_element": "Metal",
+    "weight": 5,
+    "desc": "금(Metal) 기운은 날카로운 지성과 결단력을 상징합니다."
+  },
+  {
+    "id": "rule_water",
+    "keyword": "Wisdom",
+    "display_name": "지혜롭고 유연한",
+    "target_element": "Water",
+    "weight": 5,
+    "desc": "물(Water) 기운은 깊은 지혜와 막힘없는 흐름을 상징합니다."
+  }
+]
+
