@@ -50,6 +50,7 @@ export const lineHeight = {
     labelSm: 16,
     labelMd: 18,
     labelLg: 20,
+    labelXlg: 22,
     captionMd: 22,
     bodyMd: 18,
     bodyLg: 20,

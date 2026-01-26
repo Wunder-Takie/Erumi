@@ -1,0 +1,465 @@
+/**
+ * Erumi Report Engine - Main Report Generator
+ * 전체 리포트 생성 오케스트레이터
+ */
+
+import type {
+    ReportInput,
+    NameReport,
+    HeaderSection,
+    SummarySection,
+    CarouselCard,
+    AnalysisTabs,
+} from './types';
+
+import { YinYangAnalyzer } from './analyzers/YinYangAnalyzer';
+import { PronunciationAnalyzer } from './analyzers/PronunciationAnalyzer';
+import { NumerologyAnalyzer } from './analyzers/NumerologyAnalyzer';
+import { NaturalElementAnalyzer } from './analyzers/NaturalElementAnalyzer';
+import { ForbiddenCharAnalyzer } from './analyzers/ForbiddenCharAnalyzer';
+import { generateReportContent, type HanjaInfo, type AnalysisData } from './ReportLLMGenerator';
+
+import hanjaDb from '../data/core/hanja_db.json' with { type: 'json' };
+import surnames from '../data/core/surnames.json' with { type: 'json' };
+
+interface HanjaEntry {
+    hanja: string;
+    hangul: string;
+    meaning_korean: string;
+    meaning_story?: string;
+    strokes: number;
+    element?: string;
+}
+
+interface SurnameEntry {
+    hangul: string;
+    hanja: string;
+    strokes: number;
+    element: string;
+}
+
+// ============================================
+// Report Generator Class
+// ============================================
+
+export class ReportGenerator {
+    private yinYangAnalyzer: YinYangAnalyzer;
+    private pronunciationAnalyzer: PronunciationAnalyzer;
+    private numerologyAnalyzer: NumerologyAnalyzer;
+    private naturalElementAnalyzer: NaturalElementAnalyzer;
+    private forbiddenCharAnalyzer: ForbiddenCharAnalyzer;
+    private hanjaMap: Map<string, HanjaEntry>;
+    private surnameMap: Map<string, SurnameEntry>;
+
+    constructor() {
+        this.yinYangAnalyzer = new YinYangAnalyzer();
+        this.pronunciationAnalyzer = new PronunciationAnalyzer();
+        this.numerologyAnalyzer = new NumerologyAnalyzer();
+        this.naturalElementAnalyzer = new NaturalElementAnalyzer();
+        this.forbiddenCharAnalyzer = new ForbiddenCharAnalyzer();
+        this.hanjaMap = new Map(
+            (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
+        );
+        this.surnameMap = new Map(
+            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
+        );
+    }
+
+    /**
+     * 전체 리포트 생성
+     */
+    async generate(input: ReportInput): Promise<NameReport> {
+        // 1. Header 생성
+        const header = await this.generateHeader(input);
+
+        // 2. Analysis 탭 생성 (계산 기반)
+        const analysis = await this.generateAnalysis(input);
+
+        // 3. 한자 정보 수집
+        const hanjaInfoList = this.collectHanjaInfo(input);
+
+        // 4. 분석 데이터 변환 (LLM용)
+        const analysisData = this.convertToAnalysisData(analysis);
+
+        // 5. LLM으로 콘텐츠 생성 (Summary, Carousel, 탭 요약)
+        const llmContent = await generateReportContent(input, hanjaInfoList, analysisData);
+
+        // 6. LLM 생성 요약을 Analysis 탭에 적용
+        const enhancedAnalysis = this.applyLLMComments(analysis, llmContent.analysisComments);
+
+        return {
+            header,
+            summary: { text: llmContent.summary },
+            carousel: llmContent.carousel,
+            analysis: enhancedAnalysis,
+            generatedAt: new Date(),
+            version: '1.0.0',
+        };
+    }
+
+    /**
+     * 한자 정보 수집
+     */
+    private collectHanjaInfo(input: ReportInput): HanjaInfo[] {
+        return input.givenNameHanja.map((hanja, i) => {
+            const entry = this.hanjaMap.get(hanja);
+            return {
+                hanja,
+                hangul: input.givenName[i],
+                meaning_korean: entry?.meaning_korean || hanja,
+                meaning_story: entry?.meaning_story,
+                element: entry?.element,
+            };
+        });
+    }
+
+    /**
+     * Analysis를 LLM용 데이터로 변환
+     */
+    private convertToAnalysisData(analysis: AnalysisTabs): AnalysisData {
+        return {
+            yinYang: {
+                isBalanced: analysis.yinYang.isBalanced,
+                yinCount: analysis.yinYang.characters.filter(c => c.type === '음').length,
+                yangCount: analysis.yinYang.characters.filter(c => c.type === '양').length,
+            },
+            pronunciation: {
+                flow: analysis.pronunciation.flow || '중립',
+                elements: analysis.pronunciation.characters.map(c => c.elementKorean),
+            },
+            numerology: {
+                scores: analysis.numerology.periods.map(p => ({
+                    name: p.name,
+                    level: p.level,
+                    ageRange: p.ageRange,
+                    suriNumber: p.suriNumber,
+                    interpretation: p.interpretation,
+                })),
+            },
+            naturalElement: {
+                nameElements: {
+                    wood: analysis.naturalElement.nameElements.wood,
+                    fire: analysis.naturalElement.nameElements.fire,
+                    earth: analysis.naturalElement.nameElements.earth,
+                    metal: analysis.naturalElement.nameElements.metal,
+                    water: analysis.naturalElement.nameElements.water,
+                },
+                filled: analysis.naturalElement.filledElements,
+            },
+            forbiddenChar: {
+                hasIssue: analysis.forbiddenChar.characters.some(c => c.status !== 'good'),
+                issues: analysis.forbiddenChar.characters
+                    .filter(c => c.status !== 'good')
+                    .map(c => c.reason),
+            },
+        };
+    }
+
+    /**
+     * LLM 생성 요약을 Analysis 탭에 적용
+     */
+    private applyLLMComments(
+        analysis: AnalysisTabs,
+        comments: { yinYang: string; pronunciation: string; numerology: string; naturalElement: string; forbiddenChar: string }
+    ): AnalysisTabs {
+        // 수리성명학: LLM 응답에서 각 시기별 해석 파싱
+        const enhancedNumerology = this.enhanceNumerologyWithLLM(analysis.numerology, comments.numerology);
+
+        return {
+            yinYang: { ...analysis.yinYang, summary: comments.yinYang },
+            pronunciation: { ...analysis.pronunciation, summary: comments.pronunciation },
+            numerology: enhancedNumerology,
+            naturalElement: { ...analysis.naturalElement, summary: comments.naturalElement },
+            forbiddenChar: { ...analysis.forbiddenChar, summary: comments.forbiddenChar },
+        };
+    }
+
+    /**
+     * LLM 수리성명학 해석을 periods에 적용
+     */
+    private enhanceNumerologyWithLLM(
+        numerology: AnalysisTabs['numerology'],
+        llmNumerology: string
+    ): AnalysisTabs['numerology'] {
+        // LLM 응답을 시기별로 파싱 (초년운: ...\n청년운: ... 형식)
+        const parsedInterpretations: Record<string, string> = {};
+
+        // 줄바꿈으로 분리 (실제 \n과 이스케이프된 \\n 모두 처리)
+        const lines = llmNumerology.split(/\\n|\n/).filter(l => l.trim());
+
+        for (const line of lines) {
+            // "초년운: ..." 형식 파싱 (초년운/청년운/중년운/말년운 지원)
+            const match = line.match(/^(초년운|청년운|중년운|말년운)[^:]*:\s*(.+)$/);
+            if (match) {
+                parsedInterpretations[match[1]] = match[2].trim();
+            }
+        }
+
+        // periods에 LLM 해석 적용
+        // period.name은 '초년', '청년', '중년', '말년' 형식
+        // LLM 키는 '초년운', '청년운', '중년운', '말년운' 형식
+        const enhancedPeriods = numerology.periods.map(period => {
+            const llmKey = period.name + '운';
+            const llmInterpretation = parsedInterpretations[llmKey];
+            return {
+                ...period,
+                interpretation: llmInterpretation || period.interpretation,
+            };
+        });
+
+        return {
+            ...numerology,
+            periods: enhancedPeriods,
+            summary: llmNumerology,
+        };
+    }
+
+    /**
+     * Header 섹션 생성
+     */
+    private async generateHeader(input: ReportInput): Promise<HeaderSection> {
+        const characters = [];
+
+        // 성씨 추가
+        characters.push({
+            hanja: input.surnameHanja,
+            hangul: input.surname,
+            meaning: this.lookupMeaning(input.surnameHanja, true),
+            strokes: this.getStrokes(input.surnameHanja, true),
+            element: this.getElement(input.surnameHanja, true),
+        });
+
+        // 이름 글자 추가
+        for (let i = 0; i < input.givenNameHanja.length; i++) {
+            characters.push({
+                hanja: input.givenNameHanja[i],
+                hangul: input.givenName[i],
+                meaning: this.lookupMeaning(input.givenNameHanja[i], false),
+                strokes: this.getStrokes(input.givenNameHanja[i], false),
+                element: this.getElement(input.givenNameHanja[i], false),
+            });
+        }
+
+        return { characters };
+    }
+
+    /**
+     * Analysis 탭 전체 생성
+     */
+    private async generateAnalysis(input: ReportInput): Promise<AnalysisTabs> {
+        const [yinYang, pronunciation, numerology, naturalElement, forbiddenChar] = await Promise.all([
+            this.yinYangAnalyzer.analyze(input),
+            this.pronunciationAnalyzer.analyze(input),
+            this.numerologyAnalyzer.analyze(input),
+            this.naturalElementAnalyzer.analyze(input),
+            this.forbiddenCharAnalyzer.analyze(input),
+        ]);
+
+        return {
+            yinYang,
+            pronunciation,
+            numerology,
+            naturalElement,
+            forbiddenChar,
+        };
+    }
+
+    /**
+     * Summary 생성 (LLM 연동 - Phase 4)
+     */
+    private async generateSummary(input: ReportInput, analysis: AnalysisTabs): Promise<SummarySection> {
+        // 템플릿 기반 생성 (LLM 연동 전까지)
+        const names = input.givenName.join('');
+        const meanings = input.givenNameHanja.map(h => {
+            const entry = this.hanjaMap.get(h);
+            return entry?.meaning_korean || h;
+        });
+
+        // 간단한 스토리 생성
+        const meaningText = meanings.join('과 ');
+        const yinYangSummary = analysis.yinYang.isBalanced ? '균형 잡힌' : '개성 있는';
+
+        return {
+            text: `${meaningText}의 의미를 담은 ${yinYangSummary} 이름이에요. ${names}은(는) 밝고 아름다운 미래를 향해 나아갈 것입니다.`,
+        };
+    }
+
+    /**
+     * Carousel 카드 생성 (LLM 연동 - Phase 4)
+     */
+    private async generateCarousel(input: ReportInput, _analysis: AnalysisTabs): Promise<CarouselCard[]> {
+        // 1. 글자별 의미 카드
+        const meaningCard: CarouselCard = {
+            type: 'meaning',
+            title: '글자별 의미',
+            characters: input.givenNameHanja.map((hanja, i) => {
+                const entry = this.hanjaMap.get(hanja);
+                return {
+                    hanja,
+                    meaning: entry?.meaning_korean || `${input.givenName[i]}`,
+                    story: entry?.meaning_story || `${input.givenName[i]}의 깊은 의미를 담고 있습니다.`,
+                };
+            }),
+        };
+
+        // 2. 이름의 기운 카드 (두 글자 조합 해석)
+        const entries = input.givenNameHanja.map(h => this.hanjaMap.get(h));
+        const energyTitle = this.generateEnergyTitle(entries);
+        const energyContent = this.generateEnergyContent(input, entries);
+
+        const energyCard: CarouselCard = {
+            type: 'energy',
+            title: energyTitle,
+            content: energyContent,
+        };
+
+        // 3. 축복 메시지 카드
+        const blessingTitle = this.generateBlessingTitle(entries);
+        const blessingContent = this.generateBlessingContent(input, entries);
+
+        const blessingCard: CarouselCard = {
+            type: 'blessing',
+            title: blessingTitle,
+            content: blessingContent,
+        };
+
+        return [meaningCard, energyCard, blessingCard];
+    }
+
+    /**
+     * 이름의 기운 제목 생성
+     */
+    private generateEnergyTitle(entries: (HanjaEntry | undefined)[]): string {
+        // 첫 글자와 두 번째 글자의 핵심 특성 추출
+        const traits: string[] = [];
+
+        entries.forEach(entry => {
+            if (entry?.meaning_korean) {
+                const meaning = entry.meaning_korean;
+                // "밝을 랑" → "밝은", "시 시" → "시적인" 등 변환
+                if (meaning.includes('밝을')) traits.push('맑은 목소리');
+                else if (meaning.includes('시')) traits.push('뛰어난 표현력');
+                else if (meaning.includes('현')) traits.push('현명한 지혜');
+                else if (meaning.includes('지')) traits.push('깊은 지혜');
+                else if (meaning.includes('준')) traits.push('빼어난 재능');
+                else traits.push(meaning.split(' ')[0]);
+            }
+        });
+
+        return traits.length > 1 ? `${traits[0]}와 ${traits[1]}` : traits[0] || '이름의 기운';
+    }
+
+    /**
+     * 이름의 기운 본문 생성
+     */
+    private generateEnergyContent(input: ReportInput, entries: (HanjaEntry | undefined)[]): string {
+        const names = input.givenName.join('');
+
+        if (entries.length >= 2 && entries[0] && entries[1]) {
+            const first = entries[0];
+            const second = entries[1];
+            return `${second.meaning_korean?.split(' ')[0] || ''}(${second.hanja})와 ${first.meaning_korean?.split(' ')[0] || ''}(${first.hanja})을 겸비하여, 자신의 뜻을 세상에 명확하고 조리 있게 전달하는 리더나 예술가로 성장하라는 뜻이에요.`;
+        }
+
+        return `${names}은(는) 뛰어난 재능과 밝은 기운을 가진 이름입니다.`;
+    }
+
+    /**
+     * 축복 제목 생성
+     */
+    private generateBlessingTitle(entries: (HanjaEntry | undefined)[]): string {
+        const traits: string[] = [];
+
+        entries.forEach(entry => {
+            if (entry?.meaning_korean) {
+                const meaning = entry.meaning_korean;
+                if (meaning.includes('밝을')) traits.push('명랑하고 구김살 없는');
+                else if (meaning.includes('시')) traits.push('예술가');
+                else if (meaning.includes('현')) traits.push('현명한 지도자');
+                else if (meaning.includes('지')) traits.push('지혜로운');
+                else if (meaning.includes('준')) traits.push('뛰어난 리더');
+            }
+        });
+
+        if (traits.includes('명랑하고 구김살 없는') && traits.includes('예술가')) {
+            return '명랑하고 구김살 없는 예술가';
+        }
+
+        return traits.join(' ') || '밝은 미래로의 축복';
+    }
+
+    /**
+     * 축복 본문 생성
+     */
+    private generateBlessingContent(input: ReportInput, entries: (HanjaEntry | undefined)[]): string {
+        const hasBright = entries.some(e => e?.meaning_korean?.includes('밝을'));
+        const hasPoetic = entries.some(e => e?.meaning_korean?.includes('시'));
+
+        if (hasBright && hasPoetic) {
+            return '섬세한 재능을 지녔으면서도 예민함 대신, 구김살 없이 밝고 명랑한 에너지로 주변에 즐거움을 주는 사람이 되라는 축복을 담고 있어요.';
+        }
+
+        if (hasBright) {
+            return '달빛처럼 환하고 밝은 성격으로, 어디서든 주변을 환하게 밝히는 사람이 되라는 축복을 담고 있어요.';
+        }
+
+        if (hasPoetic) {
+            return '깊은 감수성과 아름다운 표현력으로, 세상에 감동을 전하는 사람이 되라는 축복을 담고 있어요.';
+        }
+
+        const names = input.givenName.join('');
+        return `${names}이(가) 행복하고 밝은 미래를 향해 나아가길 기원합니다.`;
+    }
+
+    // ============================================
+    // Helper Methods
+    // ============================================
+
+    /**
+     * 한자 음훈 조회
+     */
+    private lookupMeaning(hanja: string, isSurname: boolean): string {
+        if (isSurname) {
+            const entry = this.surnameMap.get(hanja);
+            if (entry) return `${entry.hangul} ${entry.hangul}`;
+        }
+        const entry = this.hanjaMap.get(hanja);
+        return entry?.meaning_korean ?? `${hanja}`;
+    }
+
+    /**
+     * 한자 획수 조회
+     */
+    private getStrokes(hanja: string, isSurname: boolean): number {
+        if (isSurname) {
+            const entry = this.surnameMap.get(hanja);
+            if (entry) return entry.strokes;
+        }
+        const entry = this.hanjaMap.get(hanja);
+        return entry?.strokes ?? 10;
+    }
+
+    /**
+     * 한자 오행 조회
+     */
+    private getElement(hanja: string, isSurname: boolean): string {
+        if (isSurname) {
+            const entry = this.surnameMap.get(hanja);
+            if (entry) return entry.element;
+        }
+        const entry = this.hanjaMap.get(hanja);
+        return entry?.element ?? 'Earth';
+    }
+}
+
+// ============================================
+// Convenience Function
+// ============================================
+
+/**
+ * 리포트 생성 편의 함수
+ */
+export async function generateReport(input: ReportInput): Promise<NameReport> {
+    const generator = new ReportGenerator();
+    return generator.generate(input);
+}

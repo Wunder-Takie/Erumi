@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { generateNames, calculateSaju, sajuToWeights, analyzeElements, extractYongsin } from 'erumi-core';
 import storyFlow from '../data/ui/story_flow.json';
 import type { NameItem } from '../types';
-import { NameReport } from '../components/NameReport';
+import { NewNameReport } from '../components/NewNameReport';
 
 // Types
 interface StoryOption {
@@ -840,42 +840,29 @@ export default function UserFlow() {
                     />
                 )}
 
-                {/* Name Report Modal */}
+                {/* Name Report Modal - 새 리포트 엔진 사용 */}
                 {selectedReportName && 'hanjaName' in selectedReportName && (
-                    <NameReport
+                    <NewNameReport
                         name={{
                             hangulName: selectedReportName.hanja1.hangul + selectedReportName.hanja2.hangul,
                             hanjaName: selectedReportName.hanja1.hanja + selectedReportName.hanja2.hanja,
-                            fullName: {
-                                hangul: selectedReportName.fullName.hangul,
-                                hanja: surname + selectedReportName.hanja1.hanja + selectedReportName.hanja2.hanja,
-                                roman: selectedReportName.romanName,
-                            },
+                            surname: surname,
+                            surnameHanja: surname,
                             hanja1: {
                                 hanja: selectedReportName.hanja1.hanja,
                                 hangul: selectedReportName.hanja1.hangul,
-                                meaning_korean: (selectedReportName.hanja1 as any).meaning_korean || '',
-                                element: (selectedReportName.hanja1 as any).element || 'Wood',
-                                strokes: (selectedReportName.hanja1 as any).strokes || 8,
                             },
                             hanja2: {
                                 hanja: selectedReportName.hanja2.hanja,
                                 hangul: selectedReportName.hanja2.hangul,
-                                meaning_korean: (selectedReportName.hanja2 as any).meaning_korean || '',
-                                element: (selectedReportName.hanja2 as any).element || 'Water',
-                                strokes: (selectedReportName.hanja2 as any).strokes || 8,
                             },
-                            suri: selectedReportName.suri as any || {
-                                초년운: { count: 0, info: { level: '-' } },
-                                중년운: { count: 0, info: { level: '-' } },
-                                말년운: { count: 0, info: { level: '-' } },
-                                총운: { count: 0, info: { level: '-' } },
-                            },
-                            elements: selectedReportName.elements,
-                            score: selectedReportName.score,
                         }}
-                        saju={computedSaju as any}
-                        analysis={computedAnalysis as any}
+                        saju={computedSaju ? {
+                            birthDate: birthDate,
+                            birthHour: birthHour,
+                            elements: computedAnalysis?.distribution,
+                            yongsin: computedAnalysis?.neededElements,
+                        } : undefined}
                         onClose={() => setSelectedReportName(null)}
                     />
                 )}

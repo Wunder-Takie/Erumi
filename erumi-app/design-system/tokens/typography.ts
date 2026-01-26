@@ -47,7 +47,7 @@ export const label: Record<string, TypographyStyle> = {
     xlg: {
         fontFamily: fontFamily.pretendardMedium,
         fontSize: 18,
-        lineHeight: lineHeight.labelLg,
+        lineHeight: lineHeight.labelXlg,
         letterSpacing: tracking.base,
     },
     // SemiBold variants
@@ -78,7 +78,7 @@ export const label: Record<string, TypographyStyle> = {
     xlgSemiBold: {
         fontFamily: fontFamily.pretendardSemiBold,
         fontSize: 18,
-        lineHeight: lineHeight.labelLg,
+        lineHeight: lineHeight.labelXlg,
         letterSpacing: tracking.base,
     },
     // Bold variants
@@ -109,7 +109,7 @@ export const label: Record<string, TypographyStyle> = {
     xlgBold: {
         fontFamily: fontFamily.pretendardBold,
         fontSize: 18,
-        lineHeight: lineHeight.labelLg,
+        lineHeight: lineHeight.labelXlg,
         letterSpacing: tracking.base,
     },
 } as const;

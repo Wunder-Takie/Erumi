@@ -23,3 +23,6 @@ export * from './naming/sajuUtils';
 export * from './naming/narrativeUtils';
 export * from './naming/pronunciationUtils';
 export * from './naming/pureKoreanUtils';
+
+// Report Engine
+export * from './report';
