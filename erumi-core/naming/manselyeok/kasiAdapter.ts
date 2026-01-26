@@ -4,6 +4,9 @@
  * 공공데이터포털: data.go.kr
  */
 
+// Node.js process 타입 선언 (React Native 호환)
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 import sajuData from '../../data/saju/saju_data.json' with { type: 'json' };
 
 // ==========================================
@@ -78,8 +81,18 @@ interface SajuDataJson {
 // ==========================================
 
 const getApiKey = (): string => {
-    if (typeof import.meta !== 'undefined' && import.meta.env) {
-        return import.meta.env.VITE_KASI_API_KEY || '';
+    // React Native / Hermes 호환: import.meta 대신 globalThis 사용
+    try {
+        // Vite 환경
+        if (typeof globalThis !== 'undefined' && (globalThis as Record<string, unknown>).__VITE_ENV__) {
+            return ((globalThis as Record<string, unknown>).__VITE_ENV__ as Record<string, string>).VITE_KASI_API_KEY || '';
+        }
+        // Node.js 환경
+        if (typeof process !== 'undefined' && process.env) {
+            return process.env.VITE_KASI_API_KEY || '';
+        }
+    } catch {
+        // React Native / Hermes 환경에서는 API 키 없음 (Firebase proxy 사용)
     }
     return '';
 };
