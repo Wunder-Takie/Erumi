@@ -3,8 +3,9 @@
  * 정통 작명 리포트 - TabMenu + OrthodoxReportContent 조합
  */
 import * as React from 'react';
-import { useState, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, ViewStyle, ScrollView, PanResponder } from 'react-native';
+import { useState, useRef } from 'react';
+import { View, Text, StyleSheet, ViewStyle, ScrollView } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { TabMenu, TabItem } from './TabMenu';
 import {
     OrthodoxReportContent,
@@ -57,7 +58,7 @@ const TAB_ITEMS: TabItem[] = [
     { id: 'unluckyCharacters', label: '불용문자' },
 ];
 
-const SWIPE_THRESHOLD = 50; // 스와이프 인식 최소 거리
+const SWIPE_THRESHOLD = 15; // 스와이프 인식 최소 거리 (최대 민감)
 
 // =============================================================================
 // OrthodoxReport Component
@@ -84,7 +85,6 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
     React.useEffect(() => {
         const layout = tabLayouts.current[selectedTab];
         if (layout && scrollViewRef.current) {
-            // 탭이 보이도록 스크롤 (약간의 여유 공간 포함)
             scrollViewRef.current.scrollTo({ x: Math.max(0, layout.x - 16), animated: true });
         }
     }, [selectedTab]);
@@ -94,28 +94,29 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
         tabLayouts.current[id] = layout;
     };
 
-    // 스와이프 제스처 핸들러
-    const panResponder = useMemo(
-        () =>
-            PanResponder.create({
-                onStartShouldSetPanResponder: () => false,
-                onMoveShouldSetPanResponder: (_, gestureState) => {
-                    // 수평 드래그가 수직보다 클 때만 제스처 인식
-                    return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10;
-                },
-                onPanResponderRelease: (_, gestureState) => {
-                    const { dx } = gestureState;
-                    if (dx < -SWIPE_THRESHOLD && currentIndex < TAB_ITEMS.length - 1) {
-                        // 왼쪽으로 스와이프 → 다음 탭
-                        setSelectedTab(TAB_ITEMS[currentIndex + 1].id as ContentType);
-                    } else if (dx > SWIPE_THRESHOLD && currentIndex > 0) {
-                        // 오른쪽으로 스와이프 → 이전 탭
-                        setSelectedTab(TAB_ITEMS[currentIndex - 1].id as ContentType);
-                    }
-                },
-            }),
-        [currentIndex]
-    );
+    // 탭 전환 함수
+    const changeTab = React.useCallback((newTab: ContentType) => {
+        setSelectedTab(newTab);
+    }, []);
+
+    // react-native-gesture-handler Pan 제스처
+    const panGesture = Gesture.Pan()
+        .activeOffsetX([-1, 1])    // 1px 수평 이동 시 즉시 제스처 활성화 (최극단)
+        // failOffsetY 제거 - 수직 스크롤 없으므로 수평 드래그 항상 우선
+        .onEnd((event) => {
+            const { translationX, velocityX } = event;
+            // 속도가 조금이라도 있으면 threshold 더 낮춤
+            const threshold = Math.abs(velocityX) > 100 ? 8 : SWIPE_THRESHOLD;
+
+            if (translationX < -threshold && currentIndex < TAB_ITEMS.length - 1) {
+                // 왼쪽으로 스와이프 → 다음 탭
+                changeTab(TAB_ITEMS[currentIndex + 1].id as ContentType);
+            } else if (translationX > threshold && currentIndex > 0) {
+                // 오른쪽으로 스와이프 → 이전 탭
+                changeTab(TAB_ITEMS[currentIndex - 1].id as ContentType);
+            }
+        })
+        .runOnJS(true); // JS에서 실행
 
     // 현재 선택된 탭의 헤더 데이터
     const currentHeader = headerData?.[selectedTab];
@@ -132,7 +133,7 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
                 <TabMenu
                     items={TAB_ITEMS}
                     selectedId={selectedTab}
-                    onSelect={(id) => setSelectedTab(id as ContentType)}
+                    onSelect={(id) => changeTab(id as ContentType)}
                     onTabLayout={handleTabLayout}
                 />
             </ScrollView>
@@ -153,18 +154,20 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
                 </View>
             )}
 
-            {/* Content Area - 스와이프 제스처 적용 */}
-            <View {...panResponder.panHandlers}>
-                <OrthodoxReportContent
-                    style={styles.contentArea}
-                    variant={selectedTab}
-                    pronunciationElements={pronunciationElements}
-                    fiveElementsTheory={fiveElementsTheory}
-                    suriAnalysis={suriAnalysis}
-                    elementalBalance={elementalBalance}
-                    unluckyCharacters={unluckyCharacters}
-                />
-            </View>
+            {/* Content Area - GestureDetector 적용 */}
+            <GestureDetector gesture={panGesture}>
+                <View>
+                    <OrthodoxReportContent
+                        style={styles.contentArea}
+                        variant={selectedTab}
+                        pronunciationElements={pronunciationElements}
+                        fiveElementsTheory={fiveElementsTheory}
+                        suriAnalysis={suriAnalysis}
+                        elementalBalance={elementalBalance}
+                        unluckyCharacters={unluckyCharacters}
+                    />
+                </View>
+            </GestureDetector>
         </View>
     );
 };
@@ -190,7 +193,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background.default.higher, // Figma: VariableID:5:270 (F4ECDD)
         borderRadius: 16, // Figma: cornerRadius 16
     },
-    // Figma: reportOverview (padding: 12, bg: surface.tertiary, borderRadius: 12)
+    // Figma: reportOverview (padding 12, bg: surface.secondary.high, borderRadius: 12)
     reportOverviewWrapper: {
         padding: 12, // Figma: padding 12
         backgroundColor: colors.background.default.high, // Figma: VariableID:5:271 (E8DEC8)
