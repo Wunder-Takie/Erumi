@@ -16,12 +16,16 @@ export interface Suri81Entry {
     desc: string;
 }
 
-export interface SurnameInfo {
-    hangul: string;
+export interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+export type SurnamesData = Record<string, SurnameVariant[]>;
 
 export interface SuriSection {
     count: number;
@@ -64,12 +68,20 @@ export function getSuriInfo(count: number): Suri81Entry | null {
 }
 
 /**
- * 성씨 정보 가져오기
+ * 성씨 정보 가져오기 (새 구조: hangul → variants 배열)
  * @param hangul - 성씨 한글
- * @returns 성씨 정보 또는 null
+ * @param hanja - 특정 한자 (선택)
+ * @returns 성씨 variant 또는 null
  */
-export function getSurnameInfo(hangul: string): SurnameInfo | null {
-    return (surnames as SurnameInfo[]).find(s => s.hangul === hangul) || null;
+export function getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | null {
+    const surnamesData = surnames as SurnamesData;
+    const variants = surnamesData[hangul];
+    if (!variants || variants.length === 0) return null;
+
+    if (hanja) {
+        return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+    }
+    return variants.find(v => v.is_major) || variants[0];
 }
 
 /**

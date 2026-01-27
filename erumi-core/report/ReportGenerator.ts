@@ -31,12 +31,16 @@ interface HanjaEntry {
     element?: string;
 }
 
-interface SurnameEntry {
-    hangul: string;
+interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+type SurnamesData = Record<string, SurnameVariant[]>;
 
 // ============================================
 // Report Generator Class
@@ -49,7 +53,7 @@ export class ReportGenerator {
     private naturalElementAnalyzer: NaturalElementAnalyzer;
     private forbiddenCharAnalyzer: ForbiddenCharAnalyzer;
     private hanjaMap: Map<string, HanjaEntry>;
-    private surnameMap: Map<string, SurnameEntry>;
+    private surnamesData: SurnamesData;
 
     constructor() {
         this.yinYangAnalyzer = new YinYangAnalyzer();
@@ -60,9 +64,20 @@ export class ReportGenerator {
         this.hanjaMap = new Map(
             (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
         );
-        this.surnameMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
-        );
+        this.surnamesData = surnames as SurnamesData;
+    }
+
+    /**
+     * 한글 성씨로 한자 variant 조회
+     */
+    private getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | undefined {
+        const variants = this.surnamesData[hangul];
+        if (!variants || variants.length === 0) return undefined;
+
+        if (hanja) {
+            return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+        }
+        return variants.find(v => v.is_major) || variants[0];
     }
 
     /**
@@ -224,9 +239,9 @@ export class ReportGenerator {
         characters.push({
             hanja: input.surnameHanja,
             hangul: input.surname,
-            meaning: this.lookupMeaning(input.surnameHanja, true),
-            strokes: this.getStrokes(input.surnameHanja, true),
-            element: this.getElement(input.surnameHanja, true),
+            meaning: this.lookupMeaning(input.surname, input.surnameHanja, true),
+            strokes: this.getStrokes(input.surname, input.surnameHanja, true),
+            element: this.getElement(input.surname, input.surnameHanja, true),
         });
 
         // 이름 글자 추가
@@ -234,9 +249,9 @@ export class ReportGenerator {
             characters.push({
                 hanja: input.givenNameHanja[i],
                 hangul: input.givenName[i],
-                meaning: this.lookupMeaning(input.givenNameHanja[i], false),
-                strokes: this.getStrokes(input.givenNameHanja[i], false),
-                element: this.getElement(input.givenNameHanja[i], false),
+                meaning: this.lookupMeaning('', input.givenNameHanja[i], false),
+                strokes: this.getStrokes('', input.givenNameHanja[i], false),
+                element: this.getElement('', input.givenNameHanja[i], false),
             });
         }
 
@@ -418,10 +433,10 @@ export class ReportGenerator {
     /**
      * 한자 음훈 조회
      */
-    private lookupMeaning(hanja: string, isSurname: boolean): string {
+    private lookupMeaning(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return `${entry.hangul} ${entry.hangul}`;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.meaning;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.meaning_korean ?? `${hanja}`;
@@ -430,10 +445,10 @@ export class ReportGenerator {
     /**
      * 한자 획수 조회
      */
-    private getStrokes(hanja: string, isSurname: boolean): number {
+    private getStrokes(hangul: string, hanja: string, isSurname: boolean): number {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return entry.strokes;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.strokes;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.strokes ?? 10;
@@ -442,10 +457,10 @@ export class ReportGenerator {
     /**
      * 한자 오행 조회
      */
-    private getElement(hanja: string, isSurname: boolean): string {
+    private getElement(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return entry.element;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.element;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.element ?? 'Earth';

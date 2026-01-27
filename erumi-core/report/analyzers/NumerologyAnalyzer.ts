@@ -13,27 +13,39 @@ interface HanjaEntry {
     strokes: number;
 }
 
-interface SurnameEntry {
+interface SurnameVariant {
     hanja: string;
     strokes: number;
-    hangul?: string;
+    element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+type SurnamesData = Record<string, SurnameVariant[]>;
 
 export class NumerologyAnalyzer {
     private hanjaMap: Map<string, HanjaEntry>;
-    private surnameMap: Map<string, SurnameEntry>;
-    private surnameHangulMap: Map<string, SurnameEntry>;
+    private surnamesData: SurnamesData;
 
     constructor() {
         this.hanjaMap = new Map(
             (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
         );
-        this.surnameMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
-        );
-        this.surnameHangulMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hangul || '', s])
-        );
+        this.surnamesData = surnames as SurnamesData;
+    }
+
+    /**
+     * 한글 성씨로 한자 variant 조회
+     */
+    private getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | undefined {
+        const variants = this.surnamesData[hangul];
+        if (!variants || variants.length === 0) return undefined;
+
+        if (hanja) {
+            return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+        }
+        return variants.find(v => v.is_major) || variants[0];
     }
 
     /**
@@ -43,9 +55,9 @@ export class NumerologyAnalyzer {
      */
     async analyze(input: ReportInput): Promise<NumerologyResult> {
         // 획수 계산
-        const surnameStrokes = this.getStrokes(input.surnameHanja, true);
-        const strokes1 = input.givenNameHanja[0] ? this.getStrokes(input.givenNameHanja[0], false) : 0;
-        const strokes2 = input.givenNameHanja[1] ? this.getStrokes(input.givenNameHanja[1], false) : 0;
+        const surnameStrokes = this.getStrokes(input.surname, input.surnameHanja, true);
+        const strokes1 = input.givenNameHanja[0] ? this.getStrokes('', input.givenNameHanja[0], false) : 0;
+        const strokes2 = input.givenNameHanja[1] ? this.getStrokes('', input.givenNameHanja[1], false) : 0;
 
         // suriUtils.ts와 동일한 4격 계산
         // 초년 (= 초년운): 이름1 + 이름2
@@ -68,14 +80,10 @@ export class NumerologyAnalyzer {
     /**
      * 획수 조회
      */
-    private getStrokes(hanja: string, isSurname: boolean): number {
+    private getStrokes(hangul: string, hanja: string, isSurname: boolean): number {
         if (isSurname) {
-            // 한자로 먼저 조회
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return entry.strokes;
-            // 한글로 조회 시도
-            const hangulEntry = this.surnameHangulMap.get(hanja);
-            if (hangulEntry) return hangulEntry.strokes;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.strokes;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.strokes ?? 10;

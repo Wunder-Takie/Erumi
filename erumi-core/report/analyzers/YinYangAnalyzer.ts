@@ -15,24 +15,39 @@ interface HanjaEntry {
     element?: string;
 }
 
-interface SurnameEntry {
-    hangul: string;
+interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+type SurnamesData = Record<string, SurnameVariant[]>;
 
 export class YinYangAnalyzer {
     private hanjaMap: Map<string, HanjaEntry>;
-    private surnameMap: Map<string, SurnameEntry>;
+    private surnamesData: SurnamesData;
 
     constructor() {
         this.hanjaMap = new Map(
             (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
         );
-        this.surnameMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
-        );
+        this.surnamesData = surnames as SurnamesData;
+    }
+
+    /**
+     * 한글 성씨로 한자 variant 조회
+     */
+    private getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | undefined {
+        const variants = this.surnamesData[hangul];
+        if (!variants || variants.length === 0) return undefined;
+
+        if (hanja) {
+            return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+        }
+        return variants.find(v => v.is_major) || variants[0];
     }
 
     /**
@@ -42,10 +57,10 @@ export class YinYangAnalyzer {
         const characters: YinYangCharacter[] = [];
 
         // 성씨 분석
-        const surnameStrokes = this.getStrokes(input.surnameHanja, true);
+        const surnameStrokes = this.getStrokes(input.surname, input.surnameHanja, true);
         characters.push({
             hanja: input.surnameHanja,
-            meaning: this.getMeaning(input.surnameHanja, true),
+            meaning: this.getMeaning(input.surname, input.surnameHanja, true),
             strokes: surnameStrokes,
             isOdd: surnameStrokes % 2 === 1,
             type: surnameStrokes % 2 === 1 ? '양' : '음',
@@ -53,10 +68,10 @@ export class YinYangAnalyzer {
 
         // 이름 글자 분석
         for (const hanja of input.givenNameHanja) {
-            const strokes = this.getStrokes(hanja, false);
+            const strokes = this.getStrokes('', hanja, false);
             characters.push({
                 hanja,
-                meaning: this.getMeaning(hanja, false),
+                meaning: this.getMeaning('', hanja, false),
                 strokes,
                 isOdd: strokes % 2 === 1,
                 type: strokes % 2 === 1 ? '양' : '음',
@@ -82,10 +97,10 @@ export class YinYangAnalyzer {
     /**
      * 획수 조회
      */
-    private getStrokes(hanja: string, isSurname: boolean): number {
+    private getStrokes(hangul: string, hanja: string, isSurname: boolean): number {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return entry.strokes;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.strokes;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.strokes ?? 10;
@@ -94,10 +109,10 @@ export class YinYangAnalyzer {
     /**
      * 음훈 조회
      */
-    private getMeaning(hanja: string, isSurname: boolean): string {
+    private getMeaning(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return `${entry.hangul} ${entry.hangul}`;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.meaning;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.meaning_korean ?? `${hanja}`;

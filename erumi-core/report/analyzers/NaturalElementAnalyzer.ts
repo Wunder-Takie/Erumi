@@ -12,10 +12,16 @@ interface HanjaEntry {
     element?: string;
 }
 
-interface SurnameEntry {
+interface SurnameVariant {
     hanja: string;
+    strokes: number;
     element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+type SurnamesData = Record<string, SurnameVariant[]>;
 
 const ELEMENT_KEYS = ['Wood', 'Fire', 'Earth', 'Metal', 'Water'] as const;
 
@@ -29,15 +35,26 @@ const ELEMENT_KOREAN: Record<string, string> = {
 
 export class NaturalElementAnalyzer {
     private hanjaMap: Map<string, HanjaEntry>;
-    private surnameMap: Map<string, SurnameEntry>;
+    private surnamesData: SurnamesData;
 
     constructor() {
         this.hanjaMap = new Map(
             (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
         );
-        this.surnameMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
-        );
+        this.surnamesData = surnames as SurnamesData;
+    }
+
+    /**
+     * 한글 성씨로 한자 variant 조회 (한자가 있으면 해당 variant, 없으면 is_major=true)
+     */
+    private getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | undefined {
+        const variants = this.surnamesData[hangul];
+        if (!variants || variants.length === 0) return undefined;
+
+        if (hanja) {
+            return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+        }
+        return variants.find(v => v.is_major) || variants[0];
     }
 
     /**
@@ -94,10 +111,10 @@ export class NaturalElementAnalyzer {
             Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0,
         };
 
-        // 성씨 오행
-        const surnameEntry = this.surnameMap.get(input.surnameHanja);
-        if (surnameEntry?.element) {
-            counts[surnameEntry.element] = (counts[surnameEntry.element] || 0) + 1;
+        // 성씨 오행 (한글 성씨로 조회, 한자가 있으면 해당 variant 사용)
+        const surnameVariant = this.getSurnameVariant(input.surname, input.surnameHanja);
+        if (surnameVariant?.element) {
+            counts[surnameVariant.element] = (counts[surnameVariant.element] || 0) + 1;
         }
 
         // 이름 오행

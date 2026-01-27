@@ -1,42 +1,706 @@
-[
-  { "id": 1, "hangul": "김", "hanja": "金", "roman": "Kim", "strokes": 8, "element": "Metal" },
-  { "id": 2, "hangul": "이", "hanja": "李", "roman": "Lee", "strokes": 7, "element": "Wood" },
-  { "id": 3, "hangul": "박", "hanja": "朴", "roman": "Park", "strokes": 6, "element": "Wood" },
-  { "id": 4, "hangul": "최", "hanja": "崔", "roman": "Choi", "strokes": 11, "element": "Earth" },
-  { "id": 5, "hangul": "정", "hanja": "鄭", "roman": "Jung", "strokes": 19, "element": "Fire" },
-  { "id": 6, "hangul": "강", "hanja": "姜", "roman": "Kang", "strokes": 9, "element": "Wood" },
-  { "id": 7, "hangul": "조", "hanja": "趙", "roman": "Cho", "strokes": 14, "element": "Fire" },
-  { "id": 8, "hangul": "윤", "hanja": "尹", "roman": "Yoon", "strokes": 4, "element": "Earth" },
-  { "id": 9, "hangul": "장", "hanja": "張", "roman": "Jang", "strokes": 11, "element": "Fire" },
-  { "id": 10, "hangul": "임", "hanja": "林", "roman": "Lim", "strokes": 8, "element": "Wood" },
-  { "id": 11, "hangul": "한", "hanja": "韓", "roman": "Han", "strokes": 17, "element": "Water" },
-  { "id": 12, "hangul": "오", "hanja": "吳", "roman": "Oh", "strokes": 7, "element": "Wood" },
-  { "id": 13, "hangul": "서", "hanja": "徐", "roman": "Seo", "strokes": 10, "element": "Metal" },
-  { "id": 14, "hangul": "신", "hanja": "申", "roman": "Shin", "strokes": 5, "element": "Metal" },
-  { "id": 15, "hangul": "권", "hanja": "權", "roman": "Kwon", "strokes": 22, "element": "Wood" },
-  { "id": 16, "hangul": "황", "hanja": "黃", "roman": "Hwang", "strokes": 12, "element": "Earth" },
-  { "id": 17, "hangul": "안", "hanja": "安", "roman": "Ahn", "strokes": 6, "element": "Earth" },
-  { "id": 18, "hangul": "송", "hanja": "宋", "roman": "Song", "strokes": 7, "element": "Wood" },
-  { "id": 19, "hangul": "류", "hanja": "柳", "roman": "Ryu", "strokes": 9, "element": "Wood" },
-  { "id": 20, "hangul": "전", "hanja": "全", "roman": "Jeon", "strokes": 6, "element": "Metal" },
-  { "id": 21, "hangul": "홍", "hanja": "洪", "roman": "Hong", "strokes": 10, "element": "Water" },
-  { "id": 22, "hangul": "고", "hanja": "高", "roman": "Ko", "strokes": 10, "element": "Wood" },
-  { "id": 23, "hangul": "문", "hanja": "文", "roman": "Moon", "strokes": 4, "element": "Water" },
-  { "id": 24, "hangul": "양", "hanja": "梁", "roman": "Yang", "strokes": 11, "element": "Wood" },
-  { "id": 25, "hangul": "손", "hanja": "孫", "roman": "Son", "strokes": 10, "element": "Metal" },
-  { "id": 26, "hangul": "배", "hanja": "裴", "roman": "Bae", "strokes": 14, "element": "Water" },
-  { "id": 27, "hangul": "백", "hanja": "白", "roman": "Baek", "strokes": 5, "element": "Metal" },
-  { "id": 28, "hangul": "허", "hanja": "許", "roman": "Heo", "strokes": 11, "element": "Wood" },
-  { "id": 29, "hangul": "유", "hanja": "劉", "roman": "Yoo", "strokes": 15, "element": "Metal" },
-  { "id": 30, "hangul": "남", "hanja": "南", "roman": "Nam", "strokes": 9, "element": "Fire" },
-  { 
-    "id": 999, 
-    "hangul": "직접입력", 
-    "hanja": null, 
-    "roman": null, 
-    "strokes": 0, 
-    "element": null,
-    "is_custom": true 
-  }
-]
-
+{
+  "김": [
+    {
+      "hanja": "金",
+      "strokes": 8,
+      "element": "Metal",
+      "meaning": "쇠 김",
+      "examples": "김해, 경주, 광산, 김녕, 안동",
+      "is_major": true
+    }
+  ],
+  "이": [
+    {
+      "hanja": "李",
+      "strokes": 7,
+      "element": "Wood",
+      "meaning": "오얏 이",
+      "examples": "전주, 경주, 성주, 광주, 연안",
+      "is_major": true
+    },
+    {
+      "hanja": "異",
+      "strokes": 12,
+      "element": "Earth",
+      "meaning": "다를 이",
+      "examples": "밀양",
+      "is_major": false
+    },
+    {
+      "hanja": "伊",
+      "strokes": 6,
+      "element": "Fire",
+      "meaning": "저 이",
+      "examples": "태원, 은천",
+      "is_major": false
+    }
+  ],
+  "박": [
+    {
+      "hanja": "朴",
+      "strokes": 6,
+      "element": "Wood",
+      "meaning": "후박나무 박",
+      "examples": "밀양, 반남, 함양, 순천, 무안",
+      "is_major": true
+    }
+  ],
+  "최": [
+    {
+      "hanja": "崔",
+      "strokes": 11,
+      "element": "Earth",
+      "meaning": "높을 최",
+      "examples": "경주, 전주, 해주, 강릉, 탐진",
+      "is_major": true
+    }
+  ],
+  "정": [
+    {
+      "hanja": "鄭",
+      "strokes": 19,
+      "element": "Fire",
+      "meaning": "나라 정",
+      "examples": "동래, 경주, 진주, 연일, 하동",
+      "is_major": true
+    },
+    {
+      "hanja": "丁",
+      "strokes": 2,
+      "element": "Fire",
+      "meaning": "고무래 정",
+      "examples": "나주, 영광, 창원, 압해",
+      "is_major": true
+    },
+    {
+      "hanja": "程",
+      "strokes": 12,
+      "element": "Wood",
+      "meaning": "한도 정",
+      "examples": "하남",
+      "is_major": false
+    }
+  ],
+  "강": [
+    {
+      "hanja": "姜",
+      "strokes": 9,
+      "element": "Earth",
+      "meaning": "성 강",
+      "examples": "진주",
+      "is_major": true
+    },
+    {
+      "hanja": "康",
+      "strokes": 11,
+      "element": "Wood",
+      "meaning": "편안 강",
+      "examples": "신천, 곡산",
+      "is_major": false
+    },
+    {
+      "hanja": "強",
+      "strokes": 11,
+      "element": "Wood",
+      "meaning": "강할 강",
+      "examples": "괴산",
+      "is_major": false
+    }
+  ],
+  "조": [
+    {
+      "hanja": "趙",
+      "strokes": 14,
+      "element": "Fire",
+      "meaning": "나라 조",
+      "examples": "한양, 함안, 풍양, 배천",
+      "is_major": true
+    },
+    {
+      "hanja": "曺",
+      "strokes": 10,
+      "element": "Earth",
+      "meaning": "성 조",
+      "examples": "창녕",
+      "is_major": true
+    }
+  ],
+  "윤": [
+    {
+      "hanja": "尹",
+      "strokes": 4,
+      "element": "Earth",
+      "meaning": "다스릴 윤",
+      "examples": "파평, 해남, 칠원, 남원",
+      "is_major": true
+    }
+  ],
+  "장": [
+    {
+      "hanja": "張",
+      "strokes": 11,
+      "element": "Fire",
+      "meaning": "베풀 장",
+      "examples": "인동, 안동, 흥덕, 단양",
+      "is_major": true
+    },
+    {
+      "hanja": "章",
+      "strokes": 11,
+      "element": "Fire",
+      "meaning": "글 장",
+      "examples": "거창",
+      "is_major": false
+    },
+    {
+      "hanja": "莊",
+      "strokes": 13,
+      "element": "Wood",
+      "meaning": "풀 장",
+      "examples": "금천",
+      "is_major": false
+    }
+  ],
+  "임": [
+    {
+      "hanja": "林",
+      "strokes": 8,
+      "element": "Wood",
+      "meaning": "수풀 임",
+      "examples": "나주, 평택, 부안, 예천",
+      "is_major": true
+    },
+    {
+      "hanja": "任",
+      "strokes": 6,
+      "element": "Earth",
+      "meaning": "맡길 임",
+      "examples": "풍천, 장흥",
+      "is_major": true
+    }
+  ],
+  "한": [
+    {
+      "hanja": "韓",
+      "strokes": 17,
+      "element": "Water",
+      "meaning": "나라 한",
+      "examples": "청주, 곡산",
+      "is_major": true
+    },
+    {
+      "hanja": "漢",
+      "strokes": 15,
+      "element": "Water",
+      "meaning": "한나라 한",
+      "examples": "충주",
+      "is_major": false
+    }
+  ],
+  "오": [
+    {
+      "hanja": "吳",
+      "strokes": 7,
+      "element": "Wood",
+      "meaning": "나라 오",
+      "examples": "해주, 동복, 보성",
+      "is_major": true
+    }
+  ],
+  "서": [
+    {
+      "hanja": "徐",
+      "strokes": 10,
+      "element": "Metal",
+      "meaning": "천천할 서",
+      "examples": "달성, 이천, 대구",
+      "is_major": true
+    }
+  ],
+  "신": [
+    {
+      "hanja": "申",
+      "strokes": 5,
+      "element": "Metal",
+      "meaning": "납 신",
+      "examples": "평산, 고령, 아주",
+      "is_major": true
+    },
+    {
+      "hanja": "辛",
+      "strokes": 7,
+      "element": "Metal",
+      "meaning": "매울 신",
+      "examples": "영산, 영월",
+      "is_major": true
+    },
+    {
+      "hanja": "愼",
+      "strokes": 13,
+      "element": "Fire",
+      "meaning": "삼갈 신",
+      "examples": "거창",
+      "is_major": false
+    }
+  ],
+  "권": [
+    {
+      "hanja": "權",
+      "strokes": 22,
+      "element": "Wood",
+      "meaning": "권세 권",
+      "examples": "안동, 예천",
+      "is_major": true
+    }
+  ],
+  "황": [
+    {
+      "hanja": "黃",
+      "strokes": 12,
+      "element": "Earth",
+      "meaning": "누를 황",
+      "examples": "창원, 장수, 평해",
+      "is_major": true
+    }
+  ],
+  "안": [
+    {
+      "hanja": "安",
+      "strokes": 6,
+      "element": "Earth",
+      "meaning": "편안 안",
+      "examples": "순흥, 죽산, 광주",
+      "is_major": true
+    }
+  ],
+  "송": [
+    {
+      "hanja": "宋",
+      "strokes": 7,
+      "element": "Wood",
+      "meaning": "나라 송",
+      "examples": "여산, 은진, 진천",
+      "is_major": true
+    }
+  ],
+  "류": [
+    {
+      "hanja": "柳",
+      "strokes": 9,
+      "element": "Wood",
+      "meaning": "버들 류",
+      "examples": "문화, 전주, 진주",
+      "is_major": true
+    }
+  ],
+  "유": [
+    {
+      "hanja": "柳",
+      "strokes": 9,
+      "element": "Wood",
+      "meaning": "버들 유",
+      "examples": "문화, 전주, 진주 (두음법칙)",
+      "is_major": true
+    },
+    {
+      "hanja": "劉",
+      "strokes": 15,
+      "element": "Metal",
+      "meaning": "이길 유",
+      "examples": "강릉, 거창",
+      "is_major": true
+    },
+    {
+      "hanja": "俞",
+      "strokes": 9,
+      "element": "Metal",
+      "meaning": "맑을 유",
+      "examples": "기계",
+      "is_major": true
+    },
+    {
+      "hanja": "庾",
+      "strokes": 12,
+      "element": "Wood",
+      "meaning": "곳집 유",
+      "examples": "무송",
+      "is_major": false
+    }
+  ],
+  "전": [
+    {
+      "hanja": "全",
+      "strokes": 6,
+      "element": "Metal",
+      "meaning": "온전할 전",
+      "examples": "천안, 정선, 옥천",
+      "is_major": true
+    },
+    {
+      "hanja": "田",
+      "strokes": 5,
+      "element": "Earth",
+      "meaning": "밭 전",
+      "examples": "담양, 영광",
+      "is_major": true
+    },
+    {
+      "hanja": "錢",
+      "strokes": 16,
+      "element": "Metal",
+      "meaning": "돈 전",
+      "examples": "문경",
+      "is_major": false
+    }
+  ],
+  "홍": [
+    {
+      "hanja": "洪",
+      "strokes": 10,
+      "element": "Water",
+      "meaning": "넓을 홍",
+      "examples": "남양, 풍산",
+      "is_major": true
+    }
+  ],
+  "고": [
+    {
+      "hanja": "高",
+      "strokes": 10,
+      "element": "Wood",
+      "meaning": "높을 고",
+      "examples": "제주, 장흥",
+      "is_major": true
+    }
+  ],
+  "문": [
+    {
+      "hanja": "文",
+      "strokes": 4,
+      "element": "Water",
+      "meaning": "글월 문",
+      "examples": "남평, 장흥",
+      "is_major": true
+    }
+  ],
+  "양": [
+    {
+      "hanja": "梁",
+      "strokes": 11,
+      "element": "Wood",
+      "meaning": "들보 양",
+      "examples": "남원, 제주",
+      "is_major": true
+    },
+    {
+      "hanja": "楊",
+      "strokes": 13,
+      "element": "Wood",
+      "meaning": "버들 양",
+      "examples": "청주, 남원",
+      "is_major": false
+    }
+  ],
+  "손": [
+    {
+      "hanja": "孫",
+      "strokes": 10,
+      "element": "Metal",
+      "meaning": "자손 손",
+      "examples": "밀양, 경주",
+      "is_major": true
+    }
+  ],
+  "배": [
+    {
+      "hanja": "裵",
+      "strokes": 14,
+      "element": "Water",
+      "meaning": "성 배",
+      "examples": "성주, 분성, 달성",
+      "is_major": true
+    }
+  ],
+  "백": [
+    {
+      "hanja": "白",
+      "strokes": 5,
+      "element": "Metal",
+      "meaning": "흰 백",
+      "examples": "수원, 태인",
+      "is_major": true
+    }
+  ],
+  "허": [
+    {
+      "hanja": "許",
+      "strokes": 11,
+      "element": "Wood",
+      "meaning": "허락할 허",
+      "examples": "양천, 김해",
+      "is_major": true
+    }
+  ],
+  "남": [
+    {
+      "hanja": "南",
+      "strokes": 9,
+      "element": "Fire",
+      "meaning": "남녘 남",
+      "examples": "의령, 영양",
+      "is_major": true
+    }
+  ],
+  "심": [
+    {
+      "hanja": "沈",
+      "strokes": 8,
+      "element": "Water",
+      "meaning": "잠길 심",
+      "examples": "청송, 삼척",
+      "is_major": true
+    }
+  ],
+  "노": [
+    {
+      "hanja": "盧",
+      "strokes": 16,
+      "element": "Fire",
+      "meaning": "밥그릇 노",
+      "examples": "광주, 교하, 풍천",
+      "is_major": true
+    },
+    {
+      "hanja": "魯",
+      "strokes": 15,
+      "element": "Water",
+      "meaning": "노나라 노",
+      "examples": "함평",
+      "is_major": false
+    }
+  ],
+  "하": [
+    {
+      "hanja": "河",
+      "strokes": 9,
+      "element": "Water",
+      "meaning": "물 하",
+      "examples": "진주",
+      "is_major": true
+    },
+    {
+      "hanja": "夏",
+      "strokes": 10,
+      "element": "Fire",
+      "meaning": "여름 하",
+      "examples": "달성",
+      "is_major": false
+    }
+  ],
+  "곽": [
+    {
+      "hanja": "郭",
+      "strokes": 15,
+      "element": "Wood",
+      "meaning": "성곽 곽",
+      "examples": "현풍, 청주",
+      "is_major": true
+    }
+  ],
+  "성": [
+    {
+      "hanja": "成",
+      "strokes": 7,
+      "element": "Metal",
+      "meaning": "이룰 성",
+      "examples": "창녕",
+      "is_major": true
+    }
+  ],
+  "차": [
+    {
+      "hanja": "車",
+      "strokes": 7,
+      "element": "Fire",
+      "meaning": "수레 차",
+      "examples": "연안",
+      "is_major": true
+    }
+  ],
+  "주": [
+    {
+      "hanja": "朱",
+      "strokes": 6,
+      "element": "Fire",
+      "meaning": "붉을 주",
+      "examples": "신안",
+      "is_major": true
+    },
+    {
+      "hanja": "周",
+      "strokes": 8,
+      "element": "Metal",
+      "meaning": "두루 주",
+      "examples": "상주, 초계",
+      "is_major": false
+    }
+  ],
+  "우": [
+    {
+      "hanja": "禹",
+      "strokes": 9,
+      "element": "Water",
+      "meaning": "성 우",
+      "examples": "단양",
+      "is_major": true
+    }
+  ],
+  "구": [
+    {
+      "hanja": "具",
+      "strokes": 8,
+      "element": "Metal",
+      "meaning": "갖출 구",
+      "examples": "능성",
+      "is_major": true
+    },
+    {
+      "hanja": "丘",
+      "strokes": 5,
+      "element": "Earth",
+      "meaning": "언덕 구",
+      "examples": "평해",
+      "is_major": false
+    }
+  ],
+  "나": [
+    {
+      "hanja": "羅",
+      "strokes": 20,
+      "element": "Fire",
+      "meaning": "그물 나",
+      "examples": "나주, 금성",
+      "is_major": true
+    }
+  ],
+  "민": [
+    {
+      "hanja": "閔",
+      "strokes": 12,
+      "element": "Water",
+      "meaning": "위문할 민",
+      "examples": "여흥",
+      "is_major": true
+    }
+  ],
+  "진": [
+    {
+      "hanja": "陳",
+      "strokes": 16,
+      "element": "Earth",
+      "meaning": "베풀 진",
+      "examples": "여양",
+      "is_major": true
+    },
+    {
+      "hanja": "秦",
+      "strokes": 10,
+      "element": "Wood",
+      "meaning": "벼 이름 진",
+      "examples": "풍기",
+      "is_major": false
+    },
+    {
+      "hanja": "晉",
+      "strokes": 10,
+      "element": "Fire",
+      "meaning": "나아갈 진",
+      "examples": "남원",
+      "is_major": false
+    },
+    {
+      "hanja": "眞",
+      "strokes": 10,
+      "element": "Metal",
+      "meaning": "참 진",
+      "examples": "서산",
+      "is_major": false
+    }
+  ],
+  "지": [
+    {
+      "hanja": "池",
+      "strokes": 7,
+      "element": "Water",
+      "meaning": "못 지",
+      "examples": "충주",
+      "is_major": true
+    },
+    {
+      "hanja": "智",
+      "strokes": 12,
+      "element": "Fire",
+      "meaning": "지혜 지",
+      "examples": "봉산",
+      "is_major": false
+    }
+  ],
+  "엄": [
+    {
+      "hanja": "嚴",
+      "strokes": 20,
+      "element": "Earth",
+      "meaning": "엄할 엄",
+      "examples": "영월",
+      "is_major": true
+    }
+  ],
+  "채": [
+    {
+      "hanja": "蔡",
+      "strokes": 17,
+      "element": "Wood",
+      "meaning": "성 채",
+      "examples": "평강, 인천",
+      "is_major": true
+    }
+  ],
+  "원": [
+    {
+      "hanja": "元",
+      "strokes": 4,
+      "element": "Wood",
+      "meaning": "으뜸 원",
+      "examples": "원주",
+      "is_major": true
+    }
+  ],
+  "천": [
+    {
+      "hanja": "千",
+      "strokes": 3,
+      "element": "Metal",
+      "meaning": "일천 천",
+      "examples": "영양",
+      "is_major": true
+    }
+  ],
+  "방": [
+    {
+      "hanja": "方",
+      "strokes": 4,
+      "element": "Earth",
+      "meaning": "모 방",
+      "examples": "온양",
+      "is_major": true
+    },
+    {
+      "hanja": "房",
+      "strokes": 8,
+      "element": "Wood",
+      "meaning": "방 방",
+      "examples": "남양",
+      "is_major": false
+    }
+  ]
+}

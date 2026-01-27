@@ -27,7 +27,7 @@ export interface HanjaInfo {
 
 export interface SurnameInfo {
     element?: string;  // string으로 변경하여 suriUtils와 호환
-    hangul: string;
+    hangul?: string;   // optional로 변경 (SurnameVariant와 호환)
     strokes: number;
 }
 

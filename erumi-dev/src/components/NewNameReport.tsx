@@ -6,10 +6,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { generateReport, type NameReport, type ReportInput } from 'erumi-core';
 
-// 리포트 캠시 (같은 이름 재조회 시 재사용)
+// 리포트 캐시 (같은 이름 재조회 시 재사용)
 const reportCache = new Map<string, NameReport>();
-function getCacheKey(name: { hanjaName: string; surname: string }): string {
-    return `${name.surname}_${name.hanjaName}`;
+function getCacheKey(name: { hanjaName: string; surname: string }, saju?: { elements?: Record<string, number> }): string {
+    const hasSaju = !!(saju?.elements && Object.keys(saju.elements).length > 0);
+    return `${name.surname}_${name.hanjaName}_${hasSaju ? 'saju' : 'nosaju'}`;
 }
 
 interface NewNameReportProps {
@@ -70,7 +71,7 @@ export function NewNameReport({ name, saju, onClose }: NewNameReportProps) {
 
     useEffect(() => {
         async function loadReport() {
-            const cacheKey = getCacheKey(name);
+            const cacheKey = getCacheKey(name, saju);
 
             // 캐시 확인
             const cached = reportCache.get(cacheKey);

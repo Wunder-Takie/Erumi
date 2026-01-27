@@ -6,8 +6,8 @@
  * - 성명학 탭 summary (5개)
  */
 
-import { LLM_CONFIG } from '../naming/llmConfig.ts';
-import type { CarouselCard, ReportInput } from './types.ts';
+import { LLM_CONFIG } from '../naming/llmConfig';
+import type { CarouselCard, ReportInput } from './types';
 
 // ==========================================
 // Types

@@ -4,6 +4,7 @@ import { generateNames, generatePureKoreanNames, calculateSaju, sajuToWeights, a
 import storyFlow from '../data/ui/story_flow.json';
 import type { NameItem } from '../types';
 import { NewNameReport } from '../components/NewNameReport';
+import surnamesData from 'erumi-core/data/core/surnames.json';
 
 type NameMode = 'hanja' | 'pure-korean';
 
@@ -605,7 +606,7 @@ function DevApp() {
               hangulName: selectedReportName.hanja1.hangul + selectedReportName.hanja2.hangul,
               hanjaName: selectedReportName.hanja1.hanja + selectedReportName.hanja2.hanja,
               surname: surname,
-              surnameHanja: surname,
+              surnameHanja: ((surnamesData as Record<string, { hanja: string; is_major: boolean }[]>)[surname]?.find(v => v.is_major) || (surnamesData as Record<string, { hanja: string }[]>)[surname]?.[0])?.hanja || surname,
               hanja1: {
                 hanja: selectedReportName.hanja1.hanja,
                 hangul: selectedReportName.hanja1.hangul,

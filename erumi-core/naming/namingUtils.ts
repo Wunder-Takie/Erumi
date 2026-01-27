@@ -21,7 +21,7 @@ import { evaluateNamesWithLLM, applyLLMScore, shouldExcludeAsOldFashioned } from
 
 // 🆕 모듈 분리: 새로 생성된 유틸리티 모듈들 (직접 사용)
 import { decomposeHangul, getInitialSound } from './hangulUtils.ts';
-import { getSuriInfo, getSurnameInfo, calculateWeightedSuriScore } from './suriUtils.ts';
+import { getSuriInfo, getSurnameVariant, calculateWeightedSuriScore } from './suriUtils.ts';
 import { hasChoSeongRepetition, hasRoundVowelConflict, hasJongChoConflict } from './phoneticScoring.ts';
 import { calculateAdvancedElementScore, type ElementType } from './semanticScoring.ts';
 import {
@@ -73,7 +73,7 @@ export interface HanjaInfo {
 
 // 이제 hangulUtils.ts에서 import됨
 
-// NOTE: isLuckySuri, getSuriInfo, getSurnameInfo는 이제 suriUtils.ts에서 import됨
+// NOTE: isLuckySuri, getSuriInfo, getSurnameVariant는 이제 suriUtils.ts에서 import됨
 // NOTE: checkGlobalRisk, checkBadCombinations는 이제 nameValidation.ts에서 import됨
 
 
@@ -164,7 +164,7 @@ export async function generateNames(
   });
 
   // modernPreferences는 다른 곳에서 직접 참조됨
-  const surnameInfo = getSurnameInfo(surnameInput);
+  const surnameInfo = getSurnameVariant(surnameInput);
   const surnameStrokes = surnameInfo?.strokes || 8;
   const surnameElement = surnameInfo?.element || null;
 

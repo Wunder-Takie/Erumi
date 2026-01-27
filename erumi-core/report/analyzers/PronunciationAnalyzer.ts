@@ -13,11 +13,16 @@ interface HanjaEntry {
     element?: string;
 }
 
-interface SurnameEntry {
-    hangul: string;
+interface SurnameVariant {
     hanja: string;
+    strokes: number;
     element: string;
+    meaning: string;
+    examples: string;
+    is_major: boolean;
 }
+
+type SurnamesData = Record<string, SurnameVariant[]>;
 
 // 오행 상생 관계: 목→화→토→금→수→목
 const ELEMENT_GENERATION: Record<string, string> = {
@@ -47,15 +52,26 @@ const ELEMENT_KOREAN: Record<string, string> = {
 
 export class PronunciationAnalyzer {
     private hanjaMap: Map<string, HanjaEntry>;
-    private surnameMap: Map<string, SurnameEntry>;
+    private surnamesData: SurnamesData;
 
     constructor() {
         this.hanjaMap = new Map(
             (hanjaDb as HanjaEntry[]).map(h => [h.hanja, h])
         );
-        this.surnameMap = new Map(
-            (surnames as SurnameEntry[]).map(s => [s.hanja, s])
-        );
+        this.surnamesData = surnames as SurnamesData;
+    }
+
+    /**
+     * 한글 성씨로 한자 variant 조회
+     */
+    private getSurnameVariant(hangul: string, hanja?: string): SurnameVariant | undefined {
+        const variants = this.surnamesData[hangul];
+        if (!variants || variants.length === 0) return undefined;
+
+        if (hanja) {
+            return variants.find(v => v.hanja === hanja) || variants.find(v => v.is_major) || variants[0];
+        }
+        return variants.find(v => v.is_major) || variants[0];
     }
 
     /**
@@ -65,7 +81,7 @@ export class PronunciationAnalyzer {
         const characters: PronunciationResult['characters'] = [];
 
         // 성씨
-        const surnameElement = this.getElement(input.surnameHanja, true);
+        const surnameElement = this.getElement(input.surname, input.surnameHanja, true);
         characters.push({
             hanja: input.surnameHanja,
             hangul: input.surname,
@@ -75,7 +91,7 @@ export class PronunciationAnalyzer {
 
         // 이름 글자
         for (let i = 0; i < input.givenNameHanja.length; i++) {
-            const element = this.getElement(input.givenNameHanja[i], false);
+            const element = this.getElement('', input.givenNameHanja[i], false);
             characters.push({
                 hanja: input.givenNameHanja[i],
                 hangul: input.givenName[i],
@@ -99,10 +115,10 @@ export class PronunciationAnalyzer {
     /**
      * 오행 조회
      */
-    private getElement(hanja: string, isSurname: boolean): string {
+    private getElement(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
-            const entry = this.surnameMap.get(hanja);
-            if (entry) return entry.element;
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant) return variant.element;
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.element ?? 'Earth';
