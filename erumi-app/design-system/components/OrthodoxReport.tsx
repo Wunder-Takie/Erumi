@@ -101,8 +101,8 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
 
     // react-native-gesture-handler Pan 제스처
     const panGesture = Gesture.Pan()
-        .activeOffsetX([-1, 1])    // 1px 수평 이동 시 즉시 제스처 활성화 (최극단)
-        // failOffsetY 제거 - 수직 스크롤 없으므로 수평 드래그 항상 우선
+        .activeOffsetX([-10, 10])   // 10px 수평 이동 시 제스처 활성화 (균형)
+        .failOffsetY([-15, 15])     // 15px 수직 이동 시 제스처 실패 (스크롤 가능)
         .onEnd((event) => {
             const { translationX, velocityX } = event;
             // 속도가 조금이라도 있으면 threshold 더 낮춤
@@ -138,25 +138,26 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
                 />
             </ScrollView>
 
-            {/* Header */}
-            {(currentHeader?.reportOverview || currentHeader?.categoryGuide) && (
-                <View style={styles.headerContainer}>
-                    {currentHeader.reportOverview && (
-                        <View style={styles.reportOverviewWrapper}>
-                            <Text style={styles.reportOverviewText}>{currentHeader.reportOverview}</Text>
-                        </View>
-                    )}
-                    {currentHeader.categoryGuide && (
-                        <View style={styles.categoryGuideWrapper}>
-                            <Text style={styles.categoryGuideText}>{currentHeader.categoryGuide}</Text>
-                        </View>
-                    )}
-                </View>
-            )}
-
-            {/* Content Area - GestureDetector 적용 */}
+            {/* Header + Content 영역 전체에 GestureDetector 적용 */}
             <GestureDetector gesture={panGesture}>
-                <View>
+                <View style={styles.gestureArea}>
+                    {/* Header */}
+                    {(currentHeader?.reportOverview || currentHeader?.categoryGuide) && (
+                        <View style={styles.headerContainer}>
+                            {currentHeader.reportOverview && (
+                                <View style={styles.reportOverviewWrapper}>
+                                    <Text style={styles.reportOverviewText}>{currentHeader.reportOverview}</Text>
+                                </View>
+                            )}
+                            {currentHeader.categoryGuide && (
+                                <View style={styles.categoryGuideWrapper}>
+                                    <Text style={styles.categoryGuideText}>{currentHeader.categoryGuide}</Text>
+                                </View>
+                            )}
+                        </View>
+                    )}
+
+                    {/* Content Area */}
                     <OrthodoxReportContent
                         style={styles.contentArea}
                         variant={selectedTab}
@@ -185,6 +186,11 @@ const styles = StyleSheet.create({
     tabScrollContent: {
         // paddingHorizontal 없음 (Figma)
         alignSelf: 'stretch', // FILL
+    },
+    // 제스처 인식 영역 (header + content)
+    gestureArea: {
+        flex: 1,
+        gap: 16, // container와 동일한 gap
     },
     // Figma: header (VERTICAL, gap: 8, padding: 8, bg: surface.secondary, borderRadius: 16)
     headerContainer: {
