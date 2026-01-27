@@ -16,5 +16,5 @@ export * from './typography';
 export { colorPrimitives } from './colorPrimitives';
 export { fontFamily, fontScale, fontWeight, lineHeight, tracking } from './typographyPrimitives';
 export { space, radius, border, iconSize } from './spacing';
-export { colors, backgroundColors, iconColors, textColors, strokeColors } from './colors';
+export { colors, backgroundColors, iconColors, textColors, borderColors } from './colors';
 export { typography, caption, label, body, title, heading, display } from './typography';

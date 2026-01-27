@@ -43,3 +43,35 @@ export type { DialogProps } from './Dialog';
 
 export { DialogItem } from './DialogItem';
 export type { DialogItemProps } from './DialogItem';
+
+export { Badge } from './Badge';
+export type { BadgeProps, BadgeSize, BadgeShape, BadgeColor } from './Badge';
+
+export { ElementBarGraphItem } from './ElementBarGraphItem';
+export type { ElementBarGraphItemProps, ElementType, ElementAmount } from './ElementBarGraphItem';
+
+export { ElementBarGraph } from './ElementBarGraph';
+export type { ElementBarGraphProps, ElementValues } from './ElementBarGraph';
+
+export { YinYang } from './YinYang';
+export type { YinYangProps, YinYangVariant } from './YinYang';
+
+export { TabMenu } from './TabMenu';
+export type { TabMenuProps, TabItem } from './TabMenu';
+
+export { OrthodoxReportContent } from './OrthodoxReportContent';
+export type {
+    OrthodoxReportContentProps,
+    ContentType,
+    PronunciationElementsData,
+    FiveElementsTheoryData,
+    SuriAnalysisData,
+    ElementalBalanceData,
+    UnluckyCharactersData,
+    CharacterInfo,
+    SuriPeriod,
+    UnluckyCharacterInfo,
+} from './OrthodoxReportContent';
+
+export { OrthodoxReport } from './OrthodoxReport';
+export type { OrthodoxReportProps } from './OrthodoxReport';

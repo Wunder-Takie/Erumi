@@ -111,7 +111,7 @@ const getVariantStyles = (
                     container: {
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
-                        borderColor: colors.stroke.disabled.default,
+                        borderColor: colors.border.disabled.default,
                     },
                     text: {
                         color: colors.text.disabled.default,
@@ -155,7 +155,7 @@ const getVariantStyles = (
                 container: {
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
-                    borderColor: colors.stroke.default.primary,
+                    borderColor: colors.border.default.primary,
                 },
                 text: {
                     color: colors.text.default.primary,

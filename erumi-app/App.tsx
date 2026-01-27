@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, Alert, ActivityIndicator, Platform 
 import { useFonts } from 'expo-font';
 import { useState, useRef } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Button, Icon, Logo, Navbar, NavbarMenu, Topbar, TopbarItem, SelectItem, Pagination, SearchInput, SelectionInput, TextArea, SyllableInput, Dialog, DialogItem, colors } from './design-system';
+import { Button, Icon, Logo, Navbar, NavbarMenu, Topbar, TopbarItem, SelectItem, Pagination, SearchInput, SelectionInput, TextArea, SyllableInput, Dialog, DialogItem, Badge, ElementBarGraph, YinYang, TabMenu, OrthodoxReport, OrthodoxReportContent, colors } from './design-system';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -43,6 +43,8 @@ export default function App() {
   const [selectedZodiac, setSelectedZodiac] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const prevHanjaRef = useRef<{ hanja: string; meaning: string } | null>(null);
+  const [selectedTab1, setSelectedTab1] = useState('tab1');
+  const [selectedTab2, setSelectedTab2] = useState('b');
 
   // Zodiac time options
   const zodiacOptions = [
@@ -85,6 +87,214 @@ export default function App() {
       <Text style={styles.title}>Erumi Design System</Text>
 
       {/* === NEW COMPONENTS TEST AREA (add new components here) === */}
+
+      {/* Badge */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Badge - Colors</Text>
+        <View style={styles.buttonRow}>
+          <Badge firstLabel="기본" secondLabel="값" color="default" />
+          <Badge firstLabel="성공" secondLabel="값" color="green" />
+          <Badge firstLabel="경고" secondLabel="값" color="orange" />
+          <Badge firstLabel="위험" secondLabel="값" color="red" />
+        </View>
+        <Text style={styles.navbarHint}>Sizes:</Text>
+        <View style={styles.buttonRow}>
+          <Badge firstLabel="Small" size="small" />
+          <Badge firstLabel="Medium" size="medium" />
+        </View>
+        <Text style={styles.navbarHint}>Shapes:</Text>
+        <View style={styles.buttonRow}>
+          <Badge firstLabel="Pill" secondLabel="모양" shape="pill" />
+          <Badge firstLabel="Rectangle" secondLabel="모양" shape="rectangle" />
+        </View>
+        <Text style={styles.navbarHint}>Color + Shape Combinations:</Text>
+        <View style={styles.buttonRow}>
+          <Badge firstLabel="대길" color="green" shape="rectangle" />
+          <Badge firstLabel="길" color="green" shape="pill" />
+          <Badge firstLabel="흉" color="red" shape="rectangle" />
+          <Badge firstLabel="주의" color="orange" shape="pill" />
+        </View>
+      </View>
+
+      {/* ElementBarGraph */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>ElementBarGraph - 오행 그래프</Text>
+        <Text style={styles.navbarHint}>사주 오행만 (이름 오행 없음):</Text>
+        <ElementBarGraph
+          elements={{ wood: 2, fire: 1, earth: 0, metal: 3, water: 1 }}
+        />
+        <Text style={[styles.navbarHint, { marginTop: 16 }]}>사주 + 이름 오행 (wood, water):</Text>
+        <ElementBarGraph
+          elements={{ wood: 2, fire: 1, earth: 0, metal: 3, water: 1 }}
+          nameElements={['wood', 'water']}
+        />
+        <Text style={[styles.navbarHint, { marginTop: 16 }]}>모든 오행 0:</Text>
+        <ElementBarGraph
+          elements={{ wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }}
+        />
+        <Text style={[styles.navbarHint, { marginTop: 16 }]}>모든 오행 3:</Text>
+        <ElementBarGraph
+          elements={{ wood: 3, fire: 3, earth: 3, metal: 3, water: 3 }}
+        />
+      </View>
+
+      {/* YinYang */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>YinYang - 음양</Text>
+        <View style={styles.buttonRow}>
+          <YinYang variant="yin" />
+          <YinYang variant="yang" />
+        </View>
+      </View>
+
+      {/* TabMenu */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>TabMenu - 탭 메뉴</Text>
+        <Text style={styles.navbarHint}>5개 탭:</Text>
+        <TabMenu
+          items={[
+            { id: 'tab1', label: '발음오행' },
+            { id: 'tab2', label: '자원오행' },
+            { id: 'tab3', label: '학자평가' },
+            { id: 'tab4', label: '음양배합' },
+            { id: 'tab5', label: '이름풀이' },
+          ]}
+          selectedId={selectedTab1}
+          onSelect={setSelectedTab1}
+        />
+        <Text style={[styles.navbarHint, { marginTop: 16 }]}>3개 탭:</Text>
+        <TabMenu
+          items={[
+            { id: 'a', label: '첫번째' },
+            { id: 'b', label: '두번째' },
+            { id: 'c', label: '세번째' },
+          ]}
+          selectedId={selectedTab2}
+          onSelect={setSelectedTab2}
+        />
+      </View>
+
+      {/* OrthodoxReportContent - fiveElementsTheory */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReportContent - fiveElementsTheory (음양오행)</Text>
+        <OrthodoxReportContent
+          variant="fiveElementsTheory"
+          fiveElementsTheory={{
+            surname: { hanja: '金', reading: '김', hun: '쇠', strokeCount: 8, isEven: true, yinYang: 'yang' },
+            firstName: { hanja: '珉', reading: '아', hun: '돌', strokeCount: 9, isEven: false, yinYang: 'yin' },
+            secondName: { hanja: '羅', reading: '라', hun: '비단', strokeCount: 19, isEven: false, yinYang: 'yang' },
+          }}
+        />
+      </View>
+
+      {/* OrthodoxReportContent - pronunciationElements */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReportContent - pronunciationElements (발음오행)</Text>
+        <OrthodoxReportContent
+          variant="pronunciationElements"
+          pronunciationElements={{
+            surname: { hanja: '金', reading: '김', hun: '쇠', imageSource: require('./assets/hanja_placeholder.png') },
+            firstName: { hanja: '珉', reading: '민', hun: '나무', imageSource: require('./assets/hanja_placeholder.png') },
+            secondName: { hanja: '羅', reading: '라', hun: '불', imageSource: require('./assets/hanja_placeholder.png') },
+          }}
+        />
+      </View>
+
+      {/* OrthodoxReportContent - suriAnalysis */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReportContent - suriAnalysis (수리성명학)</Text>
+        <OrthodoxReportContent
+          variant="suriAnalysis"
+          suriAnalysis={{
+            periods: [
+              { label: '초년', detail: '0세~19세 | 24수', description: '부모의 그늘 없이도, 일찍부터 자신의 재능으로 두각을 나타내는 시기입니다.', badgeLabel: '대길', badgeColor: 'green' },
+              { label: '청년', detail: '20세~40세 | 24수', description: '인생의 황금기! 사회에 나가 리더가 되어 많은 사람을 이끄는 강력한 운입니다.', badgeLabel: '길', badgeColor: 'green' },
+              { label: '중년', detail: '40세~60세 | 24수', description: '머리는 비상하고 재주가 넘치지만, 남모를 고독이나 예상치 못한 난관을 겪을 수 있는 시기입니다.', badgeLabel: '반길반흉', badgeColor: 'orange' },
+              { label: '말년', detail: '60세~평생 | 24수', description: '인생의 모든 어려움이 걷히고, 순풍에 돛 단 듯 부와 명예를 누리며 편안하게 마무리하는 최고의 운입니다.', badgeLabel: '흉', badgeColor: 'red' },
+            ],
+          }}
+        />
+      </View>
+
+      {/* OrthodoxReportContent - elementalBalance */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReportContent - elementalBalance (오행밸런스)</Text>
+        <OrthodoxReportContent
+          variant="elementalBalance"
+          elementalBalance={{
+            elements: { wood: 2, fire: 1, earth: 0, metal: 3, water: 1 },
+            nameElements: ['metal', 'water', 'fire'],
+          }}
+        />
+      </View>
+
+      {/* OrthodoxReportContent - unluckyCharacters */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReportContent - unluckyCharacters (불용문자)</Text>
+        <OrthodoxReportContent
+          variant="unluckyCharacters"
+          unluckyCharacters={{
+            firstName: { hanja: '詩', readingTitle: '시', reading: '시', badgeLabel: '좋음', badgeColor: 'green' },
+            secondName: { hanja: '朗', readingTitle: '밝을', reading: '랑', badgeLabel: '좋음', badgeColor: 'green' },
+          }}
+        />
+      </View>
+
+      {/* OrthodoxReport (Full Component) */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>OrthodoxReport (Full Component)</Text>
+        <OrthodoxReport
+          pronunciationElements={{
+            surname: { hanja: '金', reading: '김', hun: '쇠' },
+            firstName: { hanja: '珉', reading: '민', hun: '돌' },
+            secondName: { hanja: '羅', reading: '라', hun: '벌릴' },
+          }}
+          fiveElementsTheory={{
+            surname: { hanja: '金', reading: '김', hun: '쇠', strokeCount: 8, isEven: true, yinYang: 'yin' },
+            firstName: { hanja: '珉', reading: '민', hun: '돌', strokeCount: 9, isEven: false, yinYang: 'yang' },
+            secondName: { hanja: '羅', reading: '라', hun: '벌릴', strokeCount: 19, isEven: false, yinYang: 'yang' },
+          }}
+          suriAnalysis={{
+            periods: [
+              { label: '초년', detail: '0세~19세 | 24수', description: '부모의 그늘 없이도, 일찍부터 자신의 재능으로 두각을 나타내는 시기입니다.', badgeLabel: '대길', badgeColor: 'green' },
+              { label: '청년', detail: '20세~40세 | 24수', description: '인생의 황금기! 사회에 나가 리더가 되어 많은 사람을 이끄는 강력한 운입니다.', badgeLabel: '길', badgeColor: 'green' },
+              { label: '중년', detail: '40세~60세 | 24수', description: '머리는 비상하고 재주가 넘치지만, 남모를 고독이나 예상치 못한 난관을 겪을 수 있는 시기입니다.', badgeLabel: '반길반흉', badgeColor: 'orange' },
+              { label: '말년', detail: '60세~평생 | 24수', description: '인생의 모든 어려움이 걷히고, 순풍에 돛 단 듯 부와 명예를 누리며 편안하게 마무리하는 최고의 운입니다.', badgeLabel: '흉', badgeColor: 'red' },
+            ],
+          }}
+          elementalBalance={{
+            elements: { wood: 2, fire: 1, earth: 0, metal: 3, water: 1 },
+            nameElements: ['metal', 'water', 'fire'],
+          }}
+          unluckyCharacters={{
+            firstName: { hanja: '詩', readingTitle: '시', reading: '시', badgeLabel: '좋음', badgeColor: 'green' },
+            secondName: { hanja: '朗', readingTitle: '밝을', reading: '랑', badgeLabel: '좋음', badgeColor: 'green' },
+          }}
+          headerData={{
+            fiveElementsTheory: {
+              reportOverview: "'음' 기운이 강하지만 '양'의 기운도 적절히 조화되어 있어서 안정감을 주는 이름이에요. 내면의 평화를 유지하며 조화로운 삶을 살아갈 수 있음을 의미해요.",
+              categoryGuide: "* 음양오행은 글자 획수의 짝수(음)와 홀수(양)를 적절히 섞어 기운의 균형을 맞추는 거에요.",
+            },
+            pronunciationElements: {
+              reportOverview: "부드럽고 안정적인 느낌을 주는 소리예요. 듣는 사람에게 편안함과 신뢰감을 주며, 차분한 리더십을 발휘하는 사람에게 어울려요.",
+              categoryGuide: "* 발음오행은 이름을 소리 내어 불렀을 때, 소리의 기운끼리 서로 돕는지 싸우는지 볼 때 사용해요.",
+            },
+            suriAnalysis: {
+              reportOverview: "초년의 재능과 청년의 리더십이 중년의 파도를 넘어, 마침내 말년에 부와 명예로 완성되는 드라마틱한 인생이에요.",
+              categoryGuide: "* 수리성명학은 한자의 획수를 더한 숫자로 초년, 청년, 중년, 말년의 구체적인 운세를 계산하는 거에요.",
+            },
+            elementalBalance: {
+              reportOverview: "이름에 부족한 기운을 채워주는 금(金)의 기운이 강하게 나타나고 있어요. 쇠를 다듬어 보석을 만들 듯, 잠재력을 갈고 닦아 빛나는 존재가 될 수 있도록 도와줘요.",
+              categoryGuide: "* 자원오행은 한자가 본래 가지고 있는 자연의 성질(불, 물, 나무 등)이 사주에 필요한 기운인지 보는 거에요.",
+            },
+            unluckyCharacters: {
+              reportOverview: "이름에 부정적인 영향을 미치는 불용문자는 전혀 없어요. 모두 긍정적이고 아름다운 의미를 지닌 좋은 한자들이에요.",
+              categoryGuide: "* 불용문자는 뜻은 좋아도 이름에 쓰면 운이 나빠진다고 하여 작명 시 피하는 글자인지 확인하는거에요.",
+            },
+          }}
+          initialTab="fiveElementsTheory"
+        />
+      </View>
 
       {/* Logo */}
       <View style={styles.section}>
@@ -596,6 +806,35 @@ export default function App() {
           <Icon name="X Mark" size={24} iconStyle="solid" />
           <Icon name="arrowRight" size={24} iconStyle="solid" />
           <Icon name="user" size={24} iconStyle="solid" />
+        </View>
+      </View>
+
+      {/* Sun & Moon Icons */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Sun & Moon Icons</Text>
+        <View style={styles.iconRow}>
+          <Icon name="sun" size={16} iconStyle="outline" />
+          <Icon name="sun" size={20} iconStyle="outline" />
+          <Icon name="sun" size={24} iconStyle="outline" />
+          <Icon name="sun" size={40} iconStyle="outline" />
+        </View>
+        <View style={styles.iconRow}>
+          <Icon name="sun" size={16} iconStyle="solid" />
+          <Icon name="sun" size={20} iconStyle="solid" />
+          <Icon name="sun" size={24} iconStyle="solid" />
+          <Icon name="sun" size={40} iconStyle="solid" />
+        </View>
+        <View style={styles.iconRow}>
+          <Icon name="moon" size={16} iconStyle="outline" />
+          <Icon name="moon" size={20} iconStyle="outline" />
+          <Icon name="moon" size={24} iconStyle="outline" />
+          <Icon name="moon" size={40} iconStyle="outline" />
+        </View>
+        <View style={styles.iconRow}>
+          <Icon name="moon" size={16} iconStyle="solid" />
+          <Icon name="moon" size={20} iconStyle="solid" />
+          <Icon name="moon" size={24} iconStyle="solid" />
+          <Icon name="moon" size={40} iconStyle="solid" />
         </View>
       </View>
 
