@@ -6,7 +6,7 @@
  */
 import React, { useState, useCallback, ReactNode, useEffect, useRef } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, FadeIn, FadeOut, Easing } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -100,6 +100,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
     const [data, setData] = useState<WizardData>(initialData as WizardData);
     const isTransitioning = useRef(false);
 
+    // 로딩 오버레이 상태 (StyleStep → LoadingStep → ResultStep 트랜지션용)
+    const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+
     // 페이드 애니메이션 값
     const fadeAnim = useSharedValue(1);
 
@@ -129,13 +132,34 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
     }, [currentStep, navigation]);
 
     const goNext = useCallback(() => {
+        // 로딩 오버레이가 표시 중이면 FadeOut 처리
+        if (showLoadingOverlay) {
+            setShowLoadingOverlay(false);
+            // currentStep은 이미 ResultStep을 가리키고 있음
+            return;
+        }
+
         if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
+            const nextStepKey = steps[currentStep + 1]?.key;
+
+            if (nextStepKey === 'loading') {
+                // StyleStep → Loading: 오버레이 패턴
+                // 1. LoadingStep 오버레이 FadeIn (먼저 덮음)
+                setShowLoadingOverlay(true);
+                // 2. 2초 후 베이스 레이어를 ResultStep으로 교체 (사용자에게 안 보임)
+                setTimeout(() => {
+                    setCurrentStep(currentStep + 2); // Result step
+                    setDisplayedStep(currentStep + 2);
+                }, 2000);
+            } else {
+                // 일반 스텝 전환
+                setCurrentStep(currentStep + 1);
+            }
         } else {
             // 마지막 스텝이면 완료 콜백
             onComplete?.(data);
         }
-    }, [currentStep, steps.length, data, onComplete]);
+    }, [currentStep, steps.length, data, onComplete, steps, showLoadingOverlay]);
 
     // 트랜지션 완료 핸들러
     const finishTransition = useCallback(() => {
@@ -233,7 +257,7 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
                 />
             )}
 
-            {/* 현재 스텝 컨텐츠 (페이드 애니메이션 적용) */}
+            {/* 베이스 스텝 컨텐츠 (페이드 애니메이션 적용) */}
             <Animated.View style={[styles.pager, animatedStyle]}>
                 <View style={styles.stepContainer}>
                     {steps[displayedStep]?.content({
@@ -247,6 +271,25 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
                     })}
                 </View>
             </Animated.View>
+
+            {/* LoadingStep 오버레이 (FadeIn/FadeOut 애니메이션) */}
+            {showLoadingOverlay && (
+                <Animated.View
+                    style={styles.loadingOverlay}
+                    entering={FadeIn.duration(300)}
+                    exiting={FadeOut.duration(500).easing(Easing.in(Easing.cubic))}
+                >
+                    {steps.find(s => s.key === 'loading')?.content({
+                        goNext,
+                        goBack,
+                        currentStep: steps.findIndex(s => s.key === 'loading'),
+                        totalSteps: steps.length,
+                        data,
+                        updateData,
+                        openSurnameSearch: onOpenSurnameSearch,
+                    })}
+                </Animated.View>
+            )}
 
             {/* Hidden Image Preloader - 스토리 이미지 미리 로드 */}
             <View style={styles.hiddenPreloader}>
@@ -271,6 +314,10 @@ const styles = StyleSheet.create({
     },
     stepContainer: {
         flex: 1,
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: '#050510',
     },
     hiddenPreloader: {
         position: 'absolute',

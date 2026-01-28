@@ -458,7 +458,7 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
 
     // 12초 후 자동으로 결과 화면으로 이동 (3개 메시지 * 4초)
     useEffect(() => {
-        const timer = setTimeout(() => goNext(), 12000);
+        const timer = setTimeout(() => goNext(), 5000);
         return () => clearTimeout(timer);
     }, [goNext]);
 
