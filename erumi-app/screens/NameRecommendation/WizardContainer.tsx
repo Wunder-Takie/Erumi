@@ -142,25 +142,33 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
         isTransitioning.current = false;
     }, []);
 
-    // 스텝 변경 시 페이드 애니메이션 실행
+    // 스텝 변경 시 페이드 애니메이션 실행 (로딩 스텝 전후에만)
     useEffect(() => {
         if (currentStep !== displayedStep && !isTransitioning.current) {
-            isTransitioning.current = true;
-            // 1. 페이드 아웃
-            fadeAnim.value = withTiming(0, { duration: 200 }, (finished) => {
-                if (finished) {
-                    // 2. 콘텐츠 변경 (JS 스레드에서)
-                    runOnJS(setDisplayedStep)(currentStep);
-                    // 3. 페이드 인
-                    fadeAnim.value = withTiming(1, { duration: 300 }, (fadeInFinished) => {
-                        if (fadeInFinished) {
-                            runOnJS(finishTransition)();
-                        }
-                    });
-                }
-            });
+            // 로딩 스텝(hideHeader) 전후인지 확인
+            const wasHiddenHeader = steps[displayedStep]?.hideHeader || false;
+            const willHideHeader = steps[currentStep]?.hideHeader || false;
+            const shouldAnimate = wasHiddenHeader || willHideHeader;
+
+            if (shouldAnimate) {
+                // 페이드 애니메이션 적용 (부드럽게)
+                isTransitioning.current = true;
+                fadeAnim.value = withTiming(0, { duration: 400 }, (finished) => {
+                    if (finished) {
+                        runOnJS(setDisplayedStep)(currentStep);
+                        fadeAnim.value = withTiming(1, { duration: 500 }, (fadeInFinished) => {
+                            if (fadeInFinished) {
+                                runOnJS(finishTransition)();
+                            }
+                        });
+                    }
+                });
+            } else {
+                // 일반 스텝: 즉시 전환
+                setDisplayedStep(currentStep);
+            }
         }
-    }, [currentStep, displayedStep, fadeAnim, finishTransition]);
+    }, [currentStep, displayedStep, fadeAnim, finishTransition, steps]);
 
     const goBack = useCallback(() => {
         if (currentStep > 0) {
