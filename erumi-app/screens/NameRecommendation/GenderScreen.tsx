@@ -70,7 +70,7 @@ export const GenderScreen: React.FC = () => {
             />
 
             {/* Pagination - 7 pages, current: 2 (0-indexed: 1) */}
-            <Pagination totalPages={7} currentPage={1} />
+            <Pagination totalPages={6} currentPage={1} />
 
             {/* Content Section */}
             <View style={styles.contentSection}>

@@ -80,7 +80,7 @@ export const NameWizardScreen: React.FC = () => {
     return (
         <WizardContainer
             steps={WIZARD_STEPS}
-            totalPages={7}
+            totalPages={6}
             startPage={0}
             initialData={{ surname: addedSurnameFromSearch }}
             onComplete={handleComplete}

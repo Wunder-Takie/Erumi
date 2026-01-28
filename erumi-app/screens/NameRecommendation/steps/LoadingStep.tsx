@@ -462,18 +462,8 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
         return () => clearTimeout(timer);
     }, [goNext]);
 
-    // 진입 시 페이드 인 애니메이션
-    const entryOpacity = useSharedValue(0);
-    useEffect(() => {
-        entryOpacity.value = withTiming(1, { duration: 800 });
-    }, [entryOpacity]);
-
-    const entryAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: entryOpacity.value,
-    }));
-
     return (
-        <Animated.View style={[styles.container, entryAnimatedStyle]}>
+        <View style={styles.container}>
             {/* Skia Canvas - 배경 + 오로라 + 별 */}
             <Canvas style={StyleSheet.absoluteFill}>
                 {/* 더 어두운 그라데이션 배경 */}
@@ -517,7 +507,7 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
                     </Text>
                 </View>
             </View>
-        </Animated.View>
+        </View>
     );
 };
 

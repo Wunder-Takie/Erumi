@@ -160,7 +160,7 @@ export const SurnameScreen: React.FC = () => {
 
             {/* Pagination - 7페이지 중 첫 번째 */}
             <Pagination
-                totalPages={7}
+                totalPages={6}
                 currentPage={0}
                 scrollPosition={0}
             />
