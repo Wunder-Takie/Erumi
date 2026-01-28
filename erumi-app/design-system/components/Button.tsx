@@ -61,18 +61,18 @@ const sizeConfig = {
     small: {
         height: 36,
         paddingHorizontal: space[500], // 20
-        paddingVertical: space[300], // 12
+        paddingVertical: 9, // (36 - 18 lineHeight) / 2 = 9
         iconPaddingAdjust: 4,
-        textStyle: typography.label.mdSemiBold, // fontSize 14, SemiBold
+        textStyle: typography.label.mdSemiBold, // fontSize 14, SemiBold, lineHeight 18
         iconSize: 16,
         gap: space[200], // 8
     },
     medium: {
         height: 40,
         paddingHorizontal: space[500], // 20
-        paddingVertical: space[300], // 12
+        paddingVertical: 10, // (40 - 20 lineHeight) / 2 = 10
         iconPaddingAdjust: 4,
-        textStyle: typography.label.lgSemiBold, // fontSize 16, SemiBold
+        textStyle: typography.label.lgSemiBold, // fontSize 16, SemiBold, lineHeight 20
         iconSize: 20,
         gap: space[100], // 4
     },
@@ -155,10 +155,10 @@ const getVariantStyles = (
                 container: {
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
-                    borderColor: colors.border.default.primary,
+                    borderColor: colors.border.default.strong, // #92846D (sand[500])
                 },
                 text: {
-                    color: colors.text.default.primary,
+                    color: colors.text.default.secondary, // #6D614C (sand[600])
                 },
             };
         case 'tonal':
@@ -246,7 +246,7 @@ export const Button: React.FC<ButtonProps> = ({
                     paddingLeft: layoutPadding.paddingLeft,
                     paddingRight: layoutPadding.paddingRight,
                     borderRadius: radius.full,
-                    opacity: pressed ? 0.8 : 1,
+                    opacity: 1,
                 },
                 variantStyles.container,
                 style,

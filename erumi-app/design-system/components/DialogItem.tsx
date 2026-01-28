@@ -4,6 +4,8 @@
  */
 import * as React from 'react';
 import { View, ScrollView, StyleSheet, ViewStyle } from 'react-native';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { LinearGradient } from 'expo-linear-gradient';
 import { space } from '../tokens';
 
 // =============================================================================
@@ -31,17 +33,28 @@ export const DialogItem: React.FC<DialogItemProps> = ({
     style,
     children,
 }) => {
-    // zodiacTime variant: scrollable list
+    // zodiacTime variant: scrollable list with bottom fade effect
     if (variant === 'zodiacTime') {
         return (
             <View style={[styles.container, { height: maxHeight }, style]}>
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled
+                <MaskedView
+                    style={styles.maskedContainer}
+                    maskElement={
+                        <LinearGradient
+                            colors={['black', 'black', 'black', 'transparent']}
+                            locations={[0, 0.75, 0.85, 1]}
+                            style={styles.maskGradient}
+                        />
+                    }
                 >
-                    {children}
-                </ScrollView>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        nestedScrollEnabled
+                    >
+                        {children}
+                    </ScrollView>
+                </MaskedView>
             </View>
         );
     }
@@ -71,11 +84,18 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
     },
+    maskedContainer: {
+        flex: 1,
+    },
+    maskGradient: {
+        flex: 1,
+    },
     scrollContainer: {
         flex: 1,
     },
     scrollContent: {
         gap: 4, // Figma gap
+        paddingBottom: space[600], // 24 - space for gradient fade
     },
     wheelContainer: {
         width: '100%',

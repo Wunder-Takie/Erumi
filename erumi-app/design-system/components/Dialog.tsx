@@ -4,7 +4,7 @@
  */
 import * as React from 'react';
 import { useRef, useEffect, useState } from 'react';
-import { View, Modal, StyleSheet, ViewStyle, Pressable, Animated, Dimensions, Platform } from 'react-native';
+import { View, Modal, StyleSheet, ViewStyle, Pressable, Animated, Dimensions, Platform, Easing } from 'react-native';
 import { colors, space, radius } from '../tokens';
 import { Button } from './Button';
 
@@ -54,7 +54,7 @@ export const Dialog: React.FC<DialogProps> = ({
             setModalVisible(true);
         } else if (modalVisible) {
             // 닫기 애니메이션 후 Modal 숨기기
-            const duration = 220;
+            const duration = 150; // 220 → 150 (더 빠르게)
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 0,
@@ -83,12 +83,10 @@ export const Dialog: React.FC<DialogProps> = ({
                 duration: 200,
                 useNativeDriver: true,
             }),
-            Animated.spring(slideAnim, {
+            Animated.timing(slideAnim, {
                 toValue: 0,
-                mass: 1,
-                stiffness: 256,
-                damping: 24,
-                overshootClamping: true,
+                duration: 250, // 빠르게 올라오도록
+                easing: Easing.out(Easing.cubic), // 빠르게 시작, 천천히 끝남
                 useNativeDriver: true,
             }),
         ]).start();

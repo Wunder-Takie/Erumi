@@ -75,3 +75,5 @@ export type {
 
 export { OrthodoxReport } from './OrthodoxReport';
 export type { OrthodoxReportProps } from './OrthodoxReport';
+
+export { SplashScreen } from './SplashScreen';

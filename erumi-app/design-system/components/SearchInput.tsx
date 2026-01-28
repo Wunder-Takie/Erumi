@@ -22,6 +22,8 @@ export interface SearchInputProps {
     onFocus?: () => void;
     /** Blur handler */
     onBlur?: () => void;
+    /** Auto focus on mount */
+    autoFocus?: boolean;
     /** Custom style */
     style?: ViewStyle;
 }
@@ -36,6 +38,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     onChangeText,
     onFocus,
     onBlur,
+    autoFocus = false,
     style,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -71,6 +74,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     onChangeText={onChangeText}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
+                    autoFocus={autoFocus}
                 />
             </View>
         </View>

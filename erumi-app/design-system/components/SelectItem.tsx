@@ -119,7 +119,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        paddingVertical: space[300], // 12
+        paddingVertical: space[400], // 16 (Figma updated)
         paddingHorizontal: space[500], // 20
         borderRadius: radius[600], // 24
         gap: space[200], // 8
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
         ...typography.body.md,
         fontFamily: 'Pretendard-SemiBold', // fontWeight 600
         fontSize: 16,
+        lineHeight: 24, // Increased for emoji support (prevents clipping)
         color: colors.primitives.sand[800], // #332C21
     },
     secondLabel: {
