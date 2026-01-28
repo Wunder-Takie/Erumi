@@ -150,9 +150,9 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
             const willHideHeader = steps[currentStep]?.hideHeader || false;
             const isLoadingTransition = wasHiddenHeader || willHideHeader;
 
-            // 로딩 스텝: 느린 전환, 일반 스텝: 빠른 전환
-            const fadeOutDuration = isLoadingTransition ? 400 : 150;
-            const fadeInDuration = isLoadingTransition ? 500 : 200;
+            // 로딩 스텝: 느린 전환, 일반 스텝: 매우 빠른 전환
+            const fadeOutDuration = isLoadingTransition ? 300 : 80;
+            const fadeInDuration = isLoadingTransition ? 400 : 120;
 
             isTransitioning.current = true;
             fadeAnim.value = withTiming(0, { duration: fadeOutDuration }, (finished) => {
