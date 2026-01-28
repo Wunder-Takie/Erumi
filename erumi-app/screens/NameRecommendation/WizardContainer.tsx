@@ -142,31 +142,29 @@ export const WizardContainer: React.FC<WizardContainerProps> = ({
         isTransitioning.current = false;
     }, []);
 
-    // 스텝 변경 시 페이드 애니메이션 실행 (로딩 스텝 전후에만)
+    // 스텝 변경 시 빠른 페이드 애니메이션 실행 (모든 스텝)
     useEffect(() => {
         if (currentStep !== displayedStep && !isTransitioning.current) {
-            // 로딩 스텝(hideHeader) 전후인지 확인
+            // 로딩 스텝 전후는 더 부드럽게
             const wasHiddenHeader = steps[displayedStep]?.hideHeader || false;
             const willHideHeader = steps[currentStep]?.hideHeader || false;
-            const shouldAnimate = wasHiddenHeader || willHideHeader;
+            const isLoadingTransition = wasHiddenHeader || willHideHeader;
 
-            if (shouldAnimate) {
-                // 페이드 애니메이션 적용 (부드럽게)
-                isTransitioning.current = true;
-                fadeAnim.value = withTiming(0, { duration: 400 }, (finished) => {
-                    if (finished) {
-                        runOnJS(setDisplayedStep)(currentStep);
-                        fadeAnim.value = withTiming(1, { duration: 500 }, (fadeInFinished) => {
-                            if (fadeInFinished) {
-                                runOnJS(finishTransition)();
-                            }
-                        });
-                    }
-                });
-            } else {
-                // 일반 스텝: 즉시 전환
-                setDisplayedStep(currentStep);
-            }
+            // 로딩 스텝: 느린 전환, 일반 스텝: 빠른 전환
+            const fadeOutDuration = isLoadingTransition ? 400 : 150;
+            const fadeInDuration = isLoadingTransition ? 500 : 200;
+
+            isTransitioning.current = true;
+            fadeAnim.value = withTiming(0, { duration: fadeOutDuration }, (finished) => {
+                if (finished) {
+                    runOnJS(setDisplayedStep)(currentStep);
+                    fadeAnim.value = withTiming(1, { duration: fadeInDuration }, (fadeInFinished) => {
+                        if (fadeInFinished) {
+                            runOnJS(finishTransition)();
+                        }
+                    });
+                }
+            });
         }
     }, [currentStep, displayedStep, fadeAnim, finishTransition, steps]);
 

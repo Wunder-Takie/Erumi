@@ -8,6 +8,16 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    withRepeat,
+    withDelay,
+    withSequence,
+    Easing,
+    useDerivedValue,
+} from 'react-native-reanimated';
 import {
     Canvas,
     Circle,
@@ -23,15 +33,6 @@ import {
     FractalNoise,
     Line,
 } from '@shopify/react-native-skia';
-import Animated, {
-    useSharedValue,
-    withRepeat,
-    withTiming,
-    withDelay,
-    withSequence,
-    Easing,
-    useDerivedValue,
-} from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { space } from '../../../design-system';
 import { WizardStepProps } from '../WizardContainer';
@@ -461,8 +462,18 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
         return () => clearTimeout(timer);
     }, [goNext]);
 
+    // 진입 시 페이드 인 애니메이션
+    const entryOpacity = useSharedValue(0);
+    useEffect(() => {
+        entryOpacity.value = withTiming(1, { duration: 800 });
+    }, [entryOpacity]);
+
+    const entryAnimatedStyle = useAnimatedStyle(() => ({
+        opacity: entryOpacity.value,
+    }));
+
     return (
-        <View style={styles.container}>
+        <Animated.View style={[styles.container, entryAnimatedStyle]}>
             {/* Skia Canvas - 배경 + 오로라 + 별 */}
             <Canvas style={StyleSheet.absoluteFill}>
                 {/* 더 어두운 그라데이션 배경 */}
@@ -506,7 +517,7 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
                     </Text>
                 </View>
             </View>
-        </View>
+        </Animated.View>
     );
 };
 
