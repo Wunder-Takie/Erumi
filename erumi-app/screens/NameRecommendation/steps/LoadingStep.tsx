@@ -6,7 +6,7 @@
  * 
  * Uses: react-native-skia + react-native-reanimated for high quality effects
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, {
     useSharedValue,
@@ -36,6 +36,7 @@ import {
 import { Image } from 'expo-image';
 import { space } from '../../../design-system';
 import { WizardStepProps } from '../WizardContainer';
+import { useNameGeneration } from '../hooks/useNameGeneration';
 
 // 별 개수
 const STAR_COUNT = 50;
@@ -442,6 +443,11 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
     // 로딩 메시지 상태
     const [messageIndex, setMessageIndex] = useState(0);
 
+    // 엔진 연동
+    const { generate, loadMore, isLoading, isLoadingMore, names, error } = useNameGeneration();
+    const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+    const hasStartedRef = useRef(false);
+
     const loadingMessages = [
         '타고난 기운을 살피고 있어요.',
         '당신의 바람을 이름에 담는 중입니다.',
@@ -456,11 +462,44 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
         return () => clearInterval(messageInterval);
     }, []);
 
-    // 12초 후 자동으로 결과 화면으로 이동 (3개 메시지 * 4초)
+    // 엔진 호출 (마운트 시 1회만)
     useEffect(() => {
-        const timer = setTimeout(() => goNext(), 5000);
+        if (!hasStartedRef.current) {
+            hasStartedRef.current = true;
+
+            if (data.loadMoreFlag) {
+                // 더보기 요청인 경우 - 추가 배치 로드
+                updateData({ loadMoreFlag: false }); // 플래그 초기화
+                loadMore();
+            } else {
+                // 초기 생성인 경우
+                generate(data);
+            }
+        }
+    }, [generate, loadMore, data, updateData]);
+
+    // 최소 4.5초 UX 보장
+    useEffect(() => {
+        const timer = setTimeout(() => setMinTimeElapsed(true), 4500);
         return () => clearTimeout(timer);
-    }, [goNext]);
+    }, []);
+
+    // 엔진 완료 + 최소 시간 경과 시 다음으로
+    useEffect(() => {
+        // generate 또는 loadMore 완료 시
+        const loadingDone = !isLoading && !isLoadingMore;
+        if (loadingDone && names.length > 0 && minTimeElapsed) {
+            goNext();
+        }
+    }, [isLoading, isLoadingMore, names, minTimeElapsed, goNext]);
+
+    // 에러 시에도 다음으로 (ResultStep에서 에러 표시)
+    useEffect(() => {
+        if (error && minTimeElapsed) {
+            updateData({ generationError: error } as any);
+            goNext();
+        }
+    }, [error, minTimeElapsed, goNext, updateData]);
 
     return (
         <View style={styles.container}>

@@ -128,6 +128,7 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
                 ref={scrollViewRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={styles.tabScroll}
                 contentContainerStyle={styles.tabScrollContent}
             >
                 <TabMenu
@@ -183,8 +184,11 @@ const styles = StyleSheet.create({
         gap: 16, // Figma gap
     },
     // Figma: tapMenuWrapper (no padding)
+    tabScroll: {
+        marginHorizontal: -16, // Extend to screen edges for full-width scroll
+    },
     tabScrollContent: {
-        // paddingHorizontal 없음 (Figma)
+        paddingHorizontal: 16, // Add padding to prevent clipping
         alignSelf: 'stretch', // FILL
     },
     // 제스처 인식 영역 (header + content)

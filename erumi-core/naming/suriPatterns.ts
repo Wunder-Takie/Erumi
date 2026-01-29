@@ -88,9 +88,9 @@ function countLuckyGeok(surnameStrokes: number, strokes1: number, strokes2: numb
 }
 
 /**
- * 4격 모두 길수인지 확인 (엄격한 모드)
+ * 4격 모두 길수인지 확인 (엄격한 모드) - 사주 완벽 스타일용
  */
-function isAll4Lucky(surnameStrokes: number, strokes1: number, strokes2: number): boolean {
+export function isAll4Lucky(surnameStrokes: number, strokes1: number, strokes2: number): boolean {
     return countLuckyGeok(surnameStrokes, strokes1, strokes2) === 4;
 }
 
@@ -163,6 +163,7 @@ export default {
     getLuckyStrokeCombinations,
     getLuckyStrokesWithCache,
     isLuckyCombination,
+    isAll4Lucky,
     get4GeokInfo,
     isLucky
 };

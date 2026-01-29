@@ -116,7 +116,10 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
                 {/* Page Header */}
                 <View style={styles.pageHeader}>
                     <Text style={styles.title}>
-                        세상에 처음 {'\n'}도착한 시간은 언제인가요?
+                        세상에 처음{'\n'}도착한 시간은 언제인가요?
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        생년월일과 태어난 시간을 알려주세요.
                     </Text>
                 </View>
 
@@ -230,6 +233,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         lineHeight: 28,
         color: colors.text.default.primary,
+    },
+    subtitle: {
+        fontFamily: 'Pretendard-Medium',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+        color: colors.text.default.tertiary,
     },
     inputsContainer: {
         flex: 1,

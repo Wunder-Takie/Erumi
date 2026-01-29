@@ -118,4 +118,32 @@ JSON 형식으로만 응답:
   "briefComment": "현대적이고 부르기 좋은 이름"
 }`;
 
+// 배치 평가용 프롬프트 (8개 동시 평가)
+export const BATCH_EVALUATION_PROMPT = `당신은 2020년대 한국 작명 전문가입니다. 다음 이름들을 매우 엄격하게 평가해주세요.
+
+## 평가할 이름 목록
+{nameList}
+
+## 평가 기준
+
+### modernityScore (1-10): 현대적인 느낌
+- 10점: 서윤, 하준, 예준, 민서, 시우 같은 2020년대 트렌디한 이름
+- 7-9점: 지민, 수민, 유진 같은 현대적이지만 흔한 이름
+- 4-6점: 지영, 현주, 경서 같은 중립적인 이름
+- 1-3점: 영수, 영희, 철수, 순자 같은 1970-90년대 느낌 이름
+
+### pronunciationScore (1-10): 발음 자연스러움
+- 10점: 부르기 쉽고 청각적으로 아름다운 이름
+- 1-3점: 매우 어색하거나 다른 단어와 혼동되는 이름
+
+### isOldFashioned (boolean): 올드하면 true
+
+⚠️ 조금이라도 올드하거나 어색하면 낮은 점수를 주세요. 엄격하게 평가하세요.
+
+JSON 배열 형식으로만 응답:
+[
+  {"fullName": "김서준", "modernityScore": 9, "pronunciationScore": 9, "isOldFashioned": false, "briefComment": "세련된 이름"},
+  ...
+]`;
+
 export default LLM_CONFIG;

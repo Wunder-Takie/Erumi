@@ -55,7 +55,10 @@ export const GenderStep: React.FC<WizardStepProps> = ({
                 {/* Page Header */}
                 <View style={styles.pageHeader}>
                     <Text style={styles.title}>
-                        타고난 성별을 알려주세요.
+                        타고난{'\n'}성별을 알려주세요.
+                    </Text>
+                    <Text style={styles.subtitle}>
+                        모른다면 성별 구분없이 사용될 수 있는 이름을 추천할게요.
                     </Text>
                 </View>
 
@@ -110,6 +113,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         lineHeight: 28,
         color: colors.text.default.primary,
+    },
+    subtitle: {
+        fontFamily: 'Pretendard-Medium',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 18,
+        color: colors.text.default.tertiary,
     },
     optionsContainer: {
         flex: 1,

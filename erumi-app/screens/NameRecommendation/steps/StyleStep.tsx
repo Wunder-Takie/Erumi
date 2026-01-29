@@ -67,10 +67,10 @@ export const StyleStep: React.FC<WizardStepProps> = ({
                 {/* Page Header - Figma: gap=8 */}
                 <View style={styles.pageHeader}>
                     <Text style={styles.title}>
-                        이름을 짓기전{'\n'}특별한 순간이 있었나요?
+                        선호하는 이름의{'\n'}스타일을 선택해주세요.
                     </Text>
                     <Text style={styles.subtitle}>
-                        의미있던 장소나 태몽같은 특별한 순간을 떠올려보세요.
+                        선택한 스타일에따라 추천 이름이 달라질 수 있어요.
                     </Text>
                 </View>
 
@@ -84,6 +84,7 @@ export const StyleStep: React.FC<WizardStepProps> = ({
                             bodyLabel={option.body}
                             selected={selectedStyle === option.id}
                             onPress={() => handleStyleSelect(option.id)}
+                            showTrailingIcon={false}
                         />
                     ))}
                 </View>
@@ -98,7 +99,7 @@ export const StyleStep: React.FC<WizardStepProps> = ({
                     onPress={handleNext}
                     style={styles.nextButton}
                 >
-                    다음
+                    이름 추천 받기
                 </Button>
             </View>
         </View>

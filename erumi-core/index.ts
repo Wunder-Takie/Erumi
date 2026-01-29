@@ -16,6 +16,7 @@ export * from './naming/semanticScoring';
 export * from './naming/advancedPhoneticScoring';
 export * from './naming/nameModernityAnalyzer';
 export * from './naming/llmEvaluator';
+export * from './naming/BatchManager';
 export * from './naming/llmConfig';
 export * from './naming/suriPatterns';
 export * from './naming/globalNameCheck';

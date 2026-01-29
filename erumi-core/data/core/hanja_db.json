@@ -2434,5 +2434,61 @@
     "position": "both",
     "modernity": 8,
     "gender_tendency": -4
+  },
+  {
+    "id": 191,
+    "hanja": "多",
+    "hangul": "다",
+    "roman": "Da",
+    "meaning_korean": "많을 다",
+    "meaning_story": "풍요롭고 넘치는 은혜와 기쁨이 가득한",
+    "strokes": 6,
+    "element": "Fire",
+    "gender": "N",
+    "position": "first",
+    "modernity": 9,
+    "gender_tendency": -2
+  },
+  {
+    "id": 192,
+    "hanja": "可",
+    "hangul": "가",
+    "roman": "Ga",
+    "meaning_korean": "옳을 가",
+    "meaning_story": "바르고 올바른 길을 걷는 당당한",
+    "strokes": 5,
+    "element": "Wood",
+    "gender": "N",
+    "position": "first",
+    "modernity": 9,
+    "gender_tendency": -2
+  },
+  {
+    "id": 193,
+    "hanja": "世",
+    "hangul": "세",
+    "roman": "Se",
+    "meaning_korean": "세상 세",
+    "meaning_story": "세상을 품고 큰 뜻을 펼치는",
+    "strokes": 5,
+    "element": "Metal",
+    "gender": "N",
+    "position": "first",
+    "modernity": 9,
+    "gender_tendency": 0
+  },
+  {
+    "id": 194,
+    "hanja": "丹",
+    "hangul": "단",
+    "roman": "Dan",
+    "meaning_korean": "붉을 단",
+    "meaning_story": "붉게 물든 정성과 따뜻한 마음을 가진",
+    "strokes": 4,
+    "element": "Fire",
+    "gender": "N",
+    "position": "first",
+    "modernity": 8,
+    "gender_tendency": -3
   }
 ]

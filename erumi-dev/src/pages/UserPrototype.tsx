@@ -24,7 +24,7 @@ interface VibeOption {
     vibeKeyword: string;
 }
 
-type Step = 'intro' | 'basics' | 'saju' | 'story' | 'vibe' | 'result';
+type Step = 'intro' | 'basics' | 'saju' | 'story' | 'vibe' | 'style' | 'result';
 
 // 테마 정의
 const BATCH_THEMES = [
@@ -72,6 +72,7 @@ function ProgressBar({ currentStep }: { currentStep: Step }) {
         { key: 'saju', label: '사주' },
         { key: 'story', label: '스토리' },
         { key: 'vibe', label: '바이브' },
+        { key: 'style', label: '스타일' },
         { key: 'result', label: '결과' },
     ];
 
@@ -297,6 +298,7 @@ export default function UserFlow() {
     const [gender, setGender] = useState<'M' | 'F' | null>(null);
     const [selectedStory, setSelectedStory] = useState<StoryOption | null>(null);
     const [selectedVibe, setSelectedVibe] = useState<VibeOption | null>(null);
+    const [styleMode, setStyleMode] = useState<'modern' | 'saju_perfect'>('modern');
     const [allNames, setAllNames] = useState<NameItem[]>([]); // 전체 이름 풀
     const [loading, setLoading] = useState(false);
     const [selectedReportName, setSelectedReportName] = useState<NameItem | null>(null);
@@ -401,7 +403,7 @@ export default function UserFlow() {
                 }
             }
 
-            const names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights) as unknown as NameItem[];
+            const names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights, styleMode) as unknown as NameItem[];
             const sortedNames = [...names].sort((a, b) => b.score - a.score);
             setAllNames(sortedNames);
 
@@ -454,7 +456,8 @@ export default function UserFlow() {
         else if (step === 'basics' && surname) setStep('saju');
         else if (step === 'saju') setStep('story');
         else if (step === 'story') setStep('vibe');
-        else if (step === 'vibe') {
+        else if (step === 'vibe') setStep('style');
+        else if (step === 'style') {
             generateNameResults();
             setStep('result');
         }
@@ -465,7 +468,8 @@ export default function UserFlow() {
         else if (step === 'saju') setStep('basics');
         else if (step === 'story') setStep('saju');
         else if (step === 'vibe') setStep('story');
-        else if (step === 'result') setStep('vibe');
+        else if (step === 'style') setStep('vibe');
+        else if (step === 'result') setStep('style');
     };
 
     // 결제 시뮬레이션
@@ -728,6 +732,57 @@ export default function UserFlow() {
                                     </div>
                                 </button>
                             ))}
+                        </div>
+
+                        <button
+                            onClick={goNext}
+                            disabled={loading}
+                            className="w-full mt-8 bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 disabled:bg-gray-300 transition-colors"
+                        >
+                            다음 →
+                        </button>
+                    </div>
+                )}
+
+                {/* Step: Style */}
+                {step === 'style' && (
+                    <div className="py-8">
+                        <button onClick={goBack} className="text-gray-500 hover:text-gray-700 mb-4">
+                            ← 이전
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            🎨 어떤 스타일의 이름을 원하세요?
+                        </h2>
+                        <p className="text-gray-600 mb-8">이름 추천 기준을 선택해주세요</p>
+
+                        <div className="space-y-4">
+                            <button
+                                onClick={() => setStyleMode('modern')}
+                                className={`w-full p-6 rounded-xl text-left transition-all ${styleMode === 'modern'
+                                        ? 'bg-indigo-600 text-white shadow-lg scale-[1.02]'
+                                        : 'bg-white text-gray-900 hover:bg-gray-50 shadow'
+                                    }`}
+                            >
+                                <div className="text-2xl mb-2">🌟</div>
+                                <div className="font-bold text-lg">세련되고 감각적인 이름</div>
+                                <div className={`text-sm mt-1 ${styleMode === 'modern' ? 'text-indigo-200' : 'text-gray-500'}`}>
+                                    현대적이고 트렌디한 이름 (3/4 이상 길수)
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => setStyleMode('saju_perfect')}
+                                className={`w-full p-6 rounded-xl text-left transition-all ${styleMode === 'saju_perfect'
+                                        ? 'bg-purple-600 text-white shadow-lg scale-[1.02]'
+                                        : 'bg-white text-gray-900 hover:bg-gray-50 shadow'
+                                    }`}
+                            >
+                                <div className="text-2xl mb-2">🔮</div>
+                                <div className="font-bold text-lg">사주 오행이 완벽한 이름</div>
+                                <div className={`text-sm mt-1 ${styleMode === 'saju_perfect' ? 'text-purple-200' : 'text-gray-500'}`}>
+                                    수리성명학 4격 모두 길수인 이름만 추천
+                                </div>
+                            </button>
                         </div>
 
                         <button

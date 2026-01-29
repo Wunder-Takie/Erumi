@@ -16,7 +16,7 @@ import modernPreferences from '../data/filter/modern_preferences.json' with { ty
 import valueTags from '../data/ui/value_tags.json' with { type: 'json' };
 import logicRules from '../data/scoring/logic_rules.json' with { type: 'json' };
 import { checkGlobalName } from './globalNameCheck.ts';
-import { isLuckyCombination } from './suriPatterns.ts';
+import { isLuckyCombination, isAll4Lucky } from './suriPatterns.ts';
 import { evaluateNamesWithLLM, applyLLMScore, shouldExcludeAsOldFashioned } from './llmEvaluator.ts';
 
 // 🆕 모듈 분리: 새로 생성된 유틸리티 모듈들 (직접 사용)
@@ -134,14 +134,16 @@ function calculateModernityPoints(avgMod: number): number {
  * @param {Array} selectedTagIds - 선택된 태그
  * @param {string|null} gender - 성별
  * @param {object|null} preferenceWeights - 스토리 기반 오행 가중치
- * @param {object|null} yongsinWeights - 용신 기반 오행 가중치 (NEW)
+ * @param {object|null} yongsinWeights - 용신 기반 오행 가중치
+ * @param {'modern'|'saju_perfect'} styleMode - 스타일 모드 (NEW)
  */
 export async function generateNames(
   surnameInput: string,
   selectedTagIds: string[] = [],
   gender: string | null = null,
   preferenceWeights: Record<string, number> | null = null,
-  yongsinWeights: Record<string, number> | null = null
+  yongsinWeights: Record<string, number> | null = null,
+  styleMode: 'modern' | 'saju_perfect' = 'modern'
 ) {
   // === STEP 1: 기본 데이터 로드 ===
   const surname = surnameInput.trim();
@@ -149,6 +151,8 @@ export async function generateNames(
 
   // 🆕 필터링된 이름 추적
   const filteredOut = [];
+
+  console.log(`🎨 스타일 모드: ${styleMode === 'saju_perfect' ? '사주 완벽 (4격 모두 길수)' : '세련된 (3/4 이상 길수)'}`);
 
   // 성별 필터 (부드러운 방식: gender OR 'N')
   if (gender) {
@@ -203,9 +207,14 @@ export async function generateNames(
       if (hanja1.position === 'last') continue;
       if (hanja2.position === 'first') continue;
 
-      // 🆕 Phase 2: 수리 사전 필터 (4격 길수만 생성)
-      if (!isLuckyCombination(surnameStrokes, hanja1.strokes, hanja2.strokes)) {
-        continue; // 흉수 조합은 아예 생성하지 않음
+      // 🆕 Phase 2: 수리 사전 필터 (styleMode에 따라 조건 변경)
+      // styleMode='saju_perfect': 4격 모두 길수 필수
+      // styleMode='modern': 3/4 이상 길수 허용
+      const suriCheck = styleMode === 'saju_perfect'
+        ? isAll4Lucky(surnameStrokes, hanja1.strokes, hanja2.strokes)
+        : isLuckyCombination(surnameStrokes, hanja1.strokes, hanja2.strokes);
+      if (!suriCheck) {
+        continue; // 수리 조건 미충족 시 제외
       }
 
       candidates.push({
@@ -590,6 +599,12 @@ export async function generateNames(
     return b.score - a.score;
   });
 
+  // 🔴 LLM 평가 임시 비활성화 - 별도 호출로 분리 예정
+  // 원본 코드는 llmEvaluator.ts의 evaluateNamesWithLLM() 사용
+  // 향후 앱에서 필요 시점에 별도 호출:
+  //   import { evaluateNamesWithLLM, applyLLMScore, shouldExcludeAsOldFashioned } from 'erumi-core';
+  //   const llmResults = await evaluateNamesWithLLM(topCandidates, surname);
+  /*
   const topCandidates = filtered.slice(0, 50);
   try {
     const llmResults = await evaluateNamesWithLLM(topCandidates, surname);
@@ -610,6 +625,7 @@ export async function generateNames(
   } catch (error) {
     console.warn('[LLM] Evaluation skipped:', error instanceof Error ? error.message : 'Unknown error');
   }
+  */
 
   // === STEP 5: 최종 정렬 (점수 기준) ===
   filtered.sort((a: any, b: any) => {

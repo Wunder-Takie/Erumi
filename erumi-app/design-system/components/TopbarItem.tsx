@@ -17,6 +17,8 @@ export interface TopbarItemProps {
     status: TopbarItemStatus;
     /** Text label (required when status='label') */
     label?: string;
+    /** Custom label color */
+    labelColor?: string;
     /** Icon element (required when status='icon') */
     icon?: React.ReactNode;
     /** Press handler */
@@ -35,6 +37,7 @@ const TOUCH_SLOP = { top: 11, bottom: 11, left: 8, right: 8 };
 export const TopbarItem: React.FC<TopbarItemProps> = ({
     status,
     label,
+    labelColor,
     icon,
     onPress,
     style,
@@ -46,7 +49,9 @@ export const TopbarItem: React.FC<TopbarItemProps> = ({
                 onPress={onPress}
                 hitSlop={TOUCH_SLOP}
             >
-                <Text style={styles.labelText}>{label}</Text>
+                <Text style={[styles.labelText, labelColor && { color: labelColor }]}>
+                    {label}
+                </Text>
             </Pressable>
         );
     }

@@ -95,10 +95,10 @@ export const VibeStep: React.FC<WizardStepProps> = ({
                 {/* Page Header - Figma: questionWrapper gap=8 */}
                 <View style={styles.pageHeader}>
                     <Text style={styles.title}>
-                        아이에게 어떤 분위기의{'\n'}이름을 지어주고 싶으세요?
+                        이름을 받는이가{'\n'}어떤 사람으로 자라길 바라나요?
                     </Text>
                     <Text style={styles.subtitle}>
-                        원하는 느낌의 바이브를 선택해주세요.
+                        이름에 따뜻한 마음을 담아주세요 :)
                     </Text>
                 </View>
 

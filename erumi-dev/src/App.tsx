@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import DevApp from './pages/DevApp';
-import UserFlow from './pages/UserFlow';
+import DevPrototype from './pages/DevPrototype';
+import UserPrototype from './pages/UserPrototype';
 import ReportTest from './pages/ReportTest';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<UserFlow />} />
-        <Route path="/dev" element={<DevApp />} />
+        <Route path="/" element={<UserPrototype />} />
+        <Route path="/dev" element={<DevPrototype />} />
         <Route path="/report-test" element={<ReportTest />} />
       </Routes>
     </BrowserRouter>
@@ -16,3 +16,4 @@ function App() {
 }
 
 export default App;
+

@@ -4,8 +4,24 @@
  * 
  * Figma Node: 327-3017 (NameRecommendation/NameResult/OneTimeFree)
  */
-import React, { useState, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions, FlatList, ViewToken } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, FlatList, ViewToken, Pressable } from 'react-native';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    withRepeat,
+    withSequence,
+    withDelay,
+    withSpring,
+    FadeIn,
+    FadeOut,
+    SlideInUp,
+    SlideInDown,
+    SlideOutUp,
+    LinearTransition,
+    Easing,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
@@ -19,63 +35,11 @@ import {
     space,
 } from '../../../design-system';
 import { WizardStepProps } from '../WizardContainer';
+import { useNameGeneration } from '../hooks/useNameGeneration';
+import { BatchNameCandidate } from 'erumi-core';
 
 // Vector 배경 SVG Path (Figma 추출)
 const BLOB_PATH = 'M151.968 7.38668C203.085 -12.109 249.039 9.92182 273.114 39.308C290.827 60.9297 301.507 91.604 296.271 122.713C306.473 122.243 316.942 124.107 326.772 128.601C357.892 142.829 370.819 178.017 355.644 207.195C321.838 272.195 248.379 302.429 188.249 305.058C157.352 306.408 122.391 300.994 93.0441 282.63C62.2944 263.388 42.0818 232.299 40.5639 193.955C14.2183 170.467 0 137.89 0 100.734C0.000206247 68.2719 28.0676 41.9561 62.691 41.9561C72.9956 41.9561 82.7191 44.2879 91.2952 48.4182C107.389 31.1552 127.239 17.1132 150.76 7.85518L151.968 7.38668Z';
-
-// 더미 이름 데이터 (실제 구현 시 data에서 가져옴)
-const DUMMY_NAMES = [
-    {
-        id: '1',
-        nameKr: '김시아',
-        nameHanja: '金詩雅',
-        characters: [
-            { meaning: '시', pronunciation: '시' },
-            { meaning: '맑을/우아할', pronunciation: '아' },
-        ],
-        compatibility: '사주와 이름이 완벽하게 조화를 이뤄요!\n최고의 궁합이에요.',
-    },
-    {
-        id: '2',
-        nameKr: '김서윤',
-        nameHanja: '金瑞潤',
-        characters: [
-            { meaning: '상서로울', pronunciation: '서' },
-            { meaning: '윤택할', pronunciation: '윤' },
-        ],
-        compatibility: '균형 잡힌 이름으로\n조화로운 에너지를 가져요.',
-    },
-    {
-        id: '3',
-        nameKr: '김하늘',
-        nameHanja: '金夏乙',
-        characters: [
-            { meaning: '여름', pronunciation: '하' },
-            { meaning: '새', pronunciation: '늘' },
-        ],
-        compatibility: '밝고 활기찬 기운이\n가득한 이름이에요.',
-    },
-    {
-        id: '4',
-        nameKr: '김지우',
-        nameHanja: '金智宇',
-        characters: [
-            { meaning: '지혜', pronunciation: '지' },
-            { meaning: '집/하늘', pronunciation: '우' },
-        ],
-        compatibility: '지혜롭고 넓은 시야를\n가진 이름이에요.',
-    },
-    {
-        id: '5',
-        nameKr: '김수현',
-        nameHanja: '金秀賢',
-        characters: [
-            { meaning: '빼어날', pronunciation: '수' },
-            { meaning: '어질', pronunciation: '현' },
-        ],
-        compatibility: '뛰어난 재능과 덕망을\n지닌 이름이에요.',
-    },
-];
 
 // 캐러셀 설정
 const SIDE_PEEK = 24; // 양쪽에 보이는 다음/이전 카드 너비
@@ -93,6 +57,69 @@ export const ResultStep: React.FC<WizardStepProps> = ({
     const flatListRef = useRef<FlatList>(null);
     const [currentIndex, setCurrentIndex] = useState(0);
 
+    // 엔진에서 생성된 이름 데이터 (전역 상태 공유)
+    const { names, loadMore, isLoadingMore, hasMore, isExhausted, isUnlocked, unlock } = useNameGeneration();
+
+    // isLocked는 isUnlocked의 반대
+    const isLocked = !isUnlocked;
+
+    // 이름 데이터를 UI 형식으로 변환
+    const displayNames = useMemo(() => {
+        if (!names || names.length === 0) {
+            return [];
+        }
+        return names.map((name, idx) => {
+            // meaning_korean 포맷: "훈 음" (예: "펼 서", "법 율")
+            const meaning1 = name.hanja1?.meaning_korean?.split(' ')[0] || '';  // 훈
+            const pronunciation1 = name.hanja1?.meaning_korean?.split(' ')[1] || name.hangulName.charAt(0) || '';  // 음
+            const meaning2 = name.hanja2?.meaning_korean?.split(' ')[0] || '';  // 훈
+            const pronunciation2 = name.hanja2?.meaning_korean?.split(' ')[1] || name.hangulName.charAt(1) || '';  // 음
+
+            return {
+                id: String(idx),
+                nameKr: `${data.surname?.hangul || ''}${name.hangulName}`,
+                nameHanja: `${data.surname?.hanja || ''}${name.hanjaName}`,
+                characters: [
+                    { meaning: meaning1, pronunciation: pronunciation1 },
+                    { meaning: meaning2, pronunciation: pronunciation2 },
+                ],
+                compatibility: '사주와 이름이 조화를 이뤄요!',
+            };
+        });
+    }, [names, data.surname]);
+
+    // 종 흔들림 애니메이션 (3초마다 loop)
+    const shakeRotation = useSharedValue(0);
+
+    useEffect(() => {
+        if (isLocked) {
+            // 3초마다 종처럼 흔들리는 애니메이션
+            const shakeAnimation = () => {
+                shakeRotation.value = withSequence(
+                    withTiming(15, { duration: 80 }),
+                    withTiming(-15, { duration: 80 }),
+                    withTiming(12, { duration: 80 }),
+                    withTiming(-12, { duration: 80 }),
+                    withTiming(8, { duration: 80 }),
+                    withTiming(-8, { duration: 80 }),
+                    withTiming(0, { duration: 80 })
+                );
+            };
+
+            // 초기 1회 실행
+            shakeAnimation();
+
+            // 3초마다 반복
+            const intervalId = setInterval(shakeAnimation, 3000);
+
+            return () => clearInterval(intervalId);
+        }
+    }, [isLocked, shakeRotation]);
+
+    const shakeStyle = useAnimatedStyle(() => ({
+        transform: [{ rotate: `${shakeRotation.value}deg` }],
+    }));
+
     // 카드 너비 계산: 화면 너비 - 양쪽 peek - 양쪽 gap
     const CARD_WIDTH = screenWidth - (SIDE_PEEK * 2) - (CARD_GAP * 2);
 
@@ -100,12 +127,26 @@ export const ResultStep: React.FC<WizardStepProps> = ({
     const blobWidth = screenWidth - 40;
     const blobHeight = (blobWidth / 362) * 305;
 
+    // 이름 보기 버튼 클릭 시 잠금 해제
     const handleViewNames = () => {
-        goNext();
+        unlock();  // 전역 상태 변경
     };
 
+    // 버튼 width 애니메이션 스타일
+    const buttonAnimatedStyle = useAnimatedStyle(() => ({
+        width: withTiming(isLocked ? 'auto' : '100%', { duration: 350, easing: Easing.out(Easing.cubic) }),
+    }), [isLocked]);
+
     const handleViewAnalysis = () => {
-        console.log('View analysis for:', DUMMY_NAMES[currentIndex].nameKr);
+        // 잠금 상태일 때는 결제 다이얼로그 표시 (추후 구현)
+        if (isLocked) {
+            console.log('Show payment dialog');
+            return;
+        }
+        // 잠금 해제 시 리포트 화면으로 이동
+        (navigation as any).navigate('NameReport', {
+            name: displayNames[currentIndex]
+        });
     };
 
     const handleGoHome = () => {
@@ -125,7 +166,15 @@ export const ResultStep: React.FC<WizardStepProps> = ({
     };
 
     // 카드 아이템 렌더
-    const renderCard = ({ item, index }: { item: typeof DUMMY_NAMES[0], index: number }) => (
+    interface DisplayNameItem {
+        id: string;
+        nameKr: string;
+        nameHanja: string;
+        characters: { meaning: string; pronunciation: string }[];
+        compatibility: string;
+    }
+
+    const renderCard = ({ item, index }: { item: DisplayNameItem, index: number }) => (
         <View style={[styles.nameCard, { width: CARD_WIDTH, marginHorizontal: CARD_GAP }]}>
             {/* Vector 배경 (absolute positioned) */}
             <View style={[styles.blobBackground, { width: blobWidth, height: blobHeight }]}>
@@ -139,29 +188,59 @@ export const ResultStep: React.FC<WizardStepProps> = ({
 
             {/* Name content */}
             <View style={styles.nameContent}>
-                {/* Name display with blur overlay for locked state */}
+                {/* Name display wrapper - lockIcon 또는 실제 콘텐츠 표시 */}
                 <View style={styles.nameDisplayWrapper}>
-                    {/* Actual text content */}
-                    <View style={styles.nameDisplay}>
-                        <Text style={styles.nameKr}>{item.nameKr}</Text>
-                        <Text style={styles.nameHanja}>{item.nameHanja}</Text>
-                    </View>
+                    {/* Lock 해제 시 보이는 콘텐츠 (FadeIn 애니메이션) */}
+                    {!isLocked && (
+                        <Animated.View
+                            entering={FadeIn.duration(500).delay(300)}
+                            style={styles.unlockedContent}
+                        >
+                            {/* Actual text content */}
+                            <View style={styles.nameDisplay}>
+                                <Text style={styles.nameKr}>{item.nameKr}</Text>
+                                <Text style={styles.nameHanja}>{item.nameHanja}</Text>
+                            </View>
 
-                    {/* Character meaning badges */}
-                    <View style={styles.badgeRow}>
-                        {item.characters.map((char, idx) => (
-                            <Badge
-                                key={idx}
-                                firstLabel={char.meaning}
-                                secondLabel={char.pronunciation}
-                                size="medium"
-                                shape="rectangle"
-                                color="default"
-                            />
-                        ))}
-                    </View>
+                            {/* Character meaning badges */}
+                            <View style={styles.badgeRow}>
+                                {item.characters.map((char, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        firstLabel={char.meaning}
+                                        secondLabel={char.pronunciation}
+                                        size="medium"
+                                        shape="rectangle"
+                                        color="default"
+                                    />
+                                ))}
+                            </View>
+                        </Animated.View>
+                    )}
 
-
+                    {/* Lock Icon 오버레이 (잠금 상태일 때만 표시) */}
+                    {isLocked && (
+                        <Animated.View
+                            style={styles.lockIconContainer}
+                            exiting={FadeOut.duration(500)}
+                        >
+                            <Animated.View style={[styles.lockIconInner, shakeStyle]}>
+                                {/* Figma에서 추출한 Lock Icon SVG (filled style) */}
+                                <Svg width={80} height={80} viewBox="0 0 80 80" fill="none">
+                                    {/* 열쇠구멍 */}
+                                    <Path
+                                        d="M40 42.667C42.2091 42.667 44 44.4579 44 46.667C43.9999 48.1471 43.1951 49.4382 42 50.1299V53.667C41.9998 54.7714 41.1045 55.667 40 55.667C38.8955 55.667 38.0002 54.7714 38 53.667V50.1299C36.8049 49.4382 36.0001 48.1471 36 46.667C36 44.4579 37.7909 42.667 40 42.667Z"
+                                        fill={colors.primitives.sand[500]}
+                                    />
+                                    {/* 자물쇠 본체 */}
+                                    <Path
+                                        d="M40 10.5C47.6112 10.5 53.8035 16.5737 53.9951 24.1387L54 24.5V31.667C59.6753 32.6192 64 37.5541 64 43.5V57.5C64 64.1274 58.6274 69.5 52 69.5H28C21.3726 69.5 16 64.1274 16 57.5V43.5C16 37.5541 20.3247 32.6192 26 31.667V24.5L26.0049 24.1387C26.1935 16.6938 32.1938 10.6935 39.6387 10.5049L40 10.5ZM28 35.5C23.5817 35.5 20 39.0817 20 43.5V57.5C20 61.9183 23.5817 65.5 28 65.5H52C56.4183 65.5 60 61.9183 60 57.5V43.5C60 39.0817 56.4183 35.5 52 35.5H28ZM30 31.5H50V24.5C50 18.9772 45.5228 14.5 40 14.5C34.4772 14.5 30 18.9772 30 24.5V31.5Z"
+                                        fill={colors.primitives.sand[500]}
+                                    />
+                                </Svg>
+                            </Animated.View>
+                        </Animated.View>
+                    )}
                 </View>
 
                 {/* Compatibility message */}
@@ -211,7 +290,7 @@ export const ResultStep: React.FC<WizardStepProps> = ({
                 <View style={styles.carouselContainer}>
                     <FlatList
                         ref={flatListRef}
-                        data={DUMMY_NAMES}
+                        data={displayNames}
                         renderItem={renderCard}
                         keyExtractor={(item) => item.id}
                         horizontal
@@ -243,13 +322,32 @@ export const ResultStep: React.FC<WizardStepProps> = ({
 
             {/* Bottom Bar */}
             <View style={styles.bottomBar}>
-                <Button
-                    variant="primary"
-                    size="large"
-                    onPress={handleViewNames}
+                <Pressable
+                    style={[styles.bottomButton, { flex: 1 }]}
+                    onPress={isLocked ? handleViewNames : () => {
+                        // 로딩 화면을 다시 보여주고 추가 이름 로드
+                        updateData({ loadMoreFlag: true });
+                        goBack();
+                    }}
+                    disabled={!isLocked && (isLoadingMore || isExhausted)}
                 >
-                    이름 보기 (무료 1회)
-                </Button>
+                    <View style={styles.buttonTextClip}>
+                        <Animated.Text
+                            key={isLocked ? 'locked' : 'unlocked'}
+                            entering={SlideInDown.duration(400).easing(Easing.out(Easing.cubic))}
+                            exiting={SlideOutUp.duration(350).easing(Easing.in(Easing.cubic))}
+                            style={styles.bottomButtonText}
+                        >
+                            {isLocked
+                                ? '이름 보기 (무료 1회)'
+                                : isLoadingMore
+                                    ? '로딩 중...'
+                                    : isExhausted
+                                        ? '모든 이름을 확인했어요'
+                                        : '이름 더 받아보기'}
+                        </Animated.Text>
+                    </View>
+                </Pressable>
             </View>
 
             {/* Safe Area Bottom */}
@@ -293,6 +391,8 @@ const styles = StyleSheet.create({
     },
     nameDisplayWrapper: {
         alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 140, // unlocked 콘텐츠 높이에 맞춤 (레이아웃 점프 방지)
         gap: space[300],
     },
     nameDisplay: {
@@ -328,10 +428,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         alignSelf: 'stretch',
     },
-    buttonWrapper: {
-        alignItems: 'center',
-    },
-    // Page header
     pageHeader: {
         paddingHorizontal: space[500] + space[400],
         alignItems: 'center',
@@ -367,6 +463,77 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    // Lock Icon Container
+    lockIconContainer: {
+        width: 112,
+        height: 112,
+        borderRadius: 9999,
+        backgroundColor: colors.primitives.sand[200],
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    lockIconInner: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // Unlocked content
+    unlockedContent: {
+        alignItems: 'center',
+        gap: space[300],
+    },
+    // Animated wrapper for button width animation
+    buttonAnimatedWrapper: {
+        alignSelf: 'center',
+    },
+    // Card internal button wrapper
+    buttonWrapper: {
+        alignItems: 'center',
+    },
+    // Base button style - primary button style from design system
+    bottomButton: {
+        height: 52,
+        borderRadius: 9999, // Figma: pill shape
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        backgroundColor: colors.background.accent.primary,
+    },
+    // Text clip container for slide animation
+    buttonTextClip: {
+        overflow: 'hidden',
+        height: 20, // same as line height
+        alignSelf: 'stretch', // stretch to button width
+        alignItems: 'center',
+    },
+    // Button text style
+    bottomButtonText: {
+        fontFamily: 'Pretendard-Bold',
+        fontSize: 16,
+        fontWeight: '700',
+        lineHeight: 20,
+        color: colors.background.accent.onPrimary,
+        textAlign: 'center',
+    },
+    // Locked state button - uses accent primary color
+    lockedButton: {
+        backgroundColor: colors.background.accent.primary,
+    },
+    lockedButtonText: {
+        fontFamily: 'Pretendard-Bold',
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.background.accent.onPrimary,
+    },
+    // Unlocked state button - Figma: bg #8CCAE7, text #332C21, font 700/16, radius 9999
+    unlockedButton: {
+        backgroundColor: '#8CCAE7', // Figma: rgba(140, 202, 231)
+    },
+    unlockedButtonText: {
+        fontFamily: 'Pretendard-Bold',
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#332C21', // Figma: rgba(51, 44, 33)
     },
 });
 

@@ -28,6 +28,8 @@ export interface SelectItemProps {
     imageSource?: ImageSourcePropType;
     /** Show close button (for small/medium status) */
     showCloseButton?: boolean;
+    /** Show trailing icon (for hasSecondLabel/hasBodyLabel status) */
+    showTrailingIcon?: boolean;
     /** Close button press handler */
     onClosePress?: () => void;
     /** Press handler */
@@ -48,6 +50,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
     bodyLabel,
     imageSource,
     showCloseButton = false,
+    showTrailingIcon = true,
     onClosePress,
     onPress,
     style,
@@ -100,7 +103,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
             </View>
 
             {/* Trailing Icon (for hasSecondLabel, hasBodyLabel) */}
-            {(status === 'hasSecondLabel' || status === 'hasBodyLabel') && (
+            {showTrailingIcon && (status === 'hasSecondLabel' || status === 'hasBodyLabel') && (
                 <View style={styles.trailingIcon}>
                     <Icon
                         name="arrowRight"

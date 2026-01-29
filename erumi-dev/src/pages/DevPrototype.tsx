@@ -37,6 +37,7 @@ function DevApp() {
   // 🆕 스토리텔링 입력
   const [selectedStory, setSelectedStory] = useState<StoryOption | null>(null);
   const [selectedVibe, setSelectedVibe] = useState<VibeOption | null>(null);
+  const [styleMode, setStyleMode] = useState<'modern' | 'saju_perfect'>('modern');
 
   // 🆕 사주 입력
   const [birthDate, setBirthDate] = useState('');
@@ -135,7 +136,7 @@ function DevApp() {
 
         console.log('📊 최종 스토리 가중치:', preferenceWeights);
 
-        names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights as any) as unknown as NameItem[];
+        names = await generateNames(surname, [], gender as any, preferenceWeights, yongsinWeights as any, styleMode) as unknown as NameItem[];
       } else {
         names = generatePureKoreanNames(surname, { gender: gender === 'M' ? 'male' : gender === 'F' ? 'female' : null });
       }
@@ -367,6 +368,31 @@ function DevApp() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* 스타일 모드 선택 */}
+        <div className="bg-white rounded-lg shadow p-4 mb-4">
+          <h2 className="font-bold mb-3 text-lg">🎨 스타일 모드</h2>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setStyleMode('modern')}
+              className={`flex-1 p-3 rounded-lg text-sm font-medium transition-all ${styleMode === 'modern'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+              🌟 세련된 이름 (3/4 길수)
+            </button>
+            <button
+              onClick={() => setStyleMode('saju_perfect')}
+              className={`flex-1 p-3 rounded-lg text-sm font-medium transition-all ${styleMode === 'saju_perfect'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+              🔮 사주 완벽 (4/4 길수)
+            </button>
           </div>
         </div>
 
