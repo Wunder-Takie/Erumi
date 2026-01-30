@@ -37,6 +37,7 @@ export interface UseNameGenerationActions {
     unlock: () => void;
     markInterrupted: () => void;  // 백그라운드 전환 시 호출
     retry: () => Promise<void>;   // 포그라운드 복귀 시 재시도
+    devReset: () => void;         // 개발자용 완전 초기화 (isUnlocked 포함)
 }
 
 // ==========================================
@@ -97,6 +98,28 @@ async function saveFreeTrialUsed() {
     } catch (e) {
         console.error('[useNameGeneration] Failed to save free trial status:', e);
     }
+}
+
+// 🆕 전역 상태 초기화 함수 (HomeScreen에서 호출 가능)
+export function resetAllNameGenerationState() {
+    namingService.reset();
+    globalState = {
+        isLoading: false,
+        isLoadingMore: false,
+        error: null,
+        names: [],
+        hasMore: false,
+        totalCandidates: 0,
+        isExhausted: false,
+        isUnlocked: false,
+        wasInterrupted: false,
+    };
+    globalSurname = '';
+    lastWizardData = null;
+    lastWasLoadMore = false;
+    hasLoadedFromStorage = false;
+    console.log('[useNameGeneration] resetAllNameGenerationState: 전체 상태 초기화 완료');
+    notifyListeners();
 }
 
 // ==========================================
@@ -334,6 +357,30 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         }
     }, [generate, loadMore]);
 
+    /**
+     * 개발자용 완전 초기화 - isUnlocked, hasLoadedFromStorage 모두 리셋
+     */
+    const devReset = useCallback(() => {
+        namingService.reset();
+        globalState = {
+            isLoading: false,
+            isLoadingMore: false,
+            error: null,
+            names: [],
+            hasMore: false,
+            totalCandidates: 0,
+            isExhausted: false,
+            isUnlocked: false,  // 🆕 강제 잠금 상태로 리셋
+            wasInterrupted: false,
+        };
+        globalSurname = '';
+        lastWizardData = null;
+        lastWasLoadMore = false;
+        hasLoadedFromStorage = false;  // 🆕 다시 로드할 수 있도록 리셋
+        console.log('[useNameGeneration] devReset: 전체 상태 초기화 완료');
+        notifyListeners();
+    }, []);
+
     return {
         ...globalState,
         generate,
@@ -342,6 +389,7 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         unlock,
         markInterrupted,
         retry,
+        devReset,
     };
 }
 

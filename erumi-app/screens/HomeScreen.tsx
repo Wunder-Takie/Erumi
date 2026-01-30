@@ -42,8 +42,11 @@ export const HomeScreen: React.FC = () => {
                         style: 'destructive',
                         onPress: async () => {
                             await AsyncStorage.clear();
-                            Alert.alert('완료', '앱 데이터가 초기화되었습니다. 앱을 다시 시작해주세요.');
-                            console.log('[HomeScreen] AsyncStorage 초기화 완료');
+                            // 🆕 메모리 상태도 초기화
+                            const { resetAllNameGenerationState } = await import('./NameRecommendation/hooks/useNameGeneration');
+                            resetAllNameGenerationState();
+                            Alert.alert('완료', '앱 데이터가 초기화되었습니다.');
+                            console.log('[HomeScreen] AsyncStorage + 메모리 상태 초기화 완료');
                         },
                     },
                 ]
