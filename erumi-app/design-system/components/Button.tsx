@@ -3,7 +3,7 @@
  * Auto-generated from Figma Design System
  */
 import * as React from 'react';
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
 import {
     Pressable,
     Text,
@@ -14,6 +14,7 @@ import {
     ViewStyle,
     TextStyle,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { colors, typography, space, radius } from '../tokens';
 
 // =============================================================================
@@ -43,6 +44,8 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
     disabled?: boolean;
     /** Loading state - shows spinner instead of content */
     isLoading?: boolean;
+    /** Enable haptic feedback on press */
+    haptic?: boolean;
     /** Leading icon (left side) */
     leadingIcon?: ReactNode;
     /** Trailing icon (right side) */
@@ -221,10 +224,12 @@ export const Button: React.FC<ButtonProps> = ({
     size = 'medium',
     disabled = false,
     isLoading = false,
+    haptic = false,
     leadingIcon,
     trailingIcon,
     guideLabel,
     style,
+    onPress,
     ...pressableProps
 }) => {
     const sizeStyles = sizeConfig[size];
@@ -235,9 +240,18 @@ export const Button: React.FC<ButtonProps> = ({
     const showTrailing = layout === 'showTrailingIcon' && trailingIcon;
     const showGuide = layout === 'hasGuideLabel' && guideLabel;
 
+    // 햄틱 피드백 포함 onPress 핸들러
+    const handlePress = useCallback((event: any) => {
+        if (haptic && !disabled && !isLoading) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+        onPress?.(event);
+    }, [haptic, disabled, isLoading, onPress]);
+
     return (
         <Pressable
             disabled={disabled || isLoading}
+            onPress={handlePress}
             style={({ pressed }) => [
                 styles.container,
                 {

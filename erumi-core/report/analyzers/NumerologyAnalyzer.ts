@@ -100,20 +100,12 @@ export class NumerologyAnalyzer {
         // 81수리 정규화
         const normalized = suriNumber > 81 ? (suriNumber % 81 || 81) : suriNumber;
 
-        // suriUtils.ts의 getSuriInfo 함수 사용
+        // suriUtils.ts의 getSuriInfo 함수 사용 (suri_81.json에 81개 모두 있음)
         const suriInfo = getSuriInfo(normalized);
 
-        let level: '대길' | '길' | '반길반흉' | '흉';
-        let interpretation: string;
-
-        if (suriInfo) {
-            level = suriInfo.level as '대길' | '길' | '반길반흉' | '흉';
-            interpretation = suriInfo.desc;
-        } else {
-            // 길수 목록에 없는 숫자 = 흉 또는 반길반흉
-            level = this.determineNonLuckyLevel(normalized);
-            interpretation = this.generateNonLuckyInterpretation(name, level);
-        }
+        // suri_81.json에 모든 숫자 있으므로 항상 찾아야 함
+        const level = (suriInfo?.level || '반길반흉') as '대길' | '길' | '반길반흉' | '흉';
+        const interpretation = suriInfo?.desc || '평범한 운세입니다.';
 
         return {
             name,
@@ -123,30 +115,4 @@ export class NumerologyAnalyzer {
             interpretation,
         };
     }
-
-    /**
-     * 비길수 레벨 판정
-     */
-    private determineNonLuckyLevel(count: number): '반길반흉' | '흉' {
-        // 특히 나쁜 수: 2, 4, 9, 10, 12, 14, 19, 20, 22, 26, 28, 34, 36, 44, 46, 54, 59, 64, 66, 69, 74, 76, 79
-        const badNumbers = [2, 4, 9, 10, 12, 14, 19, 20, 22, 26, 28, 34, 36, 44, 46, 54, 59, 64, 66, 69, 74, 76, 79];
-        return badNumbers.includes(count) ? '흉' : '반길반흉';
-    }
-
-    /**
-     * 비길수 해석 생성
-     */
-    private generateNonLuckyInterpretation(name: string, level: '반길반흉' | '흉'): string {
-        if (level === '흉') {
-            const interpretations: Record<string, string> = {
-                '초년': '어린 시절 어려움이 있을 수 있으나 이를 극복하면 더 강해집니다.',
-                '청년': '청년기에 시련이 있을 수 있으나 성장의 밑거름이 됩니다.',
-                '중년': '중년에 도전이 있을 수 있으나 지혜로 극복할 수 있습니다.',
-                '말년': '노후에 건강 관리에 신경 쓰면 편안한 말년을 보낼 수 있습니다.',
-            };
-            return interpretations[name] || '노력으로 극복할 수 있습니다.';
-        }
-        return '평범하지만 안정적인 시기입니다.';
-    }
 }
-

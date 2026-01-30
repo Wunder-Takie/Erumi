@@ -25,6 +25,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import {
     Button,
     Badge,
@@ -62,6 +63,13 @@ export const ResultStep: React.FC<WizardStepProps> = ({
 
     // isLocked는 isUnlocked의 반대
     const isLocked = !isUnlocked;
+
+    // 첫 잠금 해제 시에만 애니메이션 실행 (이후 배치 로드에서는 애니메이션 없음)
+    const hasAnimatedRef = useRef(false);
+    if (isUnlocked && !hasAnimatedRef.current) {
+        hasAnimatedRef.current = true;
+    }
+    const shouldAnimateReveal = isUnlocked && hasAnimatedRef.current && names?.length === 1;
 
     // 이름 데이터를 UI 형식으로 변환
     const displayNames = useMemo(() => {
@@ -144,8 +152,26 @@ export const ResultStep: React.FC<WizardStepProps> = ({
             return;
         }
         // 잠금 해제 시 리포트 화면으로 이동
+        const currentName = names[currentIndex];
+        console.log('[ResultStep] currentName:', currentName);
+        console.log('[ResultStep] names length:', names?.length, 'currentIndex:', currentIndex);
+
+        const nameData = {
+            hangulName: currentName?.hangulName,
+            hanjaName: currentName?.hanjaName,
+            surname: data.surname?.hangul || '',
+            surnameHanja: data.surname?.hanja || '',
+            hanja1: currentName?.hanja1,
+            hanja2: currentName?.hanja2,
+        };
+        console.log('[ResultStep] navigating with nameData:', nameData);
+
         (navigation as any).navigate('NameReport', {
-            name: displayNames[currentIndex]
+            nameData,
+            saju: {
+                birthDate: data.birthDate?.toISOString().split('T')[0],
+                birthTime: data.birthTime,
+            },
         });
     };
 
@@ -190,10 +216,10 @@ export const ResultStep: React.FC<WizardStepProps> = ({
             <View style={styles.nameContent}>
                 {/* Name display wrapper - lockIcon 또는 실제 콘텐츠 표시 */}
                 <View style={styles.nameDisplayWrapper}>
-                    {/* Lock 해제 시 보이는 콘텐츠 (FadeIn 애니메이션) */}
+                    {/* Lock 해제 시 보이는 콘텐츠 (첫 해제 시에만 FadeIn 애니메이션) */}
                     {!isLocked && (
                         <Animated.View
-                            entering={FadeIn.duration(500).delay(300)}
+                            entering={shouldAnimateReveal ? FadeIn.duration(500).delay(300) : undefined}
                             style={styles.unlockedContent}
                         >
                             {/* Actual text content */}
@@ -254,6 +280,7 @@ export const ResultStep: React.FC<WizardStepProps> = ({
                 <Button
                     variant="outline"
                     size="small"
+                    haptic
                     onPress={handleViewAnalysis}
                 >
                     풀이보기
@@ -323,8 +350,16 @@ export const ResultStep: React.FC<WizardStepProps> = ({
             {/* Bottom Bar */}
             <View style={styles.bottomBar}>
                 <Pressable
-                    style={[styles.bottomButton, { flex: 1 }]}
-                    onPress={isLocked ? handleViewNames : () => {
+                    style={[
+                        styles.bottomButton,
+                        { flex: 1 },
+                        !isLocked && isExhausted && styles.disabledButton,
+                    ]}
+                    onPress={isLocked ? () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        handleViewNames();
+                    } : () => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         // 로딩 화면을 다시 보여주고 추가 이름 로드
                         updateData({ loadMoreFlag: true });
                         goBack();
@@ -332,20 +367,30 @@ export const ResultStep: React.FC<WizardStepProps> = ({
                     disabled={!isLocked && (isLoadingMore || isExhausted)}
                 >
                     <View style={styles.buttonTextClip}>
-                        <Animated.Text
-                            key={isLocked ? 'locked' : 'unlocked'}
-                            entering={SlideInDown.duration(400).easing(Easing.out(Easing.cubic))}
-                            exiting={SlideOutUp.duration(350).easing(Easing.in(Easing.cubic))}
-                            style={styles.bottomButtonText}
-                        >
-                            {isLocked
-                                ? '이름 보기 (무료 1회)'
-                                : isLoadingMore
+                        {isLocked ? (
+                            <Animated.Text
+                                key="locked"
+                                exiting={shouldAnimateReveal ? SlideOutUp.duration(350).easing(Easing.in(Easing.cubic)) : undefined}
+                                style={styles.bottomButtonText}
+                            >
+                                이름 보기 (무료 1회)
+                            </Animated.Text>
+                        ) : (
+                            <Animated.Text
+                                key="unlocked"
+                                entering={shouldAnimateReveal && !isExhausted ? SlideInDown.duration(300).easing(Easing.out(Easing.cubic)) : undefined}
+                                style={[
+                                    styles.bottomButtonText,
+                                    isExhausted && styles.disabledButtonText,
+                                ]}
+                            >
+                                {isLoadingMore
                                     ? '로딩 중...'
                                     : isExhausted
-                                        ? '모든 이름을 확인했어요'
+                                        ? '더 이상 추천할 이름이 없어요'
                                         : '이름 더 받아보기'}
-                        </Animated.Text>
+                            </Animated.Text>
+                        )}
                     </View>
                 </Pressable>
             </View>
@@ -534,6 +579,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: '#332C21', // Figma: rgba(51, 44, 33)
+    },
+    // Disabled button style (when exhausted) - matches Button component disabled primary
+    disabledButton: {
+        backgroundColor: colors.background.disabled.accent,
+    },
+    disabledButtonText: {
+        color: colors.text.disabled.accent,
     },
 });
 

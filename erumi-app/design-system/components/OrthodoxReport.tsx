@@ -33,6 +33,8 @@ export interface OrthodoxReportProps {
     elementalBalance: ElementalBalanceData;
     /** 불용문자 데이터 */
     unluckyCharacters: UnluckyCharactersData;
+    /** 사주 정보 여부 (false면 자원오행 placeholder 표시) */
+    hasSaju?: boolean;
     /** 각 카테고리별 헤더 데이터 */
     headerData?: {
         [key in ContentType]?: {
@@ -70,6 +72,7 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
     suriAnalysis,
     elementalBalance,
     unluckyCharacters,
+    hasSaju = true,
     headerData,
     initialTab = 'fiveElementsTheory',
     style,
@@ -158,16 +161,29 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
                         </View>
                     )}
 
-                    {/* Content Area */}
-                    <OrthodoxReportContent
-                        style={styles.contentArea}
-                        variant={selectedTab}
-                        pronunciationElements={pronunciationElements}
-                        fiveElementsTheory={fiveElementsTheory}
-                        suriAnalysis={suriAnalysis}
-                        elementalBalance={elementalBalance}
-                        unluckyCharacters={unluckyCharacters}
-                    />
+                    {/* Content Area - 자원오행 탭에서 사주 정보 없으면 placeholder */}
+                    {selectedTab === 'elementalBalance' && !hasSaju ? (
+                        <View style={styles.placeholderContainer}>
+                            <View style={styles.placeholderBox}>
+                                <Text style={styles.placeholderText}>
+                                    사주 정보를 입력하면{`\n`}자원오행 분석을 확인할 수 있어요.
+                                </Text>
+                            </View>
+                            <View style={styles.placeholderButton}>
+                                <Text style={styles.placeholderButtonText}>사주정보 입력하기</Text>
+                            </View>
+                        </View>
+                    ) : (
+                        <OrthodoxReportContent
+                            style={styles.contentArea}
+                            variant={selectedTab}
+                            pronunciationElements={pronunciationElements}
+                            fiveElementsTheory={fiveElementsTheory}
+                            suriAnalysis={suriAnalysis}
+                            elementalBalance={elementalBalance}
+                            unluckyCharacters={unluckyCharacters}
+                        />
+                    )}
                 </View>
             </GestureDetector>
         </View>
@@ -225,6 +241,36 @@ const styles = StyleSheet.create({
     // Figma: OrthodoxReportContent (FILL horizontal, HUG vertical)
     contentArea: {
         alignSelf: 'stretch', // Figma: layoutSizingHorizontal FILL
+    },
+    // Placeholder styles (사주 정보 없을 때)
+    placeholderContainer: {
+        alignItems: 'center',
+        gap: 16,
+        paddingVertical: 40,
+    },
+    placeholderBox: {
+        padding: 24,
+        backgroundColor: colors.background.default.higher,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.primitives.sand[300],
+        borderStyle: 'dashed',
+    },
+    placeholderText: {
+        ...typography.label.md,
+        color: colors.text.default.tertiary,
+        textAlign: 'center',
+    },
+    placeholderButton: {
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: colors.background.accent.primary,
+        borderRadius: 9999,
+    },
+    placeholderButtonText: {
+        ...typography.label.md,
+        fontWeight: '600',
+        color: colors.background.accent.onPrimary,
     },
 });
 

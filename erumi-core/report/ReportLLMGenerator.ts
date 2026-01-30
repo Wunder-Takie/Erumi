@@ -7,6 +7,7 @@
  */
 
 import { LLM_CONFIG } from '../naming/llmConfig';
+import { sanitizeKoreanText } from '../utils/textUtils';
 import type { CarouselCard, ReportInput } from './types';
 
 // ==========================================
@@ -23,7 +24,11 @@ export interface HanjaInfo {
 
 export interface AnalysisData {
     yinYang: { isBalanced: boolean; yinCount: number; yangCount: number };
-    pronunciation: { flow: string; elements: string[] };
+    pronunciation: {
+        flow: string;
+        elements: string[];
+        hangulChars: { hangul: string; element: string }[]  // 한글 발음과 오행
+    };
     numerology: {
         scores: {
             name: string;
@@ -33,8 +38,24 @@ export interface AnalysisData {
             interpretation: string;
         }[]
     };
-    naturalElement: { nameElements: Record<string, number>; filled?: string[] };
-    forbiddenChar: { hasIssue: boolean; issues: string[] };
+    naturalElement: {
+        nameElements: Record<string, number>;
+        filled?: string[];   // 이름이 보충하는 오행
+        missing?: string[];  // 사주에서 부족한 오행 (0개인 것)
+        sajuCounts?: { wood: number; fire: number; earth: number; metal: number; water: number };  // 사주 오행 개수
+    };
+    forbiddenChar: {
+        hasIssue: boolean;
+        issues: string[];
+        allGood: boolean;
+        characters: {
+            hanja: string;
+            hangul: string;
+            meaning: string;
+            status: 'good' | 'caution' | 'forbidden';
+            reason: string;
+        }[];
+    };
 }
 
 export interface LLMReportContent {
@@ -43,9 +64,20 @@ export interface LLMReportContent {
     analysisComments: {
         yinYang: string;
         pronunciation: string;
+        numerologySummary: string;
         numerology: string;
         naturalElement: string;
         forbiddenChar: string;
+    };
+    nameImpressions?: {
+        impression1: { title: string; content: string };
+        impression2: { title: string; content: string };
+        romanization: { title: string; content: string };
+    };
+    // 이름 해석 카드 (2번째 캐러셀 카드용)
+    nameInterpretations?: {
+        interpretation1: { title: string; description: string };
+        interpretation2: { title: string; description: string };
     };
 }
 
@@ -57,9 +89,19 @@ interface LLMResponseFormat {
     analysisComments: {
         yinYang: string;
         pronunciation: string;
+        numerologySummary?: string;
         numerology: string;
         naturalElement: string;
         forbiddenChar: string;
+    };
+    nameImpressions?: {
+        impression1: { title: string; content: string };
+        impression2: { title: string; content: string };
+        romanization: { title: string; content: string };
+    };
+    nameInterpretations?: {
+        interpretation1: { title: string; description: string };
+        interpretation2: { title: string; description: string };
     };
 }
 
@@ -112,7 +154,7 @@ class LRUCache<K, V> {
 // ==========================================
 
 const reportCache = new LRUCache<string, CacheEntry>(10000);
-const CACHE_TTL = 90 * 24 * 60 * 60 * 1000; // 90일
+const CACHE_TTL = 0; // 🔧 DEV: 캐시 즉시 만료 (테스트 후 90일로 복원)
 
 // ==========================================
 // Prompt Template
@@ -124,6 +166,7 @@ const REPORT_PROMPT = `당신은 한국 최고의 작명 전문가예요. 아래
 - 모든 문장은 "~에요.", "~해요.", "~거예요.", "~있어요."로 끝나야 해요
 - "~입니다.", "~합니다." 절대 사용 금지
 - "~융성함.", "~거느림." 같은 명사형 종결 금지
+- **한글과 한자만 사용** - 영어, 러시아어, 일본어 등 다른 언어 절대 금지. 오행은 반드시 "목(木)", "화(火)", "토(土)", "금(金)", "수(水)" 한글+한자로만 표현
 
 ## 입력 정보
 이름: {fullName}
@@ -167,32 +210,58 @@ const REPORT_PROMPT = `당신은 한국 최고의 작명 전문가예요. 아래
 
 ### analysisComments 예시
 {
-  "yinYang": "차분한 '음'과 활발한 '양'이 골고루 섞여 있어서 균형이 완벽한 이름이에요. 감정과 이성이 균형 잡힌 인생을 살아갈 수 있음을 의미해요.",
+  "yinYang": "'음' 기운이 강하지만 '양'의 기운도 적절히 조화되어 있어서 안정감을 주는 이름이에요. 내면의 평화를 유지하며 조화로운 삶을 살아갈 수 있음을 의미해요.",
   
-  "pronunciation": "평범함을 거부하는 '혁신가'의 소리예요. 남다른 개성과 재능으로 세상을 놀라게 할 예술가나 리더에게 어울려요.",
+  "pronunciation": "부드럽고 안정적인 느낌을 주는 소리예요. 듣는 사람에게 편안함과 신뢰감을 주며, 차분한 리더십을 발휘하는 사람에게 어울려요.",
   
-  "numerology": "초년운: 작은 것에서 시작해 큰 성공을 이루는 융성한 운이에요. 어린 시절부터 남다른 재능이 빛을 발하며, 일찍이 성공의 기반을 다지게 될 거예요.\\n청년운: 리더십이 탁월해서 많은 사람을 이끄는 강력한 리더가 돼요. 뛰어난 통찰력과 결단력으로 주변의 신뢰를 얻고, 조직을 이끄는 위치에 오르게 될 거예요.\\n중년운: 비상한 재주가 있으나 다소 고독할 수 있어요. 높은 성취를 이루지만, 정신적 깊이를 추구하며 내면의 성장에 집중하는 시기예요.\\n말년운: 모든 뜻을 이루고 존경받는 대성공 운이에요. 평생의 노력이 결실을 맺어서, 많은 사람들에게 귀감이 되는 삶을 살게 될 거예요.",
+  "numerologySummary": "50~60자로 초년~말년 운세 종합 요약 (~에요/해요로 끝남)",
+    "numerologySummary": "초년~말년 운세를 종합하여 정확히 2문장으로 요약 (~에요/해요로 끝남)",
+    "numerology": "초년운: 작은 것에서 시작해 큰 성공을 이루는 융성한 운이에요. 어린 시절부터 남다른 재능이 빛을 발하며, 일찍이 성공의 기반을 다지게 될 거예요.\\n청년운: 리더십이 탁월해서 많은 사람을 이끄는 강력한 리더가 돼요. 뛰어난 통찰력과 결단력으로 주변의 신뢰를 얻고, 조직을 이끄는 위치에 오르게 될 거예요.\\n중년운: 비상한 재주가 있으나 다소 고독할 수 있어요. 높은 성취를 이루지만, 정신적 깊이를 추구하며 내면의 성장에 집중하는 시기예요.\\n말년운: 모든 뜻을 이루고 존경받는 대성공 운이에요. 평생의 노력이 결실을 맺어서, 많은 사람들에게 귀감이 되는 삶을 살게 될 거예요.",
   
-  "naturalElement": "사주에 필요한 열정(火)과 결실(金)의 에너지를 이름이 완벽하게 채워주고 있어요. 뜨거운 불로 쇠를 녹여 빛나는 보석을 만들듯, 치열한 노력 끝에 화려한 성공을 거두게 도와줘요.",
+  "naturalElement": "[아래 자원오행 데이터 기반 - 케이스별 예시 참조]",
   
   "forbiddenChar": "이름에 쓰면 안 되는 흉한 한자가 전혀 없어요. 모두 긍정적이고 세련된 의미로 평가받는 좋은 한자들이에요."
 }
 
+## 자원오행(naturalElement) 작성 가이드
+⚠️ **아래 예시 문구를 그대로 복사하지 마세요. 스타일만 참고하고 새로운 표현으로 작성하세요.**
+
+정확히 2문장, 50~70자. 오행별 표현 참고 (다양하게 변형 필요):
+- 목(木): 성장, 생명력, 시작
+- 화(火): 열정, 에너지, 빛
+- 토(土): 안정, 포용, 중심
+- 금(金): 정제, 단단함, 빛남
+- 수(水): 유연함, 지혜, 깊이
+
+**케이스별 구조 (예시는 참고용):**
+1) ✓ 표시된 것 (부족 채움): "이름이 사주에 부족한 X의 기운을 채워줘요" + 해당 오행의 긍정적 의미
+2) 이름이 오행을 더함: "이름이 X의 기운을 더해줘요" + 조화/균형 언급
+3) 부족 오행이 있을 때: "사주에 X의 기운이 부족하지만, 이름의 Y가 ~해줄 거예요" (긍정 전환 필수, "채워주지 못해요" 같은 부정 표현 금지)
+
+**중요:** 
+- 부족 오행이 2개 이상이면 "금(金)과 수(水)" 형태로 함께 언급
+- "채워주지 않음/못 채움" 같은 부정적 표현 사용 금지. 항상 긍정적으로 전환
+
 ## 생성 요청
-입력된 이름에 대해 위 예시와 **동일한 스타일, 동일한 깊이, 동일한 분량**으로 콘텐츠를 생성해주세요.
+입력된 이름에 대해 위 가이드를 **참고**하여 **새롭고 다양한 표현**으로 콘텐츠를 생성해주세요.
 
 JSON만 응답:
 {
-  "summary": "정확히 2문장 (이름 언급 없이, ~에요/해요로 끝남)",
+  "summary": "30~40자 2문장 (이름 언급 없이, ~에요/해요로 끝남. 예: 시처럼 아름다운 감수성을 가졌어요. 환한 빛으로 세상을 밝힐 이름이에요.)",
   "characters": [{"hanja": "", "meaning": "키워드들.", "story": "2문장 (~에요/해요로 끝남)"}],
   "energy": {"title": "5-10글자", "content": "1-2문장 (~에요/해요로 끝남)"},
   "blessing": {"title": "5-10글자", "content": "1-2문장 (~에요/해요로 끝남)"},
   "analysisComments": {
-    "yinYang": "2문장 (~에요/해요로 끝남)",
-    "pronunciation": "2문장 (~에요/해요로 끝남)",
-    "numerology": "초년운: 2-3문장\\n청년운: 2-3문장\\n중년운: 2-3문장\\n말년운: 2-3문장 (모두 ~에요/해요로 끝남)",
-    "naturalElement": "2문장 (비유 사용, ~에요/해요로 끝남)",
-    "forbiddenChar": "1-2문장 (~에요/해요로 끝남)"
+    "yinYang": "50~60자로 (이름 언급 없이, ~에요/해요로 끝남). 숫자 표현 금지. 음/양 비율 자연스럽게 표현",
+    "pronunciation": "50~60자로 이름 소리가 주는 느낌/인상 (이름 언급 없이, ~에요/해요로 끝남. 예: 부드럽고 맑은 소리가 나요.)",
+    "numerologySummary": "초년~말년 운세를 종합하여 정확히 2문장으로 요약 (이름 언급 없이, ~에요/해요로 끝남)",
+    "numerology": "초년운: 2-3문장\\n청년운: 2-3문장\\n중년운: 2-3문장\\n말년운: 2-3문장 (모두 이름 언급 없이, ~에요/해요로 끝남)",
+    "naturalElement": "위 자원오행 가이드 참조. 데이터의 ✓ 정보에 따라 2문장 작성 (이름 언급 없이). 예시 복사 금지!",
+    "forbiddenChar": "50~60자로 불용문자 검사 결과 (이름 언급 없이, ~에요/해요로 끝남. 예: 사용된 한자 모두 좋은 의미를 담고 있어요.)"
+  },
+  "nameInterpretations": {
+    "interpretation1": {"title": "5-10글자 합성적 의미", "description": "두 한자의 뜻을 합쳐 해석한 1-2문장 (~에요/해요로 끝남)"},
+    "interpretation2": {"title": "5-10글자 합성적 의미", "description": "다른 관점에서 해석한 1-2문장 (~에요/해요로 끝남)"}
   }
 }`;
 
@@ -203,12 +272,14 @@ JSON만 응답:
 async function callReportLLM(
     input: ReportInput,
     hanjaInfoList: HanjaInfo[],
-    analysisData: AnalysisData
+    analysisData: AnalysisData,
+    retryCount = 0
 ): Promise<LLMResponseFormat | null> {
+    const MAX_RETRIES = 2;
     const fullName = input.surname + input.givenName.join('');
     const hanjaChars = input.surnameHanja + input.givenNameHanja.join('');
     const charInfo = hanjaInfoList.map(h =>
-        `- ${h.hanja}(${h.hangul}): ${h.meaning_korean}`
+        `- ${h.hanja}(${h.hangul}): ${h.meaning_korean} `
     ).join('\n');
 
     const analysisInfo = formatAnalysisData(analysisData);
@@ -221,7 +292,7 @@ async function callReportLLM(
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
 
         const response = await fetch(
             'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
@@ -241,11 +312,11 @@ async function callReportLLM(
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-            throw new Error(`LLM API error: ${response.status}`);
+            throw new Error(`LLM API error: ${response.status} `);
         }
 
         const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!text) {
             throw new Error('Empty response from LLM');
@@ -258,21 +329,79 @@ async function callReportLLM(
 
         return JSON.parse(jsonMatch[0]) as LLMResponseFormat;
     } catch (error) {
-        console.error('[Report LLM] Error:', error);
+        console.error(`[Report LLM]Error(attempt ${retryCount + 1}/${MAX_RETRIES + 1}): `, error);
+
+        // 재시도 로직
+        if (retryCount < MAX_RETRIES) {
+            console.log(`[Report LLM] Retrying... (${retryCount + 2}/${MAX_RETRIES + 1})`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기 후 재시도
+            return callReportLLM(input, hanjaInfoList, analysisData, retryCount + 1);
+        }
+
         return null;
     }
 }
 
 function formatAnalysisData(data: AnalysisData): string {
     const numerologyDetails = data.numerology.scores.map(s =>
-        `${s.name}(${s.ageRange}): 수리 ${s.suriNumber} - ${s.level} (${s.interpretation})`
+        `${s.name} (${s.ageRange}): 수리 ${s.suriNumber} - ${s.level} (${s.interpretation})`
     ).join('\n  ');
 
+    // 발음오행: 한글 발음과 오행 표시 (예: "시(水)→랑(火)")
+    const pronunciationWithHangul = data.pronunciation.hangulChars
+        .map(c => `${c.hangul} (${c.element})`)
+        .join('→');
+
+    // 자원오행: 명확한 구조로 전달
+    const elementWithHanja: Record<string, string> = {
+        Wood: '목(木)', Fire: '화(火)', Earth: '토(土)', Metal: '금(金)', Water: '수(水)'
+    };
+    const elementKorean: Record<string, string> = {
+        wood: '목', fire: '화', earth: '토', metal: '금', water: '수'
+    };
+
+    // 각 오행별 상태 계산
+    const sajuCounts = data.naturalElement.sajuCounts || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+    const nameElements = data.naturalElement.filled?.map(e => e.toLowerCase()) || [];
+
+    // 부족한 오행 (0개) 중 이름이 채워주는 것과 안 채워주는 것 분리
+    const deficientFilled: string[] = [];  // 부족 + 이름이 채움
+    const deficientNotFilled: string[] = []; // 부족 + 이름이 안 채움
+    const nameElementsDisplay: string[] = []; // 이름의 오행 (표시용)
+
+    for (const [key, count] of Object.entries(sajuCounts)) {
+        const koreanName = elementKorean[key];
+        if (count === 0) {
+            if (nameElements.includes(key)) {
+                deficientFilled.push(koreanName);
+            } else {
+                deficientNotFilled.push(koreanName);
+            }
+        }
+    }
+
+    for (const elem of data.naturalElement.filled || []) {
+        nameElementsDisplay.push(elementWithHanja[elem] || elem);
+    }
+
+    // 자원오행 정보 구성
+    let naturalElementInfo = `이름의 오행: ${nameElementsDisplay.length > 0 ? nameElementsDisplay.join(', ') : '없음'} `;
+
+    if (deficientFilled.length > 0) {
+        naturalElementInfo += `\n  → 사주에 부족한[${deficientFilled.join(', ')}]을(를) 이름이 채워줌 ✓`;
+    }
+    if (deficientNotFilled.length > 0) {
+        naturalElementInfo += `\n  → 사주에[${deficientNotFilled.join(', ')}]부족(이름의 다른 오행으로 긍정 전환 필요)`;
+    }
+    if (deficientFilled.length === 0 && deficientNotFilled.length === 0) {
+        naturalElementInfo += `\n  → 사주에 부족한 오행 없음(모든 오행이 1개 이상)`;
+    }
+
     return `- 음양: ${data.yinYang.isBalanced ? '균형' : '불균형'} (음${data.yinYang.yinCount}/양${data.yinYang.yangCount})
-- 발음오행: ${data.pronunciation.elements.join('→')} (${data.pronunciation.flow})
-- 수리성명학:\n  ${numerologyDetails}
-- 자원오행: ${Object.entries(data.naturalElement.nameElements).filter(([, v]) => v > 0).map(([k, v]) => `${k}:${v}%`).join(', ')}${data.naturalElement.filled?.length ? ` (보완: ${data.naturalElement.filled.join(', ')})` : ''}
-- 불용문자: ${data.forbiddenChar.hasIssue ? data.forbiddenChar.issues.join(', ') : '없음'}`;
+- 발음오행: ${pronunciationWithHangul} (${data.pronunciation.flow})
+- 수리성명학: \n  ${numerologyDetails}
+- 자원오행: \n  ${naturalElementInfo}
+- 불용문자: ${data.forbiddenChar.allGood ? '문제 없음 (모든 한자 양호)' : data.forbiddenChar.issues.join(', ')} `;
 }
 
 // ==========================================
@@ -288,7 +417,7 @@ function generateFallbackContent(
     const meanings = hanjaInfoList.map(h => h.meaning_korean.split(' ')[0]).join('과 ');
 
     // Summary
-    const summary = `${meanings}의 의미를 담은 아름다운 이름이에요. ${name}은(는) 밝은 미래를 향해 나아갈 것입니다.`;
+    const summary = `${meanings}의 의미를 담은 아름다운 이름이에요.${name} 은(는) 밝은 미래를 향해 나아갈 것입니다.`;
 
     // Carousel
     const carousel: CarouselCard[] = [
@@ -309,7 +438,7 @@ function generateFallbackContent(
         {
             type: 'blessing',
             title: '밝은 미래의 축복',
-            content: `${name}이(가) 행복하고 빛나는 미래를 향해 나아가길 축복합니다.`,
+            content: `${name} 이(가) 행복하고 빛나는 미래를 향해 나아가길 축복합니다.`,
         },
     ];
 
@@ -319,6 +448,7 @@ function generateFallbackContent(
             ? '음과 양이 균형을 이루고 있어요.'
             : '한쪽으로 치우친 개성 있는 구성이에요.',
         pronunciation: `${analysisData.pronunciation.flow} 흐름의 발음 오행이에요.`,
+        numerologySummary: '각 시기별 운세가 종합적으로 분석되었어요.',
         numerology: '각 시기별 운세가 분석되었어요.',
         naturalElement: analysisData.naturalElement.filled?.length
             ? `${analysisData.naturalElement.filled.join(', ')}의 에너지를 보완해줘요.`
@@ -367,29 +497,47 @@ export async function generateReportContent(
 
 function convertLLMResponse(response: LLMResponseFormat): LLMReportContent {
     return {
-        summary: response.summary,
+        summary: sanitizeKoreanText(response.summary),
         carousel: [
             {
                 type: 'meaning',
                 title: '글자별 의미',
                 characters: response.characters.map(c => ({
                     hanja: c.hanja,
-                    meaning: c.meaning,
-                    story: c.story,
+                    meaning: sanitizeKoreanText(c.meaning),
+                    story: sanitizeKoreanText(c.story),
                 })),
             },
             {
                 type: 'energy',
-                title: response.energy.title,
-                content: response.energy.content,
+                title: sanitizeKoreanText(response.energy.title),
+                content: sanitizeKoreanText(response.energy.content),
             },
             {
                 type: 'blessing',
-                title: response.blessing.title,
-                content: response.blessing.content,
+                title: sanitizeKoreanText(response.blessing.title),
+                content: sanitizeKoreanText(response.blessing.content),
             },
         ],
-        analysisComments: response.analysisComments,
+        analysisComments: {
+            yinYang: sanitizeKoreanText(response.analysisComments.yinYang || ''),
+            pronunciation: sanitizeKoreanText(response.analysisComments.pronunciation || ''),
+            numerologySummary: sanitizeKoreanText(response.analysisComments.numerologySummary || '각 시기별 운세가 다양하게 구성되어 있어요.'),
+            numerology: sanitizeKoreanText(response.analysisComments.numerology || ''),
+            naturalElement: sanitizeKoreanText(response.analysisComments.naturalElement || ''),
+            forbiddenChar: sanitizeKoreanText(response.analysisComments.forbiddenChar || ''),
+        },
+        nameImpressions: response.nameImpressions,
+        nameInterpretations: response.nameInterpretations ? {
+            interpretation1: {
+                title: sanitizeKoreanText(response.nameInterpretations.interpretation1?.title || ''),
+                description: sanitizeKoreanText(response.nameInterpretations.interpretation1?.description || ''),
+            },
+            interpretation2: {
+                title: sanitizeKoreanText(response.nameInterpretations.interpretation2?.title || ''),
+                description: sanitizeKoreanText(response.nameInterpretations.interpretation2?.description || ''),
+            },
+        } : undefined,
     };
 }
 

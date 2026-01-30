@@ -94,7 +94,7 @@ export class ReportGenerator {
         const hanjaInfoList = this.collectHanjaInfo(input);
 
         // 4. 분석 데이터 변환 (LLM용)
-        const analysisData = this.convertToAnalysisData(analysis);
+        const analysisData = this.convertToAnalysisData(analysis, input);
 
         // 5. LLM으로 콘텐츠 생성 (Summary, Carousel, 탭 요약)
         const llmContent = await generateReportContent(input, hanjaInfoList, analysisData);
@@ -107,6 +107,8 @@ export class ReportGenerator {
             summary: { text: llmContent.summary },
             carousel: llmContent.carousel,
             analysis: enhancedAnalysis,
+            nameImpressions: llmContent.nameImpressions,
+            nameInterpretations: llmContent.nameInterpretations,
             generatedAt: new Date(),
             version: '1.0.0',
         };
@@ -131,7 +133,58 @@ export class ReportGenerator {
     /**
      * Analysis를 LLM용 데이터로 변환
      */
-    private convertToAnalysisData(analysis: AnalysisTabs): AnalysisData {
+    private convertToAnalysisData(analysis: AnalysisTabs, input: ReportInput): AnalysisData {
+        // 사주 오행 개수 추출 (elementCounts가 있으면 직접 사용)
+        let sajuCounts: { wood: number; fire: number; earth: number; metal: number; water: number } | undefined;
+
+        if (input.saju?.elementCounts) {
+            // 직접 개수 사용 (권장)
+            const cts = input.saju.elementCounts;
+            const getValue = (key: string): number => {
+                const pascal = key.charAt(0).toUpperCase() + key.slice(1);
+                return cts[pascal] ?? cts[key.toLowerCase()] ?? 0;
+            };
+            sajuCounts = {
+                wood: getValue('Wood'),
+                fire: getValue('Fire'),
+                earth: getValue('Earth'),
+                metal: getValue('Metal'),
+                water: getValue('Water'),
+            };
+        } else if (input.saju?.elements) {
+            // 퍼센트에서 역산 (fallback)
+            const els = input.saju.elements;
+            const getValue = (key: string): number => {
+                const pascal = key.charAt(0).toUpperCase() + key.slice(1);
+                return els[pascal] ?? els[key.toLowerCase()] ?? 0;
+            };
+            const total = Object.values(els).reduce((a, b) => (a as number) + (b as number), 0) as number;
+            const isPercent = total >= 95 && total <= 105;
+
+            sajuCounts = {
+                wood: isPercent ? Math.round(getValue('Wood') / 12.5) : getValue('Wood'),
+                fire: isPercent ? Math.round(getValue('Fire') / 12.5) : getValue('Fire'),
+                earth: isPercent ? Math.round(getValue('Earth') / 12.5) : getValue('Earth'),
+                metal: isPercent ? Math.round(getValue('Metal') / 12.5) : getValue('Metal'),
+                water: isPercent ? Math.round(getValue('Water') / 12.5) : getValue('Water'),
+            };
+        }
+
+        // 사주에서 부족한 오행 (0개인 것) 찾기
+        const missingElements: string[] = [];
+        const elementNames = { wood: '목', fire: '화', earth: '토', metal: '금', water: '수' };
+        if (sajuCounts) {
+            console.log('[ReportGenerator] sajuCounts:', sajuCounts);
+            for (const [key, value] of Object.entries(sajuCounts)) {
+                if (value === 0) {
+                    missingElements.push(elementNames[key as keyof typeof elementNames] || key);
+                }
+            }
+            console.log('[ReportGenerator] missingElements:', missingElements);
+        } else {
+            console.log('[ReportGenerator] sajuCounts is undefined!');
+        }
+
         return {
             yinYang: {
                 isBalanced: analysis.yinYang.isBalanced,
@@ -141,6 +194,10 @@ export class ReportGenerator {
             pronunciation: {
                 flow: analysis.pronunciation.flow || '중립',
                 elements: analysis.pronunciation.characters.map(c => c.elementKorean),
+                hangulChars: analysis.pronunciation.characters.map(c => ({
+                    hangul: c.hangul,
+                    element: c.elementKorean,
+                })),
             },
             numerology: {
                 scores: analysis.numerology.periods.map(p => ({
@@ -160,12 +217,16 @@ export class ReportGenerator {
                     water: analysis.naturalElement.nameElements.water,
                 },
                 filled: analysis.naturalElement.filledElements,
+                missing: missingElements.length > 0 ? missingElements : undefined,
+                sajuCounts,
             },
             forbiddenChar: {
                 hasIssue: analysis.forbiddenChar.characters.some(c => c.status !== 'good'),
                 issues: analysis.forbiddenChar.characters
                     .filter(c => c.status !== 'good')
                     .map(c => c.reason),
+                allGood: analysis.forbiddenChar.characters.every(c => c.status === 'good'),
+                characters: analysis.forbiddenChar.characters,  // UI 바인딩용
             },
         };
     }
@@ -175,10 +236,14 @@ export class ReportGenerator {
      */
     private applyLLMComments(
         analysis: AnalysisTabs,
-        comments: { yinYang: string; pronunciation: string; numerology: string; naturalElement: string; forbiddenChar: string }
+        comments: { yinYang: string; pronunciation: string; numerologySummary: string; numerology: string; naturalElement: string; forbiddenChar: string }
     ): AnalysisTabs {
-        // 수리성명학: LLM 응답에서 각 시기별 해석 파싱
-        const enhancedNumerology = this.enhanceNumerologyWithLLM(analysis.numerology, comments.numerology);
+        // 수리성명학: LLM 응답에서 각 시기별 해석 파싱, 전체 요약은 numerologySummary 사용
+        const enhancedNumerology = this.enhanceNumerologyWithLLM(
+            analysis.numerology,
+            comments.numerology,
+            comments.numerologySummary
+        );
 
         return {
             yinYang: { ...analysis.yinYang, summary: comments.yinYang },
@@ -194,7 +259,8 @@ export class ReportGenerator {
      */
     private enhanceNumerologyWithLLM(
         numerology: AnalysisTabs['numerology'],
-        llmNumerology: string
+        llmNumerology: string,
+        llmNumerologySummary: string
     ): AnalysisTabs['numerology'] {
         // LLM 응답을 시기별로 파싱 (초년운: ...\n청년운: ... 형식)
         const parsedInterpretations: Record<string, string> = {};
@@ -225,7 +291,7 @@ export class ReportGenerator {
         return {
             ...numerology,
             periods: enhancedPeriods,
-            summary: llmNumerology,
+            summary: llmNumerologySummary,  // 전체 요약 사용
         };
     }
 

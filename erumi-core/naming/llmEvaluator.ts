@@ -73,42 +73,61 @@ async function callGemini(prompt: string, apiKey: string, retryCount = 0): Promi
     const { model, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
     const maxRetries = 2;
 
-    // Firebase Functions 프록시 호출
-    const response = await fetch(
-        'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                prompt,
-                model,
-                temperature,
-                maxOutputTokens
-            })
+    try {
+        // Firebase Functions 프록시 호출
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const response = await fetch(
+            'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt,
+                    model,
+                    temperature,
+                    maxOutputTokens
+                }),
+                signal: controller.signal
+            }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (response.status === 429 && retryCount < maxRetries) {
+            const waitTime = Math.pow(2, retryCount + 1) * 1000;
+            console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
+            await delay(waitTime);
+            return callGemini(prompt, apiKey, retryCount + 1);
         }
-    );
 
-    if (response.status === 429 && retryCount < maxRetries) {
-        const waitTime = Math.pow(2, retryCount + 1) * 1000;
-        console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
-        await delay(waitTime);
-        return callGemini(prompt, apiKey, retryCount + 1);
+        if (!response.ok) {
+            throw new Error(`Gemini API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            throw new Error('Empty response from Gemini');
+        }
+
+        return parseEvaluationResponse(text);
+    } catch (error) {
+        console.error(`[LLM] Error (attempt ${retryCount + 1}/${maxRetries + 1}):`, error);
+
+        // 재시도 로직
+        if (retryCount < maxRetries) {
+            console.log(`[LLM] Retrying... (${retryCount + 2}/${maxRetries + 1})`);
+            await delay(1000);
+            return callGemini(prompt, apiKey, retryCount + 1);
+        }
+
+        return null;
     }
-
-    if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) {
-        throw new Error('Empty response from Gemini');
-    }
-
-    return parseEvaluationResponse(text);
 }
 
 async function callOpenAI(prompt: string, apiKey: string): Promise<EvaluationResult | null> {
@@ -339,39 +358,58 @@ async function callBatchLLM(prompt: string, apiKey: string, retryCount = 0): Pro
     const { model, temperature, maxOutputTokens } = LLM_CONFIG.gemini;
     const maxRetries = 2;
 
-    const response = await fetch(
-        'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                prompt,
-                model,
-                temperature,
-                maxOutputTokens: 1500 // 배치용으로 더 큰 토큰
-            })
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+        const response = await fetch(
+            'https://us-central1-erumi-a312b.cloudfunctions.net/gemini',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    model,
+                    temperature,
+                    maxOutputTokens: 1500 // 배치용으로 더 큰 토큰
+                }),
+                signal: controller.signal
+            }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (response.status === 429 && retryCount < maxRetries) {
+            const waitTime = Math.pow(2, retryCount + 1) * 1000;
+            console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
+            await delay(waitTime);
+            return callBatchLLM(prompt, apiKey, retryCount + 1);
         }
-    );
 
-    if (response.status === 429 && retryCount < maxRetries) {
-        const waitTime = Math.pow(2, retryCount + 1) * 1000;
-        console.warn(`[LLM] Rate limited, retrying in ${waitTime / 1000}s...`);
-        await delay(waitTime);
-        return callBatchLLM(prompt, apiKey, retryCount + 1);
+        if (!response.ok) {
+            throw new Error(`Gemini API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) {
+            throw new Error('Empty response from Gemini');
+        }
+
+        return parseBatchResponse(text);
+    } catch (error) {
+        console.error(`[LLM Batch] Error (attempt ${retryCount + 1}/${maxRetries + 1}):`, error);
+
+        // 재시도 로직
+        if (retryCount < maxRetries) {
+            console.log(`[LLM Batch] Retrying... (${retryCount + 2}/${maxRetries + 1})`);
+            await delay(1000);
+            return callBatchLLM(prompt, apiKey, retryCount + 1);
+        }
+
+        return [];
     }
-
-    if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) {
-        throw new Error('Empty response from Gemini');
-    }
-
-    return parseBatchResponse(text);
 }
 
 /**

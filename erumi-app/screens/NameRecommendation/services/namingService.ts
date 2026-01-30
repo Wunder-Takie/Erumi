@@ -1,9 +1,9 @@
 /**
  * namingService.ts
- * 이름 생성 서비스 - 엔진 호출 + 배치 관리
+ * 이름 생성 서비스 - 엔진 호출 + 배치 관리 + 리포트 생성
  */
 
-import { generateNames, BatchManager, createBatchManager, BatchNameCandidate } from 'erumi-core';
+import { generateNames, BatchManager, createBatchManager, BatchNameCandidate, generateReport, NameReport, ReportInput } from 'erumi-core';
 import { mapWizardDataToEngineParams, WizardData, EngineParams } from './wizardDataMapper';
 
 // ==========================================
@@ -15,6 +15,7 @@ export interface NamingSession {
     allCandidates: BatchNameCandidate[];
     batchManager: BatchManager;
     isInitialized: boolean;
+    wizardData: WizardData;  // 리포트 생성용
 }
 
 export interface BatchResult {
@@ -23,6 +24,9 @@ export interface BatchResult {
     totalUsed: number;
     isExhausted: boolean;
 }
+
+// 리포트 캐시 (한자이름 키로 저장)
+const reportCache = new Map<string, NameReport>();
 
 // ==========================================
 // Naming Service Class
@@ -71,31 +75,82 @@ export class NamingService {
             allCandidates: candidates,
             batchManager,
             isInitialized: true,
+            wizardData,  // 리포트 생성용 저장
         };
 
         return candidates;
     }
 
     /**
-     * 첫 번째 배치 가져오기 (무료 1개)
+     * 배치에 대한 리포트 미리 생성 (병렬)
      */
-    async getFirstBatch(): Promise<BatchResult> {
+    private async preloadReports(names: BatchNameCandidate[]): Promise<void> {
+        if (!this.session) return;
+
+        const { wizardData, engineParams } = this.session;
+
+        // 병렬로 리포트 생성
+        await Promise.all(names.map(async (name) => {
+            const cacheKey = name.hanjaName;
+
+            // 이미 캐시에 있으면 스킵
+            if (reportCache.has(cacheKey)) return;
+
+            try {
+                const input: ReportInput = {
+                    surname: engineParams.surnameInput.hangul,
+                    surnameHanja: engineParams.surnameInput.hanja,
+                    givenName: [name.hanja1?.hangul || '', name.hanja2?.hangul || ''],
+                    givenNameHanja: [name.hanja1?.hanja || '', name.hanja2?.hanja || ''],
+                    saju: wizardData.birthDate ? {
+                        birthDate: wizardData.birthDate.toISOString().split('T')[0],
+                        birthHour: wizardData.birthTime ? parseInt(wizardData.birthTime) : null,
+                        elements: engineParams.sajuElements,  // 퍼센트 (UI용)
+                        elementCounts: engineParams.sajuElementCounts,  // 개수 (LLM용)
+                        yongsin: engineParams.yongsin,        // 용신 오행 배열
+                    } : undefined,
+                };
+
+                const report = await generateReport(input);
+                reportCache.set(cacheKey, report);
+                console.log(`[NamingService] Report generated for: ${cacheKey}`);
+            } catch (error) {
+                console.error(`[NamingService] Report generation failed for ${cacheKey}:`, error);
+            }
+        }));
+    }
+
+    /**
+     * 첫 번째 배치 가져오기 + 리포트 미리 생성
+     * @param count 가져올 개수 (무료=1, 이미 사용=5)
+     */
+    async getFirstBatch(count: number = 1): Promise<BatchResult> {
         if (!this.session?.isInitialized) {
             throw new Error('NamingService not initialized');
         }
 
-        return this.session.batchManager.getNextBatch(1, true);
+        const result = await this.session.batchManager.getNextBatch(count, true);
+
+        // 리포트 미리 생성
+        await this.preloadReports(result.names);
+
+        return result;
     }
 
     /**
-     * 다음 배치 가져오기 (5개)
+     * 다음 배치 가져오기 (5개) + 리포트 미리 생성
      */
     async getNextBatch(): Promise<BatchResult> {
         if (!this.session?.isInitialized) {
             throw new Error('NamingService not initialized');
         }
 
-        return this.session.batchManager.getNextBatch(5, true);
+        const result = await this.session.batchManager.getNextBatch(5, true);
+
+        // 리포트 미리 생성
+        await this.preloadReports(result.names);
+
+        return result;
     }
 
     /**
@@ -111,8 +166,9 @@ export class NamingService {
     getState(): {
         usedHangul: string[];
         usedCombinations: string[];
-        currentWindowStart: number;
+        currentTierStart: number;
         phase: string;
+        currentSearchIndex: number;
     } | null {
         return this.session?.batchManager.getState() ?? null;
     }
@@ -123,12 +179,27 @@ export class NamingService {
     restoreState(savedState: {
         usedHangul: string[];
         usedCombinations: string[];
-        currentWindowStart: number;
+        currentTierStart: number;
         phase: string;
+        currentSearchIndex: number;
     }): void {
         if (this.session?.batchManager) {
             this.session.batchManager.restoreState(savedState);
         }
+    }
+
+    /**
+     * 캐시에서 리포트 가져오기
+     */
+    getReport(hanjaName: string): NameReport | undefined {
+        return reportCache.get(hanjaName);
+    }
+
+    /**
+     * 사주 오행 가져오기 (이미 계산된 값)
+     */
+    getSajuElements(): Record<string, number> | undefined {
+        return this.session?.engineParams.sajuElements;
     }
 
     /**
@@ -143,6 +214,7 @@ export class NamingService {
      */
     reset(): void {
         this.session = null;
+        reportCache.clear();  // 리포트 캐시도 초기화
     }
 }
 

@@ -4,7 +4,7 @@
  * 
  * Figma Node: 431-6842 (NameRecommendation/NameResult/Unlocked/Report)
  */
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
     View,
     Text,
@@ -33,6 +33,8 @@ import {
     space,
     radius,
 } from '../../design-system';
+import { namingService } from './services/namingService';
+import { NameReport } from 'erumi-core';
 
 // =============================================================================
 // Types
@@ -191,19 +193,19 @@ const DUMMY_ORTHODOX_DATA = {
         },
         pronunciationElements: {
             reportOverview: '발음오행은 이름의 소리가 가진 오행 속성을 분석해요. 시(詩)는 수(水), 랑(朗)은 화(火)로 상생 관계를 이루어 조화로운 이름이에요.',
-            categoryGuide: '* 발음오행은 이름을 불렀을 때 나는 소리의 기운을 분석하는 방법이에요.',
+            categoryGuide: '* 발음오행은 이름을 소리 내어 불렀을 때, 소리의 기운끼리 서로 돕는지 싸우는지 볼 때 사용해요.',
         },
         suriAnalysis: {
             reportOverview: '수리성명학으로 분석한 결과, 초년/중년/말년 운이 모두 길하여 전반적으로 좋은 운세를 가진 이름이에요.',
-            categoryGuide: '* 수리성명학은 이름 획수의 합으로 인생의 시기별 운세를 풀이해요.',
+            categoryGuide: '* 수리성명학은 한자의 획수를 더한 숫자로 초년, 청년, 중년, 말년의 구체적인 운세를 계산하는 거에요.',
         },
         elementalBalance: {
             reportOverview: '자원오행은 한자가 가진 본래의 오행 속성을 분석해요. 금(金), 화(火) 기운이 조화롭게 배치되어 있어요.',
-            categoryGuide: '* 자원오행은 한자 자체가 가진 오행의 기운을 분석하는 방법이에요.',
+            categoryGuide: '* 자원오행은 한자가 본래 가지고 있는 자연의 성질(불, 물, 나무 등)이 사주에 필요한 기운인지 보는 거에요.',
         },
         unluckyCharacters: {
             reportOverview: '이름에 사용된 한자들은 모두 양호한 문자로, 불용문자에 해당하지 않아요. 안심하고 사용해도 좋은 이름이에요.',
-            categoryGuide: '* 불용문자는 전통적으로 이름에 사용하기 꺼려지는 한자를 검토해요.',
+            categoryGuide: '* 불용문자는 뜻은 좋아도 이름에 쓰면 운이 나빠진다고 하여 작명 시 피하는 글자인지 확인하는거에요.',
         },
     } as { [key in ContentType]?: { reportOverview?: string; categoryGuide?: string } },
 };
@@ -223,10 +225,241 @@ export const ReportScreen: React.FC = () => {
     const { width: screenWidth } = useWindowDimensions();
 
     const [meaningCardIndex, setMeaningCardIndex] = useState(0);
+    const [llmReport, setLlmReport] = useState<NameReport | null>(null);
 
     const meaningCarouselRef = useRef<FlatList>(null);
 
     const report = DUMMY_REPORT;
+
+    // Route params에서 이름 데이터 및 사주 정보 가져오기
+    const route = useRoute<RouteProp<{
+        NameReport: {
+            nameData?: { hanjaName: string };
+            saju?: { birthDate?: string; birthTime?: string | null };
+        }
+    }, 'NameReport'>>();
+    const nameData = route.params?.nameData;
+    const saju = route.params?.saju;
+
+    // 사주 정보 입력 여부 확인 (birthDate가 있어야 사주 정보가 있는 것)
+    const hasSaju = Boolean(saju?.birthDate);
+
+    // LLM 리포트 로딩 (캐시에서)
+    useEffect(() => {
+        if (!nameData?.hanjaName) return;
+
+        const cachedReport = namingService.getReport(nameData.hanjaName);
+        if (cachedReport) {
+            console.log('[ReportScreen] Using cached LLM report for:', nameData.hanjaName);
+            setLlmReport(cachedReport);
+        }
+    }, [nameData?.hanjaName]);
+
+    // LLM analysisComments → headerData 변환
+    const headerData = llmReport?.analysis ? {
+        fiveElementsTheory: {
+            reportOverview: llmReport.analysis.yinYang?.summary || DUMMY_ORTHODOX_DATA.headerData.fiveElementsTheory?.reportOverview,
+            categoryGuide: DUMMY_ORTHODOX_DATA.headerData.fiveElementsTheory?.categoryGuide,
+        },
+        pronunciationElements: {
+            reportOverview: llmReport.analysis.pronunciation?.summary || DUMMY_ORTHODOX_DATA.headerData.pronunciationElements?.reportOverview,
+            categoryGuide: DUMMY_ORTHODOX_DATA.headerData.pronunciationElements?.categoryGuide,
+        },
+        suriAnalysis: {
+            reportOverview: llmReport.analysis.numerology?.summary || DUMMY_ORTHODOX_DATA.headerData.suriAnalysis?.reportOverview,
+            categoryGuide: DUMMY_ORTHODOX_DATA.headerData.suriAnalysis?.categoryGuide,
+        },
+        elementalBalance: {
+            reportOverview: llmReport.analysis.naturalElement?.summary || DUMMY_ORTHODOX_DATA.headerData.elementalBalance?.reportOverview,
+            categoryGuide: DUMMY_ORTHODOX_DATA.headerData.elementalBalance?.categoryGuide,
+        },
+        unluckyCharacters: {
+            reportOverview: llmReport.analysis.forbiddenChar?.summary || DUMMY_ORTHODOX_DATA.headerData.unluckyCharacters?.reportOverview,
+            categoryGuide: DUMMY_ORTHODOX_DATA.headerData.unluckyCharacters?.categoryGuide,
+        },
+    } : DUMMY_ORTHODOX_DATA.headerData;
+
+    // 동적 elementalBalance 데이터 (llmReport.analysis.naturalElement에서)
+    // sajuElements는 퍼센트(0-100), 사주는 최대 8개 오행 → 12.5% per element
+    // 그래프는 3칸, 개수 3 이상은 꽉찬(3/3)으로 표시
+    const percentToCount = (pct: number): 0 | 1 | 2 | 3 => {
+        const count = Math.round(pct / 12.5);  // 퍼센트 → 개수 역산
+        return Math.min(3, Math.max(0, count)) as 0 | 1 | 2 | 3;  // 3 이상은 3으로
+    };
+    const dynamicElementalBalance = llmReport?.analysis?.naturalElement ? {
+        elements: {
+            wood: percentToCount(llmReport.analysis.naturalElement.sajuElements?.wood || 0),
+            fire: percentToCount(llmReport.analysis.naturalElement.sajuElements?.fire || 0),
+            earth: percentToCount(llmReport.analysis.naturalElement.sajuElements?.earth || 0),
+            metal: percentToCount(llmReport.analysis.naturalElement.sajuElements?.metal || 0),
+            water: percentToCount(llmReport.analysis.naturalElement.sajuElements?.water || 0),
+        },
+        nameElements: (llmReport.analysis.naturalElement.filledElements || []).map(
+            (e: string) => e.toLowerCase() as 'wood' | 'fire' | 'earth' | 'metal' | 'water'
+        ),
+    } : DUMMY_ORTHODOX_DATA.elementalBalance;
+
+    // 동적 suriAnalysis 데이터 (llmReport.analysis.numerology에서)
+    // level → badgeLabel/badgeColor 매핑
+    const levelToBadge = (level: string): { badgeLabel: string; badgeColor: 'green' | 'red' | 'orange' } => {
+        switch (level) {
+            case '대길':
+                return { badgeLabel: '대길', badgeColor: 'green' };
+            case '길':
+                return { badgeLabel: '길', badgeColor: 'green' };
+            case '반길반흉':
+                return { badgeLabel: '반길반흉', badgeColor: 'orange' };
+            case '흉':
+                return { badgeLabel: '흉', badgeColor: 'red' };
+            default:
+                return { badgeLabel: level, badgeColor: 'green' };
+        }
+    };
+
+    // numerology 데이터: scores 또는 periods 키 사용
+    const numerologyData = (llmReport?.analysis?.numerology as any)?.scores
+        || (llmReport?.analysis?.numerology as any)?.periods;
+
+    const dynamicSuriAnalysis: SuriAnalysisData = numerologyData
+        ? {
+            periods: numerologyData.map((score: {
+                name: string;
+                level: string;
+                ageRange: string;
+                suriNumber: number;
+                interpretation: string;
+            }) => ({
+                label: score.name,  // 초년, 청년, 중년, 말년
+                detail: `${score.ageRange} | ${score.suriNumber}수`,
+                description: score.interpretation,
+                ...levelToBadge(score.level),
+            })),
+        }
+        : DUMMY_ORTHODOX_DATA.suriAnalysis;
+
+
+
+    // 동적 fiveElementsTheory 데이터 (llmReport.analysis.yinYang에서)
+    // YinYangCharacter: { hanja, meaning, strokes, isOdd, type } → FiveElementsTheoryData
+    const dynamicFiveElementsTheory = (() => {
+        const chars = llmReport?.analysis?.yinYang?.characters;
+        if (!chars || chars.length < 2) return DUMMY_ORTHODOX_DATA.fiveElementsTheory;
+
+        const mapChar = (c: { hanja: string; meaning: string; strokes: number; isOdd: boolean; type: '음' | '양' }) => {
+            const parts = c.meaning.split(' ');
+            const hun = parts.slice(0, -1).join(' ') || c.meaning; // 마지막 단어 제외 = 훈
+            const reading = parts[parts.length - 1] || c.hanja;    // 마지막 단어 = 음
+            return {
+                hanja: c.hanja,
+                reading,  // 음 (예: '임')
+                hun,      // 훈 (예: '수풀')
+                strokeCount: c.strokes,
+                isEven: !c.isOdd,
+                yinYang: (c.type === '양' ? 'yang' : 'yin') as 'yin' | 'yang',
+            };
+        };
+
+        return {
+            surname: mapChar(chars[0]),
+            firstName: mapChar(chars[1]),
+            secondName: chars[2] ? mapChar(chars[2]) : undefined,
+        };
+    })();
+
+    // 동적 unluckyCharacters 데이터 (llmReport.analysis.forbiddenChar에서)
+    // status → badgeLabel/badgeColor 매핑
+    const statusToBadge = (status: string): { badgeLabel: string; badgeColor: 'green' | 'orange' | 'red' } => {
+        switch (status) {
+            case 'good':
+                return { badgeLabel: '좋음', badgeColor: 'green' };
+            case 'caution':
+                return { badgeLabel: '주의', badgeColor: 'orange' };
+            case 'forbidden':
+                return { badgeLabel: '비추천', badgeColor: 'red' };
+            default:
+                return { badgeLabel: '좋음', badgeColor: 'green' };
+        }
+    };
+
+    const dynamicUnluckyCharacters: UnluckyCharactersData | null = (() => {
+        const chars = (llmReport?.analysis?.forbiddenChar as any)?.characters;
+        if (!chars || chars.length < 1) return null;
+
+        const mapChar = (c: { hanja: string; hangul: string; meaning: string; status: string }) => ({
+            hanja: c.hanja,
+            readingTitle: c.meaning,  // 훈 (예: 펼)
+            reading: c.hangul,        // 음 (예: 서)
+            ...statusToBadge(c.status),
+        });
+
+        return {
+            firstName: mapChar(chars[0]),
+            secondName: chars[1] ? mapChar(chars[1]) : undefined,
+        };
+    })();
+
+    // 동적 pronunciationElements 데이터 (llmReport.analysis.pronunciation에서)
+    const dynamicPronunciationElements: PronunciationElementsData | null = (() => {
+        const chars = (llmReport?.analysis?.pronunciation as any)?.characters;
+        if (!chars || chars.length < 2) return null;  // 최소 성씨 + 이름1
+
+        const mapChar = (c: { hanja: string; hangul: string; meaning: string }) => ({
+            hanja: c.hanja,
+            reading: c.hangul,  // 음 (김, 시, 랑)
+            hun: c.meaning,     // 훈 (쇠, 시, 밝을)
+        });
+
+        return {
+            surname: mapChar(chars[0]),
+            firstName: mapChar(chars[1]),
+            secondName: chars[2] ? mapChar(chars[2]) : undefined,
+        };
+    })();
+
+    // 동적 meaningCards 데이터
+    // 카드1: 캐러셀의 한자별 의미 (llmReport.carousel[0].characters)
+    // 카드2: LLM 이름 해석 (llmReport.nameInterpretations)
+    const dynamicMeaningCards: MeaningCard[] | null = (() => {
+        const carousel = llmReport?.carousel;
+        const interpretations = (llmReport as any)?.nameInterpretations;
+
+        // 캐러셀에서 한자별 의미 카드 (type: 'meaning')
+        const meaningCarouselCard = carousel?.find((c: any) => c.type === 'meaning');
+        if (!meaningCarouselCard?.characters || meaningCarouselCard.characters.length < 1) return null;
+
+        // 카드1: 한자별 의미
+        const card1: MeaningCard = {
+            items: meaningCarouselCard.characters.map((c: { hanja: string; meaning: string; story: string }) => ({
+                title: `${c.hanja}: ${c.meaning}`,
+                description: c.story,
+            })),
+        };
+
+        // 카드2: 이름 해석 (LLM에서 생성)
+        const card2: MeaningCard = interpretations ? {
+            items: [
+                { title: interpretations.interpretation1?.title || '', description: interpretations.interpretation1?.description || '' },
+                { title: interpretations.interpretation2?.title || '', description: interpretations.interpretation2?.description || '' },
+            ],
+        } : DUMMY_REPORT.meaningCards[1];  // fallback
+
+        return [card1, card2];
+    })();
+
+    // 동적 headerCharacters 데이터 (상단 한자/훈/음)
+    const dynamicHeaderCharacters: NameCharacter[] | null = (() => {
+        const chars = llmReport?.analysis?.pronunciation?.characters;
+        if (!chars || chars.length < 2) return null;
+
+        // 성씨 제외, 이름 두 자만 표시 (chars[1], chars[2])
+        return chars.slice(1).map((c: { hanja: string; hangul: string; meaning: string }) => ({
+            hanja: c.hanja,
+            pronunciation: c.hangul,  // 음 (시, 랑)
+            meaning: c.meaning,       // 훈 (시, 밝을)
+            strokes: 0,               // 더미 (사용하지 않음)
+            yinYang: '양' as const,   // 더미
+        }));
+    })();
 
     const handleGoBack = () => {
         navigation.goBack();
@@ -339,11 +572,11 @@ export const ReportScreen: React.FC = () => {
                         <View style={styles.marginWrapper}>
                             {/* Name with Hanja */}
                             <View style={styles.nameWrapper}>
-                                {report.characters.map((char) => renderLetterCard(char, 'large'))}
+                                {(dynamicHeaderCharacters || report.characters).map((char) => renderLetterCard(char, 'large'))}
                             </View>
 
                             {/* Summary Text */}
-                            <Text style={styles.summaryText}>{report.summary}</Text>
+                            <Text style={styles.summaryText}>{llmReport?.summary?.text || report.summary}</Text>
                         </View>
                     </View>
 
@@ -351,7 +584,7 @@ export const ReportScreen: React.FC = () => {
                     <View style={styles.paginationWrapper}>
                         <FlatList
                             ref={meaningCarouselRef}
-                            data={report.meaningCards}
+                            data={dynamicMeaningCards || report.meaningCards}
                             renderItem={renderMeaningCard}
                             keyExtractor={(_, index) => index.toString()}
                             horizontal
@@ -367,7 +600,7 @@ export const ReportScreen: React.FC = () => {
 
                         {/* Pagination - using design system component */}
                         <Pagination
-                            totalPages={report.meaningCards.length}
+                            totalPages={(dynamicMeaningCards || report.meaningCards).length}
                             currentPage={meaningCardIndex}
                             style={styles.carouselPagination}
                         />
@@ -382,12 +615,13 @@ export const ReportScreen: React.FC = () => {
                     <View style={styles.orthodoxReportWrapper}>
                         <Text style={styles.sectionTitle}>성명학적 풀이</Text>
                         <OrthodoxReport
-                            pronunciationElements={DUMMY_ORTHODOX_DATA.pronunciationElements}
-                            fiveElementsTheory={DUMMY_ORTHODOX_DATA.fiveElementsTheory}
-                            suriAnalysis={DUMMY_ORTHODOX_DATA.suriAnalysis}
-                            elementalBalance={DUMMY_ORTHODOX_DATA.elementalBalance}
-                            unluckyCharacters={DUMMY_ORTHODOX_DATA.unluckyCharacters}
-                            headerData={DUMMY_ORTHODOX_DATA.headerData}
+                            pronunciationElements={dynamicPronunciationElements || DUMMY_ORTHODOX_DATA.pronunciationElements}
+                            fiveElementsTheory={dynamicFiveElementsTheory}
+                            suriAnalysis={dynamicSuriAnalysis}
+                            elementalBalance={dynamicElementalBalance}
+                            unluckyCharacters={dynamicUnluckyCharacters || DUMMY_ORTHODOX_DATA.unluckyCharacters}
+                            hasSaju={hasSaju}
+                            headerData={headerData}
                         />
                     </View>
 
@@ -460,6 +694,7 @@ const styles = StyleSheet.create({
     },
     textWrapper: {
         flexDirection: 'row',
+        alignItems: 'center',
         gap: 4, // Figma: gap:4
     },
     meaningText: {

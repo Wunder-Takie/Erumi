@@ -645,14 +645,8 @@ export async function generateNames(
     return (b.modernityAvg || 0) - (a.modernityAvg || 0);
   });
 
-  // 🆕 v6.0: 같은 발음(hangul) 이름 중 최고 점수만 유지 (한자 조합 중복 제거)
-  const seenHangul = new Set<string>();
-  filtered = filtered.filter((c: any) => {
-    const hangulName = c.hanja1?.hangul + c.hanja2?.hangul || c.hangulName;
-    if (seenHangul.has(hangulName)) return false;
-    seenHangul.add(hangulName);
-    return true;
-  });
+  // 🆕 v7.0: 중복 한글 제거 로직 삭제 - BatchManager에서 한자 대안 관리
+  // 같은 발음 다른 한자 조합도 모두 유지하여 BatchManager가 티어별로 추출
 
   // 순위 재할당
   filtered.forEach((c: any, idx: number) => {

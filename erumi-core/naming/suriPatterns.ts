@@ -44,8 +44,12 @@ export interface GeokInfo {
 // Internal State
 // ==========================================
 
-// 길수 목록 추출
-const LUCKY_NUMBERS = new Set((suri81 as Suri81Entry[]).map(s => s.count));
+// 길수 목록 추출 (대길, 길만 포함 - 반길반흉과 흉 제외)
+const LUCKY_NUMBERS = new Set(
+    (suri81 as Suri81Entry[])
+        .filter(s => s.level === '대길' || s.level === '길')
+        .map(s => s.count)
+);
 
 // 성씨별 길수 조합 캐시 (성능 최적화)
 const CACHE = new Map<number, StrokeCombination[]>();

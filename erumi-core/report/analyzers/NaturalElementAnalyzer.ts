@@ -70,14 +70,15 @@ export class NaturalElementAnalyzer {
         // 이름 오행 그래프
         const nameElements = this.getNameElementGraph(input);
 
-        // 채워주는 오행 목록 (사주 없으면 빈 배열)
+        // 채워주는 오행 목록 (사주 없으면 빈 배열 - UI에서 플레이스홀더 표시)
+        const yongsin = input.saju?.yongsin;
         const filledElements = hasSaju && sajuElements
-            ? this.findFilledElements(sajuElements, nameElements)
+            ? this.findFilledElements(sajuElements, nameElements, yongsin)
             : [];
 
-        // 요약 생성
-        const summary = hasSaju
-            ? this.generateSummary(filledElements, nameElements)
+        // 요약 생성 (사주도 전달)
+        const summary = hasSaju && sajuElements
+            ? this.generateSummary(sajuElements, filledElements, nameElements)
             : this.generateNoSajuSummary(nameElements);
 
         return {
@@ -94,10 +95,28 @@ export class NaturalElementAnalyzer {
 
     /**
      * 사주 오행 그래프 (0-100%)
+     * input.saju.elements는 이미 퍼센트 값이거나 카운트 값일 수 있음
      */
     private getSajuElementGraph(input: ReportInput): ElementGraph {
         if (input.saju?.elements) {
-            return this.normalizeToGraph(input.saju.elements);
+            const els = input.saju.elements;
+            // PascalCase와 lowercase 모두 지원
+            const getValue = (key: string): number => {
+                const pascal = key.charAt(0).toUpperCase() + key.slice(1);
+                return els[pascal] ?? els[key.toLowerCase()] ?? 0;
+            };
+
+            // 값이 이미 퍼센트인지 카운트인지 판단 (합계가 100 근처면 퍼센트)
+            const total = Object.values(els).reduce((a, b) => (a as number) + (b as number), 0) as number;
+            const isPercent = total >= 95 && total <= 105; // 합계가 ~100이면 퍼센트로 간주
+
+            return {
+                wood: isPercent ? getValue('Wood') : Math.min(getValue('Wood') * 20, 100),
+                fire: isPercent ? getValue('Fire') : Math.min(getValue('Fire') * 20, 100),
+                earth: isPercent ? getValue('Earth') : Math.min(getValue('Earth') * 20, 100),
+                metal: isPercent ? getValue('Metal') : Math.min(getValue('Metal') * 20, 100),
+                water: isPercent ? getValue('Water') : Math.min(getValue('Water') * 20, 100),
+            };
         }
         // 사주 정보 없으면 균등 분포
         return { wood: 20, fire: 20, earth: 20, metal: 20, water: 20 };
@@ -145,17 +164,21 @@ export class NaturalElementAnalyzer {
     }
 
     /**
-     * 사주에서 부족한데 이름이 채워주는 오행 찾기
+     * 이름이 가진 오행 찾기 (그래프에 "이름" 박스 표시용)
+     * 이름에 해당 오행이 있으면 UI에 표시
      */
-    private findFilledElements(saju: ElementGraph, name: ElementGraph): string[] {
+    private findFilledElements(
+        _saju: ElementGraph,
+        name: ElementGraph,
+        _yongsin?: string[]
+    ): string[] {
         const filled: string[] = [];
 
         for (const key of ELEMENT_KEYS) {
-            const sajuValue = saju[key.toLowerCase() as keyof ElementGraph];
             const nameValue = name[key.toLowerCase() as keyof ElementGraph];
 
-            // 사주에서 부족하고(40% 미만) 이름에서 채워주면(20% 이상)
-            if (sajuValue < 40 && nameValue >= 20) {
+            // 이름에 해당 오행이 있으면 표시
+            if (nameValue > 0) {
                 filled.push(key);
             }
         }
@@ -165,19 +188,58 @@ export class NaturalElementAnalyzer {
 
     /**
      * 요약 생성
+     * - 사주에서 부족한 오행(0개) 언급
+     * - 이름이 채워주는 오행 언급
      */
-    private generateSummary(filledElements: string[], _nameElements: ElementGraph): string {
-        if (filledElements.length === 0) {
+    private generateSummary(
+        saju: ElementGraph,
+        filledElements: string[],
+        _nameElements: ElementGraph
+    ): string {
+        // 사주에서 진짜 부족한 오행 (0개인 것)
+        const deficientElements: string[] = [];
+        for (const key of ELEMENT_KEYS) {
+            const sajuValue = saju[key.toLowerCase() as keyof ElementGraph];
+            if (sajuValue === 0) {
+                deficientElements.push(key);
+            }
+        }
+        console.log('[NaturalElementAnalyzer] saju values:', saju);
+        console.log('[NaturalElementAnalyzer] deficientElements:', deficientElements);
+
+        // 이름이 채워주는 오행 중 부족한 오행
+        const filledDeficient = filledElements.filter(e => deficientElements.includes(e));
+        // 이름이 채워주는 오행 중 부족하지 않은 오행 (보강)
+        const filledExtra = filledElements.filter(e => !deficientElements.includes(e));
+        // 부족하지만 이름이 안 채워주는 오행
+        const unfilledDeficient = deficientElements.filter(e => !filledElements.includes(e));
+
+        const deficientKorean = deficientElements.map(e => ELEMENT_KOREAN[e]);
+        const filledDeficientKorean = filledDeficient.map(e => ELEMENT_KOREAN[e]);
+        const filledExtraKorean = filledExtra.map(e => ELEMENT_KOREAN[e]);
+        const unfilledDeficientKorean = unfilledDeficient.map(e => ELEMENT_KOREAN[e]);
+
+        // 케이스별 요약 생성
+        if (deficientElements.length === 0) {
+            // 부족한 오행 없음
+            if (filledElements.length > 0) {
+                return `이름이 ${filledExtraKorean.join(', ')}의 기운을 더해 사주와 조화를 이루고 있어요.`;
+            }
             return '이름의 오행이 사주와 조화를 이루고 있습니다.';
         }
 
-        const filledKorean = filledElements.map(e => ELEMENT_KOREAN[e]).join('과 ');
-
-        if (filledElements.length === 1) {
-            return `사주에 필요한 ${filledKorean}의 에너지를 이름이 채워주고 있어요.`;
+        if (filledDeficient.length > 0 && unfilledDeficient.length === 0) {
+            // 부족한 오행을 이름이 모두 채워줌
+            return `사주에 부족한 ${filledDeficientKorean.join('과 ')}의 기운을 이름이 채워주고 있어요.`;
         }
 
-        return `사주에 필요한 ${filledKorean}의 에너지를 이름이 완벽하게 채워주고 있어요.`;
+        if (filledDeficient.length > 0 && unfilledDeficient.length > 0) {
+            // 부족한 오행 중 일부만 채워줌
+            return `사주에 ${deficientKorean.join(', ')}이 부족한데, 이름이 ${filledDeficientKorean.join('과 ')}의 기운을 채워주고 있어요.`;
+        }
+
+        // 부족한 오행이 있지만 이름이 안 채워줌
+        return `사주에 ${unfilledDeficientKorean.join('과 ')}의 기운이 부족해요. 이름은 다른 오행을 보강하고 있습니다.`;
     }
 
     /**
@@ -192,5 +254,21 @@ export class NaturalElementAnalyzer {
         const elementKorean = ELEMENT_KOREAN[elementKey] || elementKey;
 
         return `이 이름은 ${elementKorean}의 기운이 강해요. 사주 정보를 입력하시면 더 정확한 분석이 가능합니다.`;
+    }
+
+    /**
+     * 이름에서 강한 오행 목록 찾기 (20% 이상)
+     */
+    private findDominantElements(nameElements: ElementGraph): string[] {
+        const dominant: string[] = [];
+
+        for (const key of ELEMENT_KEYS) {
+            const value = nameElements[key.toLowerCase() as keyof ElementGraph];
+            if (value >= 20) {
+                dominant.push(key);
+            }
+        }
+
+        return dominant;
     }
 }

@@ -17,7 +17,8 @@ export interface SajuInfo {
         day: { stem: string; branch: string };
         hour?: { stem: string; branch: string };
     };
-    elements?: Record<string, number>;
+    elements?: Record<string, number>;       // 퍼센트 (UI 그래프용)
+    elementCounts?: Record<string, number>;  // 개수 (LLM용)
     yongsin?: string[];
 }
 
@@ -107,6 +108,7 @@ export interface PronunciationResult {
     characters: {
         hanja: string;
         hangul: string;
+        meaning: string;       // 뜻 (훈)
         element: string;       // 오행
         elementKorean: string; // 木, 火, 土, 金, 水
     }[];
@@ -166,6 +168,8 @@ export interface NaturalElementResult {
 export interface ForbiddenCharResult {
     characters: {
         hanja: string;
+        hangul: string;        // 음
+        meaning: string;       // 훈 (뜻)
         status: 'good' | 'caution' | 'forbidden';
         reason: string;
     }[];
@@ -195,6 +199,15 @@ export interface NameReport {
     summary: SummarySection;
     carousel: CarouselCard[];
     analysis: AnalysisTabs;
+    nameImpressions?: {
+        impression1: { title: string; content: string };
+        impression2: { title: string; content: string };
+        romanization: { title: string; content: string };
+    };
+    nameInterpretations?: {
+        interpretation1: { title: string; description: string };
+        interpretation2: { title: string; description: string };
+    };
     generatedAt: Date;
     version: string;
 }

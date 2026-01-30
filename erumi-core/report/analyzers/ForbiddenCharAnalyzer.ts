@@ -52,19 +52,31 @@ export class ForbiddenCharAnalyzer {
         const characters: ForbiddenCharResult['characters'] = [];
 
         // 성씨는 보통 체크하지 않음 (이름 글자만)
-        for (const hanja of input.givenNameHanja) {
+        for (let i = 0; i < input.givenNameHanja.length; i++) {
+            const hanja = input.givenNameHanja[i];
+            const hangul = input.givenName[i] || '';
             const forbidden = FORBIDDEN_CHARACTERS[hanja];
             const hanjaInfo = this.hanjaMap.get(hanja);
+            // meaning_korean은 "펼 서" 형태, 마지막 글자(음) 제외한 부분이 훈
+            let meaning = hanja;
+            if (hanjaInfo?.meaning_korean) {
+                const parts = hanjaInfo.meaning_korean.trim().split(' ');
+                meaning = parts.length > 1 ? parts.slice(0, -1).join(' ') : hanjaInfo.meaning_korean;
+            }
 
             if (forbidden) {
                 characters.push({
                     hanja,
+                    hangul,
+                    meaning,
                     status: forbidden.status,
                     reason: forbidden.reason,
                 });
             } else {
                 characters.push({
                     hanja,
+                    hangul,
+                    meaning,
                     status: 'good',
                     reason: hanjaInfo?.meaning_korean
                         ? `${hanjaInfo.meaning_korean} - 이름에 사용하기 좋은 한자입니다.`

@@ -444,7 +444,7 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
     const [messageIndex, setMessageIndex] = useState(0);
 
     // 엔진 연동
-    const { generate, loadMore, isLoading, isLoadingMore, names, error } = useNameGeneration();
+    const { generate, loadMore, isLoading, isLoadingMore, names, error, isExhausted } = useNameGeneration();
     const [minTimeElapsed, setMinTimeElapsed] = useState(false);
     const hasStartedRef = useRef(false);
 
@@ -488,10 +488,12 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
     useEffect(() => {
         // generate 또는 loadMore 완료 시
         const loadingDone = !isLoading && !isLoadingMore;
+
+        // names가 있고 로딩 완료 시 다음으로 (isExhausted 여부와 관계없이)
         if (loadingDone && names.length > 0 && minTimeElapsed) {
             goNext();
         }
-    }, [isLoading, isLoadingMore, names, minTimeElapsed, goNext]);
+    }, [isLoading, isLoadingMore, names, minTimeElapsed, goNext, isExhausted]);
 
     // 에러 시에도 다음으로 (ResultStep에서 에러 표시)
     useEffect(() => {

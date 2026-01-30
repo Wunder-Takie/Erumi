@@ -190,6 +190,7 @@ export const SurnameStep: React.FC<WizardStepProps> = ({
                     variant="primary"
                     size="large"
                     disabled={!isNextEnabled}
+                    haptic
                     onPress={handleNext}
                     style={styles.nextButton}
                 >

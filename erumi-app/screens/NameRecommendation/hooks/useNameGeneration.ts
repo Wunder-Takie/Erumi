@@ -6,9 +6,13 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { namingService, BatchResult, saveViewedNames, startNewSession } from '../services';
 import { WizardData } from '../services/wizardDataMapper';
 import { BatchNameCandidate } from 'erumi-core';
+
+// AsyncStorage 키
+const FREE_TRIAL_USED_KEY = '@erumi/free_trial_used';
 
 // ==========================================
 // Types
@@ -59,6 +63,34 @@ function setGlobalState(updater: (prev: UseNameGenerationState) => UseNameGenera
     notifyListeners();
 }
 
+// AsyncStorage에서 무료 체험 상태 로드 (앱 시작 시 1회)
+let hasLoadedFromStorage = false;
+async function loadFreeTrialStatus() {
+    if (hasLoadedFromStorage) return;
+    hasLoadedFromStorage = true;
+
+    try {
+        const value = await AsyncStorage.getItem(FREE_TRIAL_USED_KEY);
+        if (value === 'true') {
+            globalState = { ...globalState, isUnlocked: true };
+            notifyListeners();
+            console.log('[useNameGeneration] Free trial already used (loaded from storage)');
+        }
+    } catch (e) {
+        console.error('[useNameGeneration] Failed to load free trial status:', e);
+    }
+}
+
+// AsyncStorage에 무료 체험 사용 상태 저장
+async function saveFreeTrialUsed() {
+    try {
+        await AsyncStorage.setItem(FREE_TRIAL_USED_KEY, 'true');
+        console.log('[useNameGeneration] Free trial status saved to storage');
+    } catch (e) {
+        console.error('[useNameGeneration] Failed to save free trial status:', e);
+    }
+}
+
 // ==========================================
 // Hook
 // ==========================================
@@ -71,6 +103,11 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         const listener = () => forceUpdate({});
         listeners.add(listener);
         return () => { listeners.delete(listener); };
+    }, []);
+
+    // 앱 시작 시 AsyncStorage에서 무료 체험 상태 로드
+    useEffect(() => {
+        loadFreeTrialStatus();
     }, []);
 
     /**
@@ -92,8 +129,12 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             // 엔진 초기화
             await namingService.initialize(wizardData);
 
-            // 첫 배치 가져오기 (무료 1개)
-            const result = await namingService.getFirstBatch();
+            // 첫 배치 가져오기 (무료 미사용=1개, 이미 사용=5개)
+            const batchCount = globalState.isUnlocked ? 5 : 1;
+            const result = await namingService.getFirstBatch(batchCount);
+
+            // 5개 요청했는데 5개 미만이면 isExhausted 처리
+            const shouldMarkExhausted = batchCount === 5 && result.names.length < 5;
 
             // 조회한 이름 저장 (마이페이지용)
             if (result.names.length > 0) {
@@ -104,9 +145,9 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
                 ...prev,
                 isLoading: false,
                 names: result.names,
-                hasMore: result.hasMore,
+                hasMore: shouldMarkExhausted ? false : result.hasMore,
                 totalCandidates: namingService.getTotalCandidates(),
-                isExhausted: result.isExhausted,
+                isExhausted: shouldMarkExhausted ? true : result.isExhausted,
             }));
         } catch (error) {
             setGlobalState(prev => ({
@@ -138,6 +179,18 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
 
             const result = await namingService.getNextBatch();
 
+            // 5개 미만이면 해당 배치 버리고 isExhausted 처리 (이전 이름 유지)
+            if (result.names.length < 5) {
+                setGlobalState(prev => ({
+                    ...prev,
+                    isLoadingMore: false,
+                    // names 유지 (이전 배치)
+                    hasMore: false,
+                    isExhausted: true,
+                }));
+                return;
+            }
+
             // 새 이름도 저장 (마이페이지용)
             if (result.names.length > 0) {
                 saveViewedNames(result.names, globalSurname);
@@ -165,6 +218,8 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
      */
     const reset = useCallback(() => {
         namingService.reset();
+        // isUnlocked는 유지 (무료 체험 소진 상태 보존)
+        const preserveUnlocked = globalState.isUnlocked;
         globalState = {
             isLoading: false,
             isLoadingMore: false,
@@ -173,20 +228,22 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             hasMore: false,
             totalCandidates: 0,
             isExhausted: false,
-            isUnlocked: false,
+            isUnlocked: preserveUnlocked,
         };
         globalSurname = '';
         notifyListeners();
     }, []);
 
     /**
-     * 잠금 해제 (무료 1회 사용)
+     * 잠금 해제 (무료 1회 사용) - AsyncStorage에 영구 저장
      */
     const unlock = useCallback(() => {
         setGlobalState(prev => ({
             ...prev,
             isUnlocked: true,
         }));
+        // AsyncStorage에 저장 (비동기)
+        saveFreeTrialUsed();
     }, []);
 
     return {

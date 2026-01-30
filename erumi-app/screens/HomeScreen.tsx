@@ -74,6 +74,7 @@ export const HomeScreen: React.FC = () => {
                         <Button
                             variant="primary"
                             size="large"
+                            haptic
                             onPress={handleStartRecommendation}
                         >
                             이름 추천 받기

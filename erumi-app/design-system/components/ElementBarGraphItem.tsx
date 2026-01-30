@@ -104,7 +104,7 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
             {/* Graph bar */}
             <View
                 style={styles.graph}
-                onLayout={(e) => setGraphWidth(e.nativeEvent.layout.width)}
+                onLayout={(e) => setGraphWidth(Math.floor(e.nativeEvent.layout.width))}
             >
                 {/* Filled bar (사주 오행) */}
                 {amount > 0 && (
@@ -123,34 +123,34 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
                 )}
 
                 {/* Name value indicator (이름 오행) - with dashed border */}
+                {/* amount가 3이면 바 내부 상단에 오버레이, 아니면 바 위에 표시 */}
                 {hasNameValue && isLayoutReady && (
                     <View
                         style={[
                             styles.nameBox,
-                            { bottom: filledHeight },
+                            amount === 3
+                                ? { top: 0 }
+                                : { bottom: filledHeight },
+                            // 동적 borderRadius: amount > 0이면 하단은 바와 연결되므로 0
+                            {
+                                borderTopLeftRadius: CORNER_RADIUS,
+                                borderTopRightRadius: CORNER_RADIUS,
+                                borderBottomLeftRadius: amount > 0 ? 0 : CORNER_RADIUS,
+                                borderBottomRightRadius: amount > 0 ? 0 : CORNER_RADIUS,
+                            }
                         ]}
                     >
-                        {/* Background with dashed border using SVG */}
-                        {/* amount > 0이면 bottom corners = 0, 아니면 12 */}
-                        <Svg
-                            width={graphWidth}
-                            height={NAME_BOX_HEIGHT}
-                            style={styles.nameBorderSvg}
-                        >
-                            <Path
-                                d={createRoundedRectPath(
-                                    1, 1,
-                                    graphWidth - 2, NAME_BOX_HEIGHT - 2,
-                                    CORNER_RADIUS, CORNER_RADIUS,
-                                    amount > 0 ? 0 : CORNER_RADIUS,
-                                    amount > 0 ? 0 : CORNER_RADIUS
-                                )}
-                                fill={NAME_VALUE_BG_COLOR}
-                                stroke={NAME_VALUE_BORDER_COLOR}
-                                strokeWidth={1.5}
-                                strokeDasharray="3,3"
-                            />
-                        </Svg>
+                        {/* Background with dashed border */}
+                        {/* SVG 대신 View 사용 - 보더 일관성 */}
+                        <View style={[
+                            styles.nameBorderView,
+                            {
+                                borderTopLeftRadius: CORNER_RADIUS,
+                                borderTopRightRadius: CORNER_RADIUS,
+                                borderBottomLeftRadius: amount > 0 ? 0 : CORNER_RADIUS,
+                                borderBottomRightRadius: amount > 0 ? 0 : CORNER_RADIUS,
+                            }
+                        ]} />
                         {/* "이름" 텍스트 */}
                         <Text style={styles.nameText}>이름</Text>
                     </View>
@@ -195,11 +195,19 @@ const styles = StyleSheet.create({
         height: NAME_BOX_HEIGHT,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: NAME_VALUE_BG_COLOR,  // 배경색 (틈 방지)
+        overflow: 'hidden',
+        // borderRadius는 동적으로 적용됨
     },
-    nameBorderSvg: {
+    nameBorderView: {
         position: 'absolute',
         top: 0,
         left: 0,
+        right: 0,
+        bottom: 0,
+        borderWidth: 1.5,
+        borderColor: NAME_VALUE_BORDER_COLOR,
+        borderStyle: 'dashed',
     },
     nameText: {
         ...typography.label.md,

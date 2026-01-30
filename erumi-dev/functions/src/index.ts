@@ -15,7 +15,12 @@ export const gemini = onRequest(
                 return;
             }
 
-            const { prompt, model = "gemini-2.0-flash" } = req.body;
+            const {
+                prompt,
+                model = "gemini-2.0-flash",
+                temperature = 0.3,
+                maxOutputTokens = 2048
+            } = req.body;
 
             const response = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -25,8 +30,8 @@ export const gemini = onRequest(
                     body: JSON.stringify({
                         contents: [{ parts: [{ text: prompt }] }],
                         generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 1024,
+                            temperature,
+                            maxOutputTokens,
                         },
                     }),
                 }

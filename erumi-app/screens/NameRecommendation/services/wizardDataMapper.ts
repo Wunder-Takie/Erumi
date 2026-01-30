@@ -29,6 +29,10 @@ export interface EngineParams {
     styleMode: 'modern' | 'saju_perfect';
     yongsinWeights: Record<string, number>;
     preferenceWeights: Record<string, number>;
+    // 사주 분석 결과 (리포트에서 재사용)
+    sajuElements?: Record<string, number>;        // 퍼센트 (UI 그래프용)
+    sajuElementCounts?: Record<string, number>;   // 개수 (LLM용)
+    yongsin?: string[];  // 용신 오행 배열
 }
 
 // ==========================================
@@ -82,6 +86,9 @@ export async function mapWizardDataToEngineParams(data: WizardData): Promise<Eng
     let yongsinWeights: Record<string, number> = {
         Wood: 1, Fire: 1, Earth: 1, Metal: 1, Water: 1
     };
+    let sajuElements: Record<string, number> | undefined = undefined;
+    let sajuElementCounts: Record<string, number> | undefined = undefined;
+    let yongsin: string[] | undefined = undefined;
 
     if (data.birthDate) {
         try {
@@ -97,7 +104,41 @@ export async function mapWizardDataToEngineParams(data: WizardData): Promise<Eng
             const saju = await calculateSaju(data.birthDate, birthHour);
             const yongsinResult = extractYongsin(saju);
 
-            // yongsin 배열에서 weights 생성
+            // 용신 분석 결과에서 오행 분포 가져오기
+            const distribution = yongsinResult.strength ? {
+                Wood: saju.year?.stemElement === 'Wood' || saju.year?.branchElement === 'Wood' ? 1 : 0,
+                Fire: saju.year?.stemElement === 'Fire' || saju.year?.branchElement === 'Fire' ? 1 : 0,
+                Earth: saju.year?.stemElement === 'Earth' || saju.year?.branchElement === 'Earth' ? 1 : 0,
+                Metal: saju.year?.stemElement === 'Metal' || saju.year?.branchElement === 'Metal' ? 1 : 0,
+                Water: saju.year?.stemElement === 'Water' || saju.year?.branchElement === 'Water' ? 1 : 0,
+            } : null;
+
+            // sajuElements 계산 (퍼센트) + sajuElementCounts (개수)
+            // analyzeElements는 import 안 했으므로 간단히 분포 계산
+            const pillars = [saju.year, saju.month, saju.day, saju.hour].filter(Boolean);
+            const counts: Record<string, number> = { Wood: 0, Fire: 0, Earth: 0, Metal: 0, Water: 0 };
+            for (const pillar of pillars) {
+                if (pillar?.stemElement) counts[pillar.stemElement]++;
+                if (pillar?.branchElement) counts[pillar.branchElement]++;
+            }
+            const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
+
+            // 원본 개수 저장 (LLM용)
+            sajuElementCounts = { ...counts };
+            console.log('[Mapper] Saju element counts (raw):', sajuElementCounts);
+
+            // 퍼센트로 변환 (UI 그래프용)
+            sajuElements = {
+                Wood: Math.round((counts.Wood / total) * 100),
+                Fire: Math.round((counts.Fire / total) * 100),
+                Earth: Math.round((counts.Earth / total) * 100),
+                Metal: Math.round((counts.Metal / total) * 100),
+                Water: Math.round((counts.Water / total) * 100),
+            };
+            console.log('[Mapper] Saju elements (percent):', sajuElements);
+
+            // yongsin 배열 저장 및 weights 생성
+            yongsin = yongsinResult.yongsin;
             for (const element of yongsinResult.yongsin) {
                 yongsinWeights[element] = (yongsinWeights[element] || 1) + 1.0;
             }
@@ -127,6 +168,9 @@ export async function mapWizardDataToEngineParams(data: WizardData): Promise<Eng
         styleMode,
         yongsinWeights,
         preferenceWeights,
+        sajuElements,
+        sajuElementCounts,
+        yongsin,
     };
 }
 

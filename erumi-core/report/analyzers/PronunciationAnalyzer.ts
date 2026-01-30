@@ -10,6 +10,7 @@ import surnames from '../../data/core/surnames.json' with { type: 'json' };
 interface HanjaEntry {
     hanja: string;
     hangul: string;
+    meaning_korean?: string;
     element?: string;
 }
 
@@ -82,9 +83,11 @@ export class PronunciationAnalyzer {
 
         // 성씨
         const surnameElement = this.getElement(input.surname, input.surnameHanja, true);
+        const surnameMeaning = this.getMeaning(input.surname, input.surnameHanja, true);
         characters.push({
             hanja: input.surnameHanja,
             hangul: input.surname,
+            meaning: surnameMeaning,
             element: surnameElement,
             elementKorean: ELEMENT_KOREAN[surnameElement] || surnameElement,
         });
@@ -92,9 +95,11 @@ export class PronunciationAnalyzer {
         // 이름 글자
         for (let i = 0; i < input.givenNameHanja.length; i++) {
             const element = this.getElement('', input.givenNameHanja[i], false);
+            const meaning = this.getMeaning('', input.givenNameHanja[i], false);
             characters.push({
                 hanja: input.givenNameHanja[i],
                 hangul: input.givenName[i],
+                meaning: meaning,
                 element,
                 elementKorean: ELEMENT_KOREAN[element] || element,
             });
@@ -122,6 +127,27 @@ export class PronunciationAnalyzer {
         }
         const entry = this.hanjaMap.get(hanja);
         return entry?.element ?? 'Earth';
+    }
+
+    /**
+     * 훈(뜻) 조회 - meaning_korean은 "펼 서" 형태, 마지막 글자 제외한 부분이 훈
+     */
+    private getMeaning(hangul: string, hanja: string, isSurname: boolean): string {
+        if (isSurname) {
+            const variant = this.getSurnameVariant(hangul, hanja);
+            if (variant?.meaning) {
+                // "나라 이" -> "나라"
+                const parts = variant.meaning.trim().split(' ');
+                return parts.length > 1 ? parts.slice(0, -1).join(' ') : variant.meaning;
+            }
+        }
+        const entry = this.hanjaMap.get(hanja);
+        if (entry?.meaning_korean) {
+            // "펼 서" -> "펼"
+            const parts = entry.meaning_korean.trim().split(' ');
+            return parts.length > 1 ? parts.slice(0, -1).join(' ') : entry.meaning_korean;
+        }
+        return hanja;
     }
 
     /**
