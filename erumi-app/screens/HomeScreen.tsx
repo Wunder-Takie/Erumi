@@ -3,9 +3,10 @@
  * Figma 스펙 기반 구현
  */
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button, Logo, colors, typography } from '../design-system';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -14,12 +15,42 @@ export const HomeScreen: React.FC = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
     const lastTapRef = useRef<number>(0);
+    const logoLastTapRef = useRef<number>(0);
 
     const handleStartRecommendation = () => {
         // Tab Navigator 안에 있으므로 parent Stack Navigator에 접근
         const parentNav = navigation.getParent();
         if (parentNav) {
             parentNav.navigate('NameWizard' as never);
+        }
+    };
+
+    // 🆕 로고 더블탭 - AsyncStorage 초기화 (개발용)
+    const handleLogoPress = async () => {
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 300; // 300ms 이내 두 번 탭
+
+        if (now - logoLastTapRef.current < DOUBLE_TAP_DELAY) {
+            // 더블탭 감지됨 - AsyncStorage 초기화
+            Alert.alert(
+                '개발자 옵션',
+                '모든 앱 데이터를 초기화하시겠습니까?',
+                [
+                    { text: '취소', style: 'cancel' },
+                    {
+                        text: '초기화',
+                        style: 'destructive',
+                        onPress: async () => {
+                            await AsyncStorage.clear();
+                            Alert.alert('완료', '앱 데이터가 초기화되었습니다. 앱을 다시 시작해주세요.');
+                            console.log('[HomeScreen] AsyncStorage 초기화 완료');
+                        },
+                    },
+                ]
+            );
+            logoLastTapRef.current = 0; // 리셋
+        } else {
+            logoLastTapRef.current = now;
         }
     };
 
@@ -44,7 +75,9 @@ export const HomeScreen: React.FC = () => {
         <View style={[styles.container, { paddingTop: insets.top }]}>
             {/* Topbar - showLabel: false (텍스트 없음) */}
             <View style={styles.topbar}>
-                <Logo size="small" />
+                <Pressable onPress={handleLogoPress}>
+                    <Logo size="small" />
+                </Pressable>
             </View>
 
             {/* ContentSection - 스크롤 없음 */}

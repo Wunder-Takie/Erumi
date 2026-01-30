@@ -17,7 +17,7 @@ import type { CarouselCard, ReportInput } from './types';
 export interface HanjaInfo {
     hanja: string;
     hangul: string;
-    meaning_korean: string;
+    hun: string;
     meaning_story?: string;
     element?: string;
 }
@@ -224,23 +224,22 @@ const REPORT_PROMPT = `당신은 한국 최고의 작명 전문가예요. 아래
 }
 
 ## 자원오행(naturalElement) 작성 가이드
-⚠️ **아래 예시 문구를 그대로 복사하지 마세요. 스타일만 참고하고 새로운 표현으로 작성하세요.**
 
-정확히 2문장, 50~70자. 오행별 표현 참고 (다양하게 변형 필요):
-- 목(木): 성장, 생명력, 시작
-- 화(火): 열정, 에너지, 빛
-- 토(土): 안정, 포용, 중심
-- 금(金): 정제, 단단함, 빛남
-- 수(水): 유연함, 지혜, 깊이
+정확히 2문장, 50~70자. 데이터의 상태에 따라 적절히 작성.
 
-**케이스별 구조 (예시는 참고용):**
-1) ✓ 표시된 것 (부족 채움): "이름이 사주에 부족한 X의 기운을 채워줘요" + 해당 오행의 긍정적 의미
-2) 이름이 오행을 더함: "이름이 X의 기운을 더해줘요" + 조화/균형 언급
-3) 부족 오행이 있을 때: "사주에 X의 기운이 부족하지만, 이름의 Y가 ~해줄 거예요" (긍정 전환 필수, "채워주지 못해요" 같은 부정 표현 금지)
+**작성 규칙:**
 
-**중요:** 
-- 부족 오행이 2개 이상이면 "금(金)과 수(水)" 형태로 함께 언급
-- "채워주지 않음/못 채움" 같은 부정적 표현 사용 금지. 항상 긍정적으로 전환
+1. **✓ 표시 오행**: 이름이 채워주는 오행. "채워준다/보충한다/더해준다" 표현 가능.
+2. **✗ 표시 오행**: 이름이 채워주지 못하는 오행. 반드시 "부족하지만" 형태로만 언급하고,.긍정적으로 마무리.
+3. **모든 사주오행 ≥1**: 부족함 없음. 이름이 기운을 더해준다고 표현.
+
+**❌ 절대 금지:**
+- ✗ 표시된 오행을 "채워준다/보충한다/보완한다"고 표현하면 완전히 틀린 정보!
+
+**✅ 중요:**
+- 매번 새롭고 다양한 표현을 사용하세요
+- 위 규칙만 지키면 자유롭게 창의적으로 작성하세요
+- 2문장으로 자연스럽고 긍정적인 메시지를 전달하세요
 
 ## 생성 요청
 입력된 이름에 대해 위 가이드를 **참고**하여 **새롭고 다양한 표현**으로 콘텐츠를 생성해주세요.
@@ -256,7 +255,7 @@ JSON만 응답:
     "pronunciation": "50~60자로 이름 소리가 주는 느낌/인상 (이름 언급 없이, ~에요/해요로 끝남. 예: 부드럽고 맑은 소리가 나요.)",
     "numerologySummary": "초년~말년 운세를 종합하여 정확히 2문장으로 요약 (이름 언급 없이, ~에요/해요로 끝남)",
     "numerology": "초년운: 2-3문장\\n청년운: 2-3문장\\n중년운: 2-3문장\\n말년운: 2-3문장 (모두 이름 언급 없이, ~에요/해요로 끝남)",
-    "naturalElement": "위 자원오행 가이드 참조. 데이터의 ✓ 정보에 따라 2문장 작성 (이름 언급 없이). 예시 복사 금지!",
+    "naturalElement": "⚠️ 데이터의 ✓ 표시만 보고 작성! ✗ 표시된 오행은 절대 '채워준다'고 하면 안 됨. 2문장 (~에요/해요로 끝남)",
     "forbiddenChar": "50~60자로 불용문자 검사 결과 (이름 언급 없이, ~에요/해요로 끝남. 예: 사용된 한자 모두 좋은 의미를 담고 있어요.)"
   },
   "nameInterpretations": {
@@ -279,10 +278,15 @@ async function callReportLLM(
     const fullName = input.surname + input.givenName.join('');
     const hanjaChars = input.surnameHanja + input.givenNameHanja.join('');
     const charInfo = hanjaInfoList.map(h =>
-        `- ${h.hanja}(${h.hangul}): ${h.meaning_korean} `
+        `- ${h.hanja}(${h.hangul}): ${h.hun} `
     ).join('\n');
 
     const analysisInfo = formatAnalysisData(analysisData);
+
+    // 자원오행 관련 데이터 로그
+    console.log('[callReportLLM] === 자원오행 프롬프트 데이터 ===');
+    console.log(analysisInfo);
+    console.log('[callReportLLM] ================================');
 
     const prompt = REPORT_PROMPT
         .replace('{fullName}', fullName)
@@ -329,7 +333,8 @@ async function callReportLLM(
 
         return JSON.parse(jsonMatch[0]) as LLMResponseFormat;
     } catch (error) {
-        console.error(`[Report LLM]Error(attempt ${retryCount + 1}/${MAX_RETRIES + 1}): `, error);
+        // console.warn 사용 (console.error는 Expo LogBox에 빨간 에러로 표시됨)
+        console.warn(`[Report LLM] Attempt ${retryCount + 1}/${MAX_RETRIES + 1} failed:`, error);
 
         // 재시도 로직
         if (retryCount < MAX_RETRIES) {
@@ -380,6 +385,11 @@ function formatAnalysisData(data: AnalysisData): string {
         }
     }
 
+    console.log('[formatAnalysisData] sajuCounts:', sajuCounts);
+    console.log('[formatAnalysisData] nameElements (이름의 오행):', nameElements);
+    console.log('[formatAnalysisData] deficientFilled (채워주는 부족):', deficientFilled);
+    console.log('[formatAnalysisData] deficientNotFilled (못 채우는 부족):', deficientNotFilled);
+
     for (const elem of data.naturalElement.filled || []) {
         nameElementsDisplay.push(elementWithHanja[elem] || elem);
     }
@@ -388,10 +398,10 @@ function formatAnalysisData(data: AnalysisData): string {
     let naturalElementInfo = `이름의 오행: ${nameElementsDisplay.length > 0 ? nameElementsDisplay.join(', ') : '없음'} `;
 
     if (deficientFilled.length > 0) {
-        naturalElementInfo += `\n  → 사주에 부족한[${deficientFilled.join(', ')}]을(를) 이름이 채워줌 ✓`;
+        naturalElementInfo += `\n  ✓ 이름이 채워주는 부족 오행: [${deficientFilled.join(', ')}] ← "채워준다" 표현 가능`;
     }
     if (deficientNotFilled.length > 0) {
-        naturalElementInfo += `\n  → 사주에[${deficientNotFilled.join(', ')}]부족(이름의 다른 오행으로 긍정 전환 필요)`;
+        naturalElementInfo += `\n  ✗ 이름이 채워주지 않는 부족 오행: [${deficientNotFilled.join(', ')}] ← "채워준다" 표현 금지!`;
     }
     if (deficientFilled.length === 0 && deficientNotFilled.length === 0) {
         naturalElementInfo += `\n  → 사주에 부족한 오행 없음(모든 오행이 1개 이상)`;
@@ -405,6 +415,58 @@ function formatAnalysisData(data: AnalysisData): string {
 }
 
 // ==========================================
+// LLM 응답 자원오행 검증 및 교정
+// ==========================================
+
+function validateNaturalElementComment(
+    llmComment: string,
+    analysisData: AnalysisData
+): string {
+    const sajuCounts = analysisData.naturalElement.sajuCounts || {};
+    const nameElements = analysisData.naturalElement.filled?.map(e => e.toLowerCase()) || [];
+
+    const elementKorean: Record<string, string> = {
+        wood: '목', fire: '화', earth: '토', metal: '금', water: '수'
+    };
+
+    // 부족한 오행 중 이름이 채워주지 않는 것 찾기
+    const deficientNotFilled: string[] = [];
+    for (const [key, count] of Object.entries(sajuCounts)) {
+        if (count === 0 && !nameElements.includes(key)) {
+            deficientNotFilled.push(elementKorean[key] || key);
+        }
+    }
+
+    console.log(`[validateNaturalElement] deficientNotFilled: ${JSON.stringify(deficientNotFilled)}`);
+    console.log(`[validateNaturalElement] LLM 원본: ${llmComment}`);
+
+    if (deficientNotFilled.length === 0) {
+        return llmComment; // 교정 불필요
+    }
+
+    // 부족한 오행이 "채워진다"고 잘못 언급된 경우만 교정
+    for (const elem of deficientNotFilled) {
+        // 정확한 패턴: "수의 기운을 채워" 또는 "부족한 수를 채워" 등
+        // ✗ 표시된 오행이 "채워/보충/보완"과 함께 언급되면 문제
+        const wrongPatterns = [
+            new RegExp(`${elem}[의을를]?\\s*(기운)?[을를]?\\s*(채워|보충|보완|충족)`, 'i'),
+            new RegExp(`부족한\\s*${elem}[의을를]?.*?(채워|보충|보완)`, 'i'),
+            new RegExp(`${elem}[의을를]?\\s*(기운)?[을를]?\\s*(더해|불어넣)`, 'i'),
+        ];
+
+        for (const pattern of wrongPatterns) {
+            if (pattern.test(llmComment)) {
+                console.log(`[validateNaturalElement] 잘못된 표현 발견! ${elem} 교정 중...`);
+                const elemHanja = elem === '목' ? '木' : elem === '화' ? '火' : elem === '토' ? '土' : elem === '금' ? '金' : '水';
+                return `사주에 ${elem}(${elemHanja})의 기운이 다소 부족하지만 걱정하지 않아도 돼요. 이름에 담긴 다른 오행들이 전체적인 균형을 잡아주고, 부족한 기운은 살아가며 자연스럽게 채워질 거예요.`;
+            }
+        }
+    }
+
+    return llmComment;
+}
+
+// ==========================================
 // 템플릿 Fallback
 // ==========================================
 
@@ -414,7 +476,7 @@ function generateFallbackContent(
     analysisData: AnalysisData
 ): LLMReportContent {
     const name = input.givenName.join('');
-    const meanings = hanjaInfoList.map(h => h.meaning_korean.split(' ')[0]).join('과 ');
+    const meanings = hanjaInfoList.map(h => h.hun).join('과 ');
 
     // Summary
     const summary = `${meanings}의 의미를 담은 아름다운 이름이에요.${name} 은(는) 밝은 미래를 향해 나아갈 것입니다.`;
@@ -426,8 +488,8 @@ function generateFallbackContent(
             title: '글자별 의미',
             characters: hanjaInfoList.map(h => ({
                 hanja: h.hanja,
-                meaning: h.meaning_korean,
-                story: h.meaning_story || `${h.meaning_korean}의 뜻을 담은 글자입니다.`,
+                meaning: `${h.hun}`,
+                story: h.meaning_story || `${h.hun}의 뜻을 담은 글자입니다.`,
             })),
         },
         {
@@ -476,7 +538,7 @@ export async function generateReportContent(
     const llmResult = await callReportLLM(input, hanjaInfoList, analysisData);
 
     if (llmResult) {
-        const content = convertLLMResponse(llmResult);
+        const content = convertLLMResponse(llmResult, analysisData);
         reportCache.set(cacheKey, { content, timestamp: Date.now() });
         return content;
     }
@@ -495,7 +557,10 @@ export async function generateReportContent(
     return generateFallbackContent(input, hanjaInfoList, analysisData);
 }
 
-function convertLLMResponse(response: LLMResponseFormat): LLMReportContent {
+function convertLLMResponse(response: LLMResponseFormat, analysisData: AnalysisData): LLMReportContent {
+    // 검증 제거 - LLM 프롬프트를 강화했으므로 LLM 응답을 직접 사용
+    const naturalElementComment = response.analysisComments.naturalElement || '';
+
     return {
         summary: sanitizeKoreanText(response.summary),
         carousel: [
@@ -524,7 +589,7 @@ function convertLLMResponse(response: LLMResponseFormat): LLMReportContent {
             pronunciation: sanitizeKoreanText(response.analysisComments.pronunciation || ''),
             numerologySummary: sanitizeKoreanText(response.analysisComments.numerologySummary || '각 시기별 운세가 다양하게 구성되어 있어요.'),
             numerology: sanitizeKoreanText(response.analysisComments.numerology || ''),
-            naturalElement: sanitizeKoreanText(response.analysisComments.naturalElement || ''),
+            naturalElement: sanitizeKoreanText(naturalElementComment),
             forbiddenChar: sanitizeKoreanText(response.analysisComments.forbiddenChar || ''),
         },
         nameImpressions: response.nameImpressions,

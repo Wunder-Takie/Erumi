@@ -61,7 +61,8 @@ export interface HanjaInfo {
   hanja: string;
   hangul: string;
   roman: string;
-  meaning_korean: string;
+  hun: string;
+  eum: string;
   meaning_story: string;
   strokes: number;
   element: ElementType;
@@ -130,7 +131,8 @@ function calculateModernityPoints(avgMod: number): number {
 
 /**
  * 🆕 generateNames - 업데이트된 버전
- * @param {string} surnameInput - 성씨
+ * @param {string} surnameInput - 성씨 한글
+ * @param {string|null} surnameHanja - 성씨 한자 (사용자 선택)
  * @param {Array} selectedTagIds - 선택된 태그
  * @param {string|null} gender - 성별
  * @param {object|null} preferenceWeights - 스토리 기반 오행 가중치
@@ -139,6 +141,7 @@ function calculateModernityPoints(avgMod: number): number {
  */
 export async function generateNames(
   surnameInput: string,
+  surnameHanja: string | null = null,
   selectedTagIds: string[] = [],
   gender: string | null = null,
   preferenceWeights: Record<string, number> | null = null,
@@ -168,7 +171,8 @@ export async function generateNames(
   });
 
   // modernPreferences는 다른 곳에서 직접 참조됨
-  const surnameInfo = getSurnameVariant(surnameInput);
+  // 🆕 사용자가 선택한 한자(surnameHanja)가 있으면 정확한 획수 사용
+  const surnameInfo = getSurnameVariant(surnameInput, surnameHanja || undefined);
   const surnameStrokes = surnameInfo?.strokes || 8;
   const surnameElement = surnameInfo?.element || null;
 
@@ -225,7 +229,7 @@ export async function generateNames(
         strokes1: hanja1.strokes, strokes2: hanja2.strokes,
         elements: [hanja1.element, hanja2.element],
         meanings: [hanja1.meaning_story, hanja2.meaning_story],
-        meaningKorean: [hanja1.meaning_korean, hanja2.meaning_korean]
+        meaningKorean: [`${hanja1.hun} ${hanja1.eum}`, `${hanja2.hun} ${hanja2.eum}`]
       });
     }
   }
@@ -684,7 +688,7 @@ export async function generateNames(
       hanja1: {
         hanja: c.hanja1.hanja,
         hangul: c.hanja1.hangul,
-        meaning_korean: c.hanja1.meaning_korean,
+        hun: c.hanja1.hun,
         story: c.hanja1.meaning_story,
         element: c.hanja1.element,
         strokes: c.hanja1.strokes
@@ -692,7 +696,7 @@ export async function generateNames(
       hanja2: {
         hanja: c.hanja2.hanja,
         hangul: c.hanja2.hangul,
-        meaning_korean: c.hanja2.meaning_korean,
+        hun: c.hanja2.hun,
         story: c.hanja2.meaning_story,
         element: c.hanja2.element,
         strokes: c.hanja2.strokes

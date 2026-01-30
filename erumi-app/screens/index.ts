@@ -2,5 +2,6 @@
  * Screens Index
  */
 export { HomeScreen } from './HomeScreen';
-export { SurnameScreen, SurnameSearchScreen, GenderScreen, NameWizardScreen, ReportScreen } from './NameRecommendation';
+export { NameWizardScreen, ReportScreen } from './NameRecommendation';
+export { SurnameSearchScreen } from './NameRecommendation/SurnameSearchScreen';
 export { NameBuilderScreen, NameChangeScreen, ProfileScreen } from './PlaceholderScreens';

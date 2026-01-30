@@ -10,7 +10,8 @@ import surnames from '../../data/core/surnames.json' with { type: 'json' };
 interface HanjaEntry {
     hanja: string;
     hangul: string;
-    meaning_korean: string;
+    hun: string;
+    eum: string;
     strokes: number;
     element?: string;
 }
@@ -19,7 +20,8 @@ interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
-    meaning: string;
+    hun: string;
+    eum: string;
     examples: string;
     is_major: boolean;
 }
@@ -112,10 +114,10 @@ export class YinYangAnalyzer {
     private getMeaning(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
             const variant = this.getSurnameVariant(hangul, hanja);
-            if (variant) return variant.meaning;
+            if (variant) return `${variant.hun} ${variant.eum}`;
         }
         const entry = this.hanjaMap.get(hanja);
-        return entry?.meaning_korean ?? `${hanja}`;
+        return entry?.hun ? `${entry.hun} ${entry.eum}` : `${hanja}`;
     }
 
     /**

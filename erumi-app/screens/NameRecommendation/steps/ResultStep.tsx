@@ -77,11 +77,11 @@ export const ResultStep: React.FC<WizardStepProps> = ({
             return [];
         }
         return names.map((name, idx) => {
-            // meaning_korean 포맷: "훈 음" (예: "펼 서", "법 율")
-            const meaning1 = name.hanja1?.meaning_korean?.split(' ')[0] || '';  // 훈
-            const pronunciation1 = name.hanja1?.meaning_korean?.split(' ')[1] || name.hangulName.charAt(0) || '';  // 음
-            const meaning2 = name.hanja2?.meaning_korean?.split(' ')[0] || '';  // 훈
-            const pronunciation2 = name.hanja2?.meaning_korean?.split(' ')[1] || name.hangulName.charAt(1) || '';  // 음
+            // hun 필드에서 직접 훈 조회
+            const meaning1 = name.hanja1?.hun || '';  // 훈
+            const pronunciation1 = name.hangulName.charAt(0) || '';  // 음 (한글에서)
+            const meaning2 = name.hanja2?.hun || '';  // 훈
+            const pronunciation2 = name.hangulName.charAt(1) || '';  // 음 (한글에서)
 
             return {
                 id: String(idx),

@@ -11,28 +11,10 @@ import {
     space,
 } from '../../../design-system';
 import { WizardStepProps } from '../WizardContainer';
+import { SurnameItem, SurnamesDataType } from '../types';
 
 // erumi-core에서 성씨 데이터 가져오기
 import surnamesData from 'erumi-core/data/core/surnames.json';
-
-// 타입 정의
-interface SurnameVariant {
-    hanja: string;
-    strokes: number;
-    element: string;
-    meaning: string;
-    examples: string;
-    is_major: boolean;
-}
-
-type SurnamesDataType = Record<string, SurnameVariant[]>;
-
-// 성씨 선택 인터페이스
-interface SurnameItem {
-    id: string;
-    hangul: string;
-    hanja: string;
-}
 
 // 그리드 설정: 4열, gap 6
 const COLUMNS = 4;

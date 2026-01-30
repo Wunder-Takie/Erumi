@@ -8,7 +8,7 @@ import { View, StyleSheet, Keyboard, TouchableWithoutFeedback, Dimensions } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SurnameItem } from './SurnameScreen';
+import { SurnameItem, SurnameSearchResult, SurnamesDataType } from './types';
 import {
     Topbar,
     TopbarItem,
@@ -21,27 +21,6 @@ import {
 
 // erumi-core에서 성씨 데이터 가져오기
 import surnamesData from 'erumi-core/data/core/surnames.json';
-
-// 타입 정의 (erumi-core의 SurnameVariant와 동일)
-interface SurnameVariant {
-    hanja: string;
-    strokes: number;
-    element: string;
-    meaning: string;
-    examples: string;
-    is_major: boolean;
-}
-
-type SurnamesDataType = Record<string, SurnameVariant[]>;
-
-// 검색 결과용 인터페이스
-export interface SurnameSearchResult {
-    id: string;       // 고유 ID (hangul + hanja)
-    hangul: string;   // 한글 성씨
-    hanja: string;    // 한자 성씨
-    strokes: number;  // 획수
-    isMajor: boolean; // 주요 성씨 여부
-}
 
 // 그리드 설정: 4열, gap 6
 const COLUMNS = 4;

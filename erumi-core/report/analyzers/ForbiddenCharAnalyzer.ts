@@ -9,7 +9,8 @@ import hanjaDb from '../../data/core/hanja_db.json' with { type: 'json' };
 interface HanjaEntry {
     hanja: string;
     hangul: string;
-    meaning_korean: string;
+    hun: string;
+    eum: string;
 }
 
 // 불용문자 목록 (하드코딩 - 나중에 JSON으로 분리 가능)
@@ -57,12 +58,8 @@ export class ForbiddenCharAnalyzer {
             const hangul = input.givenName[i] || '';
             const forbidden = FORBIDDEN_CHARACTERS[hanja];
             const hanjaInfo = this.hanjaMap.get(hanja);
-            // meaning_korean은 "펼 서" 형태, 마지막 글자(음) 제외한 부분이 훈
-            let meaning = hanja;
-            if (hanjaInfo?.meaning_korean) {
-                const parts = hanjaInfo.meaning_korean.trim().split(' ');
-                meaning = parts.length > 1 ? parts.slice(0, -1).join(' ') : hanjaInfo.meaning_korean;
-            }
+            // hun 필드에서 직접 훈 조회
+            const meaning = hanjaInfo?.hun || hanja;
 
             if (forbidden) {
                 characters.push({
@@ -78,8 +75,8 @@ export class ForbiddenCharAnalyzer {
                     hangul,
                     meaning,
                     status: 'good',
-                    reason: hanjaInfo?.meaning_korean
-                        ? `${hanjaInfo.meaning_korean} - 이름에 사용하기 좋은 한자입니다.`
+                    reason: hanjaInfo?.hun
+                        ? `${hanjaInfo.hun} ${hanjaInfo.eum} - 이름에 사용하기 좋은 한자입니다.`
                         : '이름에 사용하기 좋은 한자입니다.',
                 });
             }

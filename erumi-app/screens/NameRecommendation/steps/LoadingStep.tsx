@@ -7,7 +7,7 @@
  * Uses: react-native-skia + react-native-reanimated for high quality effects
  */
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, AppState, AppStateStatus } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -444,9 +444,10 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
     const [messageIndex, setMessageIndex] = useState(0);
 
     // 엔진 연동
-    const { generate, loadMore, isLoading, isLoadingMore, names, error, isExhausted } = useNameGeneration();
+    const { generate, loadMore, isLoading, isLoadingMore, names, error, isExhausted, wasInterrupted, markInterrupted, retry } = useNameGeneration();
     const [minTimeElapsed, setMinTimeElapsed] = useState(false);
     const hasStartedRef = useRef(false);
+    const appStateRef = useRef(AppState.currentState);
 
     const loadingMessages = [
         '타고난 기운을 살피고 있어요.',
@@ -478,6 +479,35 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
         }
     }, [generate, loadMore, data, updateData]);
 
+    // 🆕 AppState 모니터링 - 백그라운드/포그라운드 전환 처리
+    useEffect(() => {
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+            // 백그라운드로 전환 시
+            if (
+                appStateRef.current === 'active' &&
+                (nextAppState === 'background' || nextAppState === 'inactive')
+            ) {
+                console.log('[LoadingStep] App going to background, marking interrupted');
+                markInterrupted();
+            }
+
+            // 포그라운드로 복귀 시 - 단순히 retry() 호출 (내부에서 wasInterrupted 체크)
+            if (
+                (appStateRef.current === 'background' || appStateRef.current === 'inactive') &&
+                nextAppState === 'active'
+            ) {
+                console.log('[LoadingStep] App returning to foreground, attempting retry');
+                // retry() 내부에서 wasInterrupted 확인하므로 여기서는 무조건 호출
+                retry();
+            }
+
+            appStateRef.current = nextAppState;
+        };
+
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+        return () => subscription?.remove();
+    }, [markInterrupted, retry]); // wasInterrupted 제거 - retry 내부에서 체크
+
     // 최소 4.5초 UX 보장
     useEffect(() => {
         const timer = setTimeout(() => setMinTimeElapsed(true), 4500);
@@ -495,13 +525,16 @@ export const LoadingStep: React.FC<WizardStepProps> = ({
         }
     }, [isLoading, isLoadingMore, names, minTimeElapsed, goNext, isExhausted]);
 
-    // 에러 시에도 다음으로 (ResultStep에서 에러 표시)
+    // 에러 시에도 다음으로 (ResultStep에서 에러 표시) - 단, wasInterrupted일 때는 무시
     useEffect(() => {
-        if (error && minTimeElapsed) {
+        console.log('[LoadingStep] Error effect:', { error, minTimeElapsed, wasInterrupted });
+        // wasInterrupted일 때는 retry가 처리하므로 에러로 넘어가지 않음
+        if (error && minTimeElapsed && !wasInterrupted) {
+            console.log('[LoadingStep] Going to next with error:', error);
             updateData({ generationError: error } as any);
             goNext();
         }
-    }, [error, minTimeElapsed, goNext, updateData]);
+    }, [error, minTimeElapsed, goNext, updateData, wasInterrupted]);
 
     return (
         <View style={styles.container}>

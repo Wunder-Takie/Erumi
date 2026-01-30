@@ -21,8 +21,8 @@ import { EvaluationResult } from './llmEvaluator';
 export interface BatchNameCandidate {
     hangulName: string;      // 한글 이름 (예: "서준")
     hanjaName: string;       // 한자 이름 (예: "瑞俊")
-    hanja1?: { hangul: string; hanja: string; meaning_korean?: string };
-    hanja2?: { hangul: string; hanja: string; meaning_korean?: string };
+    hanja1?: { hangul: string; hanja: string; hun?: string };
+    hanja2?: { hangul: string; hanja: string; hun?: string };
     score: number;
     rank: number;
     gender?: 'M' | 'F' | 'N';

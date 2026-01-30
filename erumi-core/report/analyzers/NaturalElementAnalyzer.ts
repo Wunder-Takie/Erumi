@@ -16,7 +16,8 @@ interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
-    meaning: string;
+    hun: string;
+    eum: string;
     examples: string;
     is_major: boolean;
 }

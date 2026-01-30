@@ -25,7 +25,8 @@ import surnames from '../data/core/surnames.json' with { type: 'json' };
 interface HanjaEntry {
     hanja: string;
     hangul: string;
-    meaning_korean: string;
+    hun: string;
+    eum: string;
     meaning_story?: string;
     strokes: number;
     element?: string;
@@ -35,7 +36,8 @@ interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
-    meaning: string;
+    hun: string;
+    eum: string;
     examples: string;
     is_major: boolean;
 }
@@ -123,7 +125,7 @@ export class ReportGenerator {
             return {
                 hanja,
                 hangul: input.givenName[i],
-                meaning_korean: entry?.meaning_korean || hanja,
+                hun: entry?.hun || hanja,
                 meaning_story: entry?.meaning_story,
                 element: entry?.element,
             };
@@ -353,7 +355,7 @@ export class ReportGenerator {
         const names = input.givenName.join('');
         const meanings = input.givenNameHanja.map(h => {
             const entry = this.hanjaMap.get(h);
-            return entry?.meaning_korean || h;
+            return entry?.hun ? `${entry.hun} ${entry.eum}` : h;
         });
 
         // 간단한 스토리 생성
@@ -377,7 +379,7 @@ export class ReportGenerator {
                 const entry = this.hanjaMap.get(hanja);
                 return {
                     hanja,
-                    meaning: entry?.meaning_korean || `${input.givenName[i]}`,
+                    meaning: entry?.hun ? `${entry.hun} ${entry.eum}` : `${input.givenName[i]}`,
                     story: entry?.meaning_story || `${input.givenName[i]}의 깊은 의미를 담고 있습니다.`,
                 };
             }),
@@ -415,15 +417,15 @@ export class ReportGenerator {
         const traits: string[] = [];
 
         entries.forEach(entry => {
-            if (entry?.meaning_korean) {
-                const meaning = entry.meaning_korean;
+            if (entry?.hun) {
+                const hun = entry.hun;
                 // "밝을 랑" → "밝은", "시 시" → "시적인" 등 변환
-                if (meaning.includes('밝을')) traits.push('맑은 목소리');
-                else if (meaning.includes('시')) traits.push('뛰어난 표현력');
-                else if (meaning.includes('현')) traits.push('현명한 지혜');
-                else if (meaning.includes('지')) traits.push('깊은 지혜');
-                else if (meaning.includes('준')) traits.push('빼어난 재능');
-                else traits.push(meaning.split(' ')[0]);
+                if (hun.includes('밝을')) traits.push('맑은 목소리');
+                else if (hun.includes('시')) traits.push('뛰어난 표현력');
+                else if (hun.includes('현')) traits.push('현명한 지혜');
+                else if (hun.includes('지')) traits.push('깊은 지혜');
+                else if (hun.includes('준')) traits.push('빼어난 재능');
+                else traits.push(hun);
             }
         });
 
@@ -439,7 +441,7 @@ export class ReportGenerator {
         if (entries.length >= 2 && entries[0] && entries[1]) {
             const first = entries[0];
             const second = entries[1];
-            return `${second.meaning_korean?.split(' ')[0] || ''}(${second.hanja})와 ${first.meaning_korean?.split(' ')[0] || ''}(${first.hanja})을 겸비하여, 자신의 뜻을 세상에 명확하고 조리 있게 전달하는 리더나 예술가로 성장하라는 뜻이에요.`;
+            return `${second.hun || ''}(${second.hanja})와 ${first.hun || ''}(${first.hanja})을 겸비하여, 자신의 뜻을 세상에 명확하고 조리 있게 전달하는 리더나 예술가로 성장하라는 뜻이에요.`;
         }
 
         return `${names}은(는) 뛰어난 재능과 밝은 기운을 가진 이름입니다.`;
@@ -452,13 +454,13 @@ export class ReportGenerator {
         const traits: string[] = [];
 
         entries.forEach(entry => {
-            if (entry?.meaning_korean) {
-                const meaning = entry.meaning_korean;
-                if (meaning.includes('밝을')) traits.push('명랑하고 구김살 없는');
-                else if (meaning.includes('시')) traits.push('예술가');
-                else if (meaning.includes('현')) traits.push('현명한 지도자');
-                else if (meaning.includes('지')) traits.push('지혜로운');
-                else if (meaning.includes('준')) traits.push('뛰어난 리더');
+            if (entry?.hun) {
+                const hun = entry.hun;
+                if (hun.includes('밝을')) traits.push('명랑하고 구김살 없는');
+                else if (hun.includes('시')) traits.push('예술가');
+                else if (hun.includes('현')) traits.push('현명한 지도자');
+                else if (hun.includes('지')) traits.push('지혜로운');
+                else if (hun.includes('준')) traits.push('뛰어난 리더');
             }
         });
 
@@ -473,8 +475,8 @@ export class ReportGenerator {
      * 축복 본문 생성
      */
     private generateBlessingContent(input: ReportInput, entries: (HanjaEntry | undefined)[]): string {
-        const hasBright = entries.some(e => e?.meaning_korean?.includes('밝을'));
-        const hasPoetic = entries.some(e => e?.meaning_korean?.includes('시'));
+        const hasBright = entries.some(e => e?.hun?.includes('밝을'));
+        const hasPoetic = entries.some(e => e?.hun?.includes('시'));
 
         if (hasBright && hasPoetic) {
             return '섬세한 재능을 지녔으면서도 예민함 대신, 구김살 없이 밝고 명랑한 에너지로 주변에 즐거움을 주는 사람이 되라는 축복을 담고 있어요.';
@@ -502,10 +504,10 @@ export class ReportGenerator {
     private lookupMeaning(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
             const variant = this.getSurnameVariant(hangul, hanja);
-            if (variant) return variant.meaning;
+            if (variant) return `${variant.hun} ${variant.eum}`;
         }
         const entry = this.hanjaMap.get(hanja);
-        return entry?.meaning_korean ?? `${hanja}`;
+        return entry?.hun ? `${entry.hun} ${entry.eum}` : `${hanja}`;
     }
 
     /**

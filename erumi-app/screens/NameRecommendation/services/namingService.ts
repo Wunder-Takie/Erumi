@@ -42,9 +42,10 @@ export class NamingService {
         // WizardData → EngineParams 변환
         const engineParams = await mapWizardDataToEngineParams(wizardData);
 
-        // 엔진 호출 (positional args: surname, tags, gender, preferenceWeights, yongsinWeights, styleMode)
+        // 엔진 호출 (positional args: surname, surnameHanja, tags, gender, preferenceWeights, yongsinWeights, styleMode)
         const rawCandidates = await generateNames(
             engineParams.surnameInput.hangul,    // surnameInput
+            engineParams.surnameInput.hanja || null,  // 🆕 surnameHanja (사용자 선택 한자)
             [],                                   // selectedTagIds (미사용)
             engineParams.gender,                  // gender
             engineParams.preferenceWeights,       // preferenceWeights
@@ -129,6 +130,33 @@ export class NamingService {
             throw new Error('NamingService not initialized');
         }
 
+        // 🆕 무료체험(count=1)일 때: 상위 50개 중 랜덤으로 1개 선택
+        if (count === 1) {
+            // 50개를 먼저 가져옴
+            const result = await this.session.batchManager.getNextBatch(50, true);
+
+            if (result.names.length === 0) {
+                return result;
+            }
+
+            // 랜덤으로 1개 선택
+            const randomIndex = Math.floor(Math.random() * Math.min(50, result.names.length));
+            const selectedName = result.names[randomIndex];
+
+            console.log(`[NamingService] 무료체험: ${result.names.length}개 중 ${randomIndex + 1}번째 선택`);
+
+            // 리포트 미리 생성 (선택된 1개만)
+            await this.preloadReports([selectedName]);
+
+            return {
+                names: [selectedName],
+                hasMore: result.hasMore,
+                totalUsed: result.totalUsed,
+                isExhausted: result.isExhausted
+            };
+        }
+
+        // 기존 로직 (5개 요청 시)
         const result = await this.session.batchManager.getNextBatch(count, true);
 
         // 리포트 미리 생성

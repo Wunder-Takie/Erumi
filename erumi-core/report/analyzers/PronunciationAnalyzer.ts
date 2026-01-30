@@ -10,7 +10,7 @@ import surnames from '../../data/core/surnames.json' with { type: 'json' };
 interface HanjaEntry {
     hanja: string;
     hangul: string;
-    meaning_korean?: string;
+    hun?: string;
     element?: string;
 }
 
@@ -18,7 +18,7 @@ interface SurnameVariant {
     hanja: string;
     strokes: number;
     element: string;
-    meaning: string;
+    hun: string;
     examples: string;
     is_major: boolean;
 }
@@ -130,24 +130,17 @@ export class PronunciationAnalyzer {
     }
 
     /**
-     * 훈(뜻) 조회 - meaning_korean은 "펼 서" 형태, 마지막 글자 제외한 부분이 훈
+     * 훈(뜻) 조회 - hun 필드에서 직접 조회
      */
     private getMeaning(hangul: string, hanja: string, isSurname: boolean): string {
         if (isSurname) {
             const variant = this.getSurnameVariant(hangul, hanja);
-            if (variant?.meaning) {
-                // "나라 이" -> "나라"
-                const parts = variant.meaning.trim().split(' ');
-                return parts.length > 1 ? parts.slice(0, -1).join(' ') : variant.meaning;
+            if (variant?.hun) {
+                return variant.hun;
             }
         }
         const entry = this.hanjaMap.get(hanja);
-        if (entry?.meaning_korean) {
-            // "펼 서" -> "펼"
-            const parts = entry.meaning_korean.trim().split(' ');
-            return parts.length > 1 ? parts.slice(0, -1).join(' ') : entry.meaning_korean;
-        }
-        return hanja;
+        return entry?.hun || hanja;
     }
 
     /**

@@ -8,7 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font';
 import { useState, useEffect } from 'react';
 import { colors, SplashScreen, Navbar, NavbarMenu } from './design-system';
-import { HomeScreen, SurnameSearchScreen, GenderScreen, NameWizardScreen, NameBuilderScreen, NameChangeScreen, ProfileScreen, ReportScreen } from './screens';
+import { HomeScreen, SurnameSearchScreen, NameWizardScreen, NameBuilderScreen, NameChangeScreen, ProfileScreen, ReportScreen } from './screens';
 import DemoScreen from './App.demo';
 
 const Tab = createBottomTabNavigator();

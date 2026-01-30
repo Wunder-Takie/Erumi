@@ -27,6 +27,7 @@ export interface UseNameGenerationState {
     totalCandidates: number;
     isExhausted: boolean;
     isUnlocked: boolean; // 무료 1회 사용 여부
+    wasInterrupted: boolean; // 백그라운드 전환으로 인터럽트됨
 }
 
 export interface UseNameGenerationActions {
@@ -34,6 +35,8 @@ export interface UseNameGenerationActions {
     loadMore: () => Promise<void>;
     reset: () => void;
     unlock: () => void;
+    markInterrupted: () => void;  // 백그라운드 전환 시 호출
+    retry: () => Promise<void>;   // 포그라운드 복귀 시 재시도
 }
 
 // ==========================================
@@ -49,7 +52,12 @@ let globalState: UseNameGenerationState = {
     totalCandidates: 0,
     isExhausted: false,
     isUnlocked: false, // 초기에는 잠금
+    wasInterrupted: false,
 };
+
+// 마지막 요청 정보 (재시도용)
+let lastWizardData: WizardData | null = null;
+let lastWasLoadMore = false;
 
 let globalSurname = '';
 const listeners: Set<() => void> = new Set();
@@ -114,6 +122,23 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
      * 이름 생성 시작
      */
     const generate = useCallback(async (wizardData: WizardData) => {
+        // 재시도용 데이터 저장
+        lastWizardData = wizardData;
+        lastWasLoadMore = false;
+
+        // 🆕 AsyncStorage에서 직접 확인하여 최신 상태 보장
+        const freeTrialUsed = await AsyncStorage.getItem(FREE_TRIAL_USED_KEY);
+        const actuallyUnlocked = freeTrialUsed === 'true';
+
+        console.log('[useNameGeneration] FREE_TRIAL_USED_KEY:', FREE_TRIAL_USED_KEY);
+        console.log('[useNameGeneration] freeTrialUsed from AsyncStorage:', freeTrialUsed);
+        console.log('[useNameGeneration] actuallyUnlocked:', actuallyUnlocked);
+
+        // 상태 동기화
+        if (actuallyUnlocked && !globalState.isUnlocked) {
+            globalState = { ...globalState, isUnlocked: true };
+        }
+
         // 새 세션 시작 및 성씨 저장
         startNewSession();
         globalSurname = wizardData.surname?.hangul || '';
@@ -130,7 +155,8 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             await namingService.initialize(wizardData);
 
             // 첫 배치 가져오기 (무료 미사용=1개, 이미 사용=5개)
-            const batchCount = globalState.isUnlocked ? 5 : 1;
+            const batchCount = actuallyUnlocked ? 5 : 1;
+            console.log('[useNameGeneration] batchCount:', batchCount);
             const result = await namingService.getFirstBatch(batchCount);
 
             // 5개 요청했는데 5개 미만이면 isExhausted 처리
@@ -150,6 +176,11 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
                 isExhausted: shouldMarkExhausted ? true : result.isExhausted,
             }));
         } catch (error) {
+            // 백그라운드 인터럽트로 인한 에러는 무시 (retry에서 재시도)
+            if (globalState.wasInterrupted) {
+                console.log('[useNameGeneration] Error ignored due to background interrupt');
+                return;
+            }
             setGlobalState(prev => ({
                 ...prev,
                 isLoading: false,
@@ -166,17 +197,16 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             return;
         }
 
+        // 재시도용 플래그 저장
+        lastWasLoadMore = true;
+
         setGlobalState(prev => ({
             ...prev,
             isLoadingMore: true,
         }));
 
         try {
-            // 기존 이름을 먼저 저장 (마이페이지용)
-            if (globalState.names.length > 0) {
-                saveViewedNames(globalState.names, globalSurname);
-            }
-
+            // 🆕 기존 이름은 이미 저장되어 있으므로 다시 저장하지 않음
             const result = await namingService.getNextBatch();
 
             // 5개 미만이면 해당 배치 버리고 isExhausted 처리 (이전 이름 유지)
@@ -205,6 +235,11 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
                 isExhausted: result.isExhausted,
             }));
         } catch (error) {
+            // 백그라운드 인터럽트로 인한 에러는 무시 (retry에서 재시도)
+            if (globalState.wasInterrupted) {
+                console.log('[useNameGeneration] LoadMore error ignored due to background interrupt');
+                return;
+            }
             setGlobalState(prev => ({
                 ...prev,
                 isLoadingMore: false,
@@ -229,8 +264,11 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             totalCandidates: 0,
             isExhausted: false,
             isUnlocked: preserveUnlocked,
+            wasInterrupted: false,
         };
         globalSurname = '';
+        lastWizardData = null;
+        lastWasLoadMore = false;
         notifyListeners();
     }, []);
 
@@ -246,12 +284,64 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         saveFreeTrialUsed();
     }, []);
 
+    /**
+     * 백그라운드 전환 시 호출 - 로딩 중이면 인터럽트 마킹
+     */
+    const markInterrupted = useCallback(() => {
+        console.log('[useNameGeneration] markInterrupted called, state:', {
+            isLoading: globalState.isLoading,
+            isLoadingMore: globalState.isLoadingMore
+        });
+        if (globalState.isLoading || globalState.isLoadingMore) {
+            console.log('[useNameGeneration] Marking as interrupted due to background');
+            setGlobalState(prev => ({
+                ...prev,
+                isLoading: false,
+                isLoadingMore: false,
+                wasInterrupted: true,
+                // 에러 메시지 설정하지 않음 - retry에서 복구할 예정
+            }));
+        }
+    }, []);
+
+    /**
+     * 포그라운드 복귀 시 재시도
+     */
+    const retry = useCallback(async () => {
+        // globalState를 직접 확인 (클로저 문제 방지)
+        if (!globalState.wasInterrupted) {
+            console.log('[useNameGeneration] Not interrupted, skipping retry');
+            return;
+        }
+
+        console.log('[useNameGeneration] Retrying after interrupt...');
+        setGlobalState(prev => ({
+            ...prev,
+            wasInterrupted: false,
+            error: null,
+        }));
+
+        try {
+            if (lastWasLoadMore) {
+                await loadMore();
+            } else if (lastWizardData) {
+                await generate(lastWizardData);
+            } else {
+                console.log('[useNameGeneration] No data to retry with');
+            }
+        } catch (e) {
+            console.error('[useNameGeneration] Retry failed:', e);
+        }
+    }, [generate, loadMore]);
+
     return {
         ...globalState,
         generate,
         loadMore,
         reset,
         unlock,
+        markInterrupted,
+        retry,
     };
 }
 
