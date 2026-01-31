@@ -3,8 +3,8 @@
  * 정통 작명 리포트 - TabMenu + OrthodoxReportContent 조합
  */
 import * as React from 'react';
-import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ViewStyle, ScrollView } from 'react-native';
+import { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { View, Text, StyleSheet, ViewStyle, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { TabMenu, TabItem } from './TabMenu';
 import {
@@ -16,6 +16,7 @@ import {
     ElementalBalanceData,
     UnluckyCharactersData,
 } from './OrthodoxReportContent';
+import { OrthodoxReportHeader } from './OrthodoxReportHeader';
 import { space, typography, colors } from '../tokens';
 
 // =============================================================================
@@ -33,8 +34,10 @@ export interface OrthodoxReportProps {
     elementalBalance: ElementalBalanceData;
     /** 불용문자 데이터 */
     unluckyCharacters: UnluckyCharactersData;
-    /** 사주 정보 여부 (false면 자원오행 placeholder 표시) */
+    /** 사주 정보 여부 (false면 음양오행/자원오행에서 placeholder 표시) */
     hasSaju?: boolean;
+    /** 사주정보 입력하기 버튼 클릭 핸들러 */
+    onSajuInputPress?: () => void;
     /** 각 카테고리별 헤더 데이터 */
     headerData?: {
         [key in ContentType]?: {
@@ -42,6 +45,12 @@ export interface OrthodoxReportProps {
             categoryGuide?: string;
         };
     };
+    /** 사주 분석 로딩 상태 */
+    sajuLoading?: boolean;
+    /** 사주 분석 에러 상태 */
+    sajuError?: boolean;
+    /** 사주 분석 재시도 핸들러 */
+    onSajuRetry?: () => void;
     /** 초기 선택 탭 */
     initialTab?: ContentType;
     /** Custom container style */
@@ -73,13 +82,49 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
     elementalBalance,
     unluckyCharacters,
     hasSaju = true,
+    onSajuInputPress,
     headerData,
+    sajuLoading = false,
+    sajuError = false,
+    onSajuRetry,
     initialTab = 'fiveElementsTheory',
     style,
 }) => {
     const [selectedTab, setSelectedTab] = useState<ContentType>(initialTab);
     const scrollViewRef = useRef<ScrollView>(null);
     const tabLayouts = useRef<{ [key: string]: { x: number; width: number } }>({});
+    const prevSajuLoadingRef = useRef(sajuLoading);
+
+    // Android에서 LayoutAnimation 활성화
+    useEffect(() => {
+        if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+            UIManager.setLayoutAnimationEnabledExperimental(true);
+        }
+    }, []);
+
+    // sajuLoading 변경 시 LayoutAnimation
+    useLayoutEffect(() => {
+        console.log('[OrthodoxReport] sajuLoading check:', prevSajuLoadingRef.current, '->', sajuLoading);
+        if (prevSajuLoadingRef.current !== sajuLoading) {
+            console.log('[OrthodoxReport] LayoutAnimation.configureNext called!');
+            LayoutAnimation.configureNext({
+                duration: 3000, // 3초 (임시)
+                update: {
+                    type: LayoutAnimation.Types.easeInEaseOut,
+                    property: LayoutAnimation.Properties.scaleXY,
+                },
+                create: {
+                    type: LayoutAnimation.Types.easeInEaseOut,
+                    property: LayoutAnimation.Properties.opacity,
+                },
+                delete: {
+                    type: LayoutAnimation.Types.easeInEaseOut,
+                    property: LayoutAnimation.Properties.opacity,
+                },
+            });
+            prevSajuLoadingRef.current = sajuLoading;
+        }
+    }, [sajuLoading]);
 
     // 현재 탭 인덱스
     const currentIndex = TAB_ITEMS.findIndex((item) => item.id === selectedTab);
@@ -145,45 +190,39 @@ export const OrthodoxReport: React.FC<OrthodoxReportProps> = ({
             {/* Header + Content 영역 전체에 GestureDetector 적용 */}
             <GestureDetector gesture={panGesture}>
                 <View style={styles.gestureArea}>
-                    {/* Header */}
-                    {(currentHeader?.reportOverview || currentHeader?.categoryGuide) && (
-                        <View style={styles.headerContainer}>
-                            {currentHeader.reportOverview && (
-                                <View style={styles.reportOverviewWrapper}>
-                                    <Text style={styles.reportOverviewText}>{currentHeader.reportOverview}</Text>
-                                </View>
-                            )}
-                            {currentHeader.categoryGuide && (
-                                <View style={styles.categoryGuideWrapper}>
-                                    <Text style={styles.categoryGuideText}>{currentHeader.categoryGuide}</Text>
-                                </View>
-                            )}
-                        </View>
-                    )}
+                    {/* OrthodoxReportHeader - 단일 컴포넌트 방식 (애니메이션 유지) */}
+                    {(() => {
+                        const isSajuTab = selectedTab === 'fiveElementsTheory' || selectedTab === 'elementalBalance';
+                        const showHeader = isSajuTab || currentHeader?.reportOverview || currentHeader?.categoryGuide;
 
-                    {/* Content Area - 자원오행 탭에서 사주 정보 없으면 placeholder */}
-                    {selectedTab === 'elementalBalance' && !hasSaju ? (
-                        <View style={styles.placeholderContainer}>
-                            <View style={styles.placeholderBox}>
-                                <Text style={styles.placeholderText}>
-                                    사주 정보를 입력하면{`\n`}자원오행 분석을 확인할 수 있어요.
-                                </Text>
-                            </View>
-                            <View style={styles.placeholderButton}>
-                                <Text style={styles.placeholderButtonText}>사주정보 입력하기</Text>
-                            </View>
-                        </View>
-                    ) : (
-                        <OrthodoxReportContent
-                            style={styles.contentArea}
-                            variant={selectedTab}
-                            pronunciationElements={pronunciationElements}
-                            fiveElementsTheory={fiveElementsTheory}
-                            suriAnalysis={suriAnalysis}
-                            elementalBalance={elementalBalance}
-                            unluckyCharacters={unluckyCharacters}
-                        />
-                    )}
+                        if (!showHeader) return null;
+
+                        // variant 계산
+                        const headerVariant = isSajuTab && sajuLoading ? 'loading'
+                            : isSajuTab && sajuError ? 'error'
+                                : isSajuTab && !hasSaju ? 'placeholder'
+                                    : 'default';
+
+                        return (
+                            <OrthodoxReportHeader
+                                variant={headerVariant}
+                                title={headerVariant === 'default' ? currentHeader?.reportOverview : undefined}
+                                guideLabel={currentHeader?.categoryGuide}
+                                onPlaceholderButtonPress={headerVariant === 'error' ? onSajuRetry : onSajuInputPress}
+                            />
+                        );
+                    })()}
+
+                    {/* Content Area */}
+                    <OrthodoxReportContent
+                        style={styles.contentArea}
+                        variant={selectedTab}
+                        pronunciationElements={pronunciationElements}
+                        fiveElementsTheory={fiveElementsTheory}
+                        suriAnalysis={suriAnalysis}
+                        elementalBalance={elementalBalance}
+                        unluckyCharacters={unluckyCharacters}
+                    />
                 </View>
             </GestureDetector>
         </View>
@@ -212,65 +251,9 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 16, // container와 동일한 gap
     },
-    // Figma: header (VERTICAL, gap: 8, padding: 8, bg: surface.secondary, borderRadius: 16)
-    headerContainer: {
-        gap: 8, // Figma: gap 8
-        padding: 8, // Figma: padding 8
-        backgroundColor: colors.background.default.higher, // Figma: VariableID:5:270 (F4ECDD)
-        borderRadius: 16, // Figma: cornerRadius 16
-    },
-    // Figma: reportOverview (padding 12, bg: surface.secondary.high, borderRadius: 12)
-    reportOverviewWrapper: {
-        padding: 12, // Figma: padding 12
-        backgroundColor: colors.background.default.high, // Figma: VariableID:5:271 (E8DEC8)
-        borderRadius: 12, // Figma: cornerRadius 12
-    },
-    reportOverviewText: {
-        ...typography.label.md, // Figma: 14px/500 (Medium)
-        color: colors.text.default.primary, // Figma: VariableID:5:279
-    },
-    // Figma: categoryGuide (paddingHorizontal: 8, paddingVertical: 4, no background)
-    categoryGuideWrapper: {
-        paddingHorizontal: 8, // Figma: padding 8
-        paddingVertical: 4, // Figma: padding 4
-    },
-    categoryGuideText: {
-        ...typography.label.xs, // Figma: 11px/500 (Medium)
-        color: colors.text.default.tertiary, // Figma: VariableID:5:281
-    },
     // Figma: OrthodoxReportContent (FILL horizontal, HUG vertical)
     contentArea: {
         alignSelf: 'stretch', // Figma: layoutSizingHorizontal FILL
-    },
-    // Placeholder styles (사주 정보 없을 때)
-    placeholderContainer: {
-        alignItems: 'center',
-        gap: 16,
-        paddingVertical: 40,
-    },
-    placeholderBox: {
-        padding: 24,
-        backgroundColor: colors.background.default.higher,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: colors.primitives.sand[300],
-        borderStyle: 'dashed',
-    },
-    placeholderText: {
-        ...typography.label.md,
-        color: colors.text.default.tertiary,
-        textAlign: 'center',
-    },
-    placeholderButton: {
-        paddingHorizontal: 20,
-        paddingVertical: 12,
-        backgroundColor: colors.background.accent.primary,
-        borderRadius: 9999,
-    },
-    placeholderButtonText: {
-        ...typography.label.md,
-        fontWeight: '600',
-        color: colors.background.accent.onPrimary,
     },
 });
 

@@ -73,6 +73,9 @@ export type {
     UnluckyCharacterInfo,
 } from './OrthodoxReportContent';
 
+export { OrthodoxReportHeader } from './OrthodoxReportHeader';
+export type { OrthodoxReportHeaderProps, OrthodoxReportHeaderVariant } from './OrthodoxReportHeader';
+
 export { OrthodoxReport } from './OrthodoxReport';
 export type { OrthodoxReportProps } from './OrthodoxReport';
 

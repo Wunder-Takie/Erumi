@@ -4,8 +4,9 @@
  */
 import * as React from 'react';
 import { useState } from 'react';
-import { View, TextInput, StyleSheet, ViewStyle } from 'react-native';
+import { View, TextInput, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
 import { colors, space, radius, typography } from '../tokens';
+import { Icon, IconName } from './Icon';
 
 // =============================================================================
 // Types
@@ -24,6 +25,12 @@ export interface SearchInputProps {
     onBlur?: () => void;
     /** Auto focus on mount */
     autoFocus?: boolean;
+    /** Show trailing icon (default: false) */
+    showTrailingIcon?: boolean;
+    /** Trailing icon name (default: 'X Mark') */
+    trailingIcon?: IconName;
+    /** Trailing icon press handler */
+    onTrailingIconPress?: () => void;
     /** Custom style */
     style?: ViewStyle;
 }
@@ -39,6 +46,9 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     onFocus,
     onBlur,
     autoFocus = false,
+    showTrailingIcon = false,
+    trailingIcon = 'X Mark',
+    onTrailingIconPress,
     style,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -77,6 +87,19 @@ export const SearchInput: React.FC<SearchInputProps> = ({
                     autoFocus={autoFocus}
                 />
             </View>
+            {showTrailingIcon && (
+                <TouchableOpacity
+                    style={styles.trailingIconWrapper}
+                    onPress={onTrailingIconPress}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                    <Icon
+                        name={trailingIcon}
+                        size={20}
+                        color={colors.primitives.sand[600]}
+                    />
+                </TouchableOpacity>
+            )}
         </View>
     );
 };
@@ -88,6 +111,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 const styles = StyleSheet.create({
     container: {
         height: 52, // Figma height
+        flexDirection: 'row', // 가로 배치 (input + icon)
+        alignItems: 'center',
         borderRadius: radius.full, // 9999
         backgroundColor: colors.primitives.sand[100], // #F4ECDD
         borderWidth: 1.5, // 항상 유지 (레이아웃 밀림 방지)
@@ -112,6 +137,11 @@ const styles = StyleSheet.create({
     inputActive: {
         fontFamily: 'Pretendard-Bold', // 700
         color: colors.primitives.sand[800], // #332C21
+    },
+    trailingIconWrapper: {
+        paddingRight: space[400], // 16
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

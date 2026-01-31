@@ -30,6 +30,8 @@ export interface SelectItemProps {
     showCloseButton?: boolean;
     /** Show trailing icon (for hasSecondLabel/hasBodyLabel status) */
     showTrailingIcon?: boolean;
+    /** Disable press visual effect (for instant dialogs) */
+    disablePressEffect?: boolean;
     /** Close button press handler */
     onClosePress?: () => void;
     /** Press handler */
@@ -51,6 +53,7 @@ export const SelectItem: React.FC<SelectItemProps> = ({
     imageSource,
     showCloseButton = false,
     showTrailingIcon = true,
+    disablePressEffect = false,
     onClosePress,
     onPress,
     style,
@@ -68,7 +71,11 @@ export const SelectItem: React.FC<SelectItemProps> = ({
     const isHorizontalLayout = status === 'hasSecondLabel' || status === 'hasBodyLabel' || status === 'hasImage';
 
     return (
-        <Pressable style={containerStyle} onPress={onPress}>
+        <Pressable
+            style={containerStyle}
+            onPress={onPress}
+            unstable_pressDelay={disablePressEffect ? 9999 : 0}
+        >
             {/* Close Button (for small/medium when showCloseButton=true) */}
             {(status === 'small' || status === 'medium') && showCloseButton && (
                 <Pressable style={styles.closeButton} onPress={onClosePress}>

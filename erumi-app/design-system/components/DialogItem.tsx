@@ -17,6 +17,10 @@ export interface DialogItemProps {
     variant?: 'zodiacTime' | 'dateAndTimeWheel' | 'custom';
     /** Maximum height for scrollable content */
     maxHeight?: number;
+    /** Initial scroll index for selected item (zodiacTime only) */
+    initialScrollIndex?: number;
+    /** Item height for calculating scroll offset (default: 64 + 4 gap) */
+    itemHeight?: number;
     /** Custom style */
     style?: ViewStyle;
     /** Children content (SelectItems or custom) */
@@ -30,11 +34,30 @@ export interface DialogItemProps {
 export const DialogItem: React.FC<DialogItemProps> = ({
     variant = 'custom',
     maxHeight = 280,
+    initialScrollIndex,
+    itemHeight = 68, // 64 (item height) + 4 (gap)
     style,
     children,
 }) => {
+    const scrollViewRef = React.useRef<ScrollView>(null);
+
     // zodiacTime variant: scrollable list with bottom fade effect
     if (variant === 'zodiacTime') {
+        // 선택된 아이템 위치로 스크롤 (가운데 정렬)
+        React.useEffect(() => {
+            if (initialScrollIndex !== undefined && initialScrollIndex > 0 && scrollViewRef.current) {
+                // 약간의 딜레이 후 스크롤 (렌더링 완료 대기)
+                setTimeout(() => {
+                    // 가운데 정렬: 아이템 위치 - (컨테이너 높이 / 2) + (아이템 높이 / 2)
+                    const centerOffset = (initialScrollIndex * itemHeight) - (maxHeight / 2) + (itemHeight / 2);
+                    scrollViewRef.current?.scrollTo({
+                        y: Math.max(0, centerOffset),
+                        animated: false,
+                    });
+                }, 50);
+            }
+        }, [initialScrollIndex, itemHeight, maxHeight]);
+
         return (
             <View style={[styles.container, { height: maxHeight }, style]}>
                 <MaskedView
@@ -48,6 +71,7 @@ export const DialogItem: React.FC<DialogItemProps> = ({
                     }
                 >
                     <ScrollView
+                        ref={scrollViewRef}
                         contentContainerStyle={styles.scrollContent}
                         showsVerticalScrollIndicator={false}
                         nestedScrollEnabled

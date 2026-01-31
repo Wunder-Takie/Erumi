@@ -3,8 +3,9 @@
  * Input field with label for selection (date picker, dropdown, etc.)
  */
 import * as React from 'react';
-import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
 import { colors, space, radius, typography } from '../tokens';
+import { Icon, IconName } from './Icon';
 
 // =============================================================================
 // Types
@@ -25,6 +26,12 @@ export interface SelectionInputProps {
     shape?: SelectionInputShape;
     /** Press handler (to open picker/modal) */
     onPress?: () => void;
+    /** Show trailing icon (default: false) */
+    showTrailingIcon?: boolean;
+    /** Trailing icon name (default: 'X Mark') */
+    trailingIcon?: IconName;
+    /** Trailing icon press handler */
+    onTrailingIconPress?: () => void;
     /** Custom style */
     style?: ViewStyle;
 }
@@ -40,6 +47,9 @@ export const SelectionInput: React.FC<SelectionInputProps> = ({
     value,
     shape = 'pill',
     onPress,
+    showTrailingIcon = false,
+    trailingIcon = 'X Mark',
+    onTrailingIconPress,
     style,
 }) => {
     const isFilled = !!value;
@@ -66,6 +76,22 @@ export const SelectionInput: React.FC<SelectionInputProps> = ({
                         {value || placeholder}
                     </Text>
                 </View>
+                {showTrailingIcon && (
+                    <TouchableOpacity
+                        style={styles.trailingIconWrapper}
+                        onPress={(e) => {
+                            e.stopPropagation?.();
+                            onTrailingIconPress?.();
+                        }}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <Icon
+                            name={trailingIcon}
+                            size={20}
+                            color={colors.primitives.sand[600]}
+                        />
+                    </TouchableOpacity>
+                )}
             </Pressable>
         </View>
     );
@@ -86,6 +112,8 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         height: 52, // Figma height
+        flexDirection: 'row', // 가로 배치 (input + icon)
+        alignItems: 'center',
         backgroundColor: colors.primitives.sand[100], // #F4ECDD
     },
     inputContainerPill: {
@@ -108,6 +136,11 @@ const styles = StyleSheet.create({
     inputTextFilled: {
         fontFamily: 'Pretendard-Bold', // 700
         color: colors.primitives.sand[800], // #332C21
+    },
+    trailingIconWrapper: {
+        paddingRight: space[400], // 16
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
 

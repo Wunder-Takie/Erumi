@@ -2,11 +2,12 @@
  * HomeScreen - 홈 화면 (이름 추천)
  * Figma 스펙 기반 구현
  */
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Button, Logo, colors, typography } from '../design-system';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -16,6 +17,20 @@ export const HomeScreen: React.FC = () => {
     const navigation = useNavigation();
     const lastTapRef = useRef<number>(0);
     const logoLastTapRef = useRef<number>(0);
+
+    // 🆕 Fade-in 애니메이션
+    const opacity = useSharedValue(0);
+
+    useEffect(() => {
+        opacity.value = withTiming(1, {
+            duration: 400,
+            easing: Easing.out(Easing.ease),
+        });
+    }, []);
+
+    const fadeStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
 
     const handleStartRecommendation = () => {
         // Tab Navigator 안에 있으므로 parent Stack Navigator에 접근
@@ -75,7 +90,7 @@ export const HomeScreen: React.FC = () => {
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <Animated.View style={[styles.container, { paddingTop: insets.top }, fadeStyle]}>
             {/* Topbar - showLabel: false (텍스트 없음) */}
             <View style={styles.topbar}>
                 <Pressable onPress={handleLogoPress}>
@@ -118,7 +133,7 @@ export const HomeScreen: React.FC = () => {
                     </View>
                 </View>
             </View>
-        </View>
+        </Animated.View>
     );
 };
 

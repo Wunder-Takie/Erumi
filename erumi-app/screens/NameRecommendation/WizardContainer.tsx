@@ -65,6 +65,7 @@ export interface WizardData {
     story?: string; // 스토리 ID
     vibe?: string; // 바이브 ID
     style?: string; // 스타일 ID
+    loadMoreFlag?: boolean; // 더보기 로딩 플래그
     // 추가 단계별 데이터...
 }
 

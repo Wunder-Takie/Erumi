@@ -59,7 +59,7 @@ export const ResultStep: React.FC<WizardStepProps> = ({
     const [currentIndex, setCurrentIndex] = useState(0);
 
     // 엔진에서 생성된 이름 데이터 (전역 상태 공유)
-    const { names, loadMore, isLoadingMore, hasMore, isExhausted, isUnlocked, unlock } = useNameGeneration();
+    const { names, loadMore, isLoadingMore, hasMore, isExhausted, isUnlocked, unlock, sajuInfo } = useNameGeneration();
 
     // isLocked는 isUnlocked의 반대
     const isLocked = !isUnlocked;
@@ -166,11 +166,15 @@ export const ResultStep: React.FC<WizardStepProps> = ({
         };
         console.log('[ResultStep] navigating with nameData:', nameData);
 
+        // 전역 사주 정보 우선, 없으면 wizardData 사용
+        const effectiveBirthDate = sajuInfo?.birthDate || data.birthDate;
+        const effectiveBirthTime = sajuInfo?.birthTime || data.birthTime;
+
         (navigation as any).navigate('NameReport', {
             nameData,
             saju: {
-                birthDate: data.birthDate?.toISOString().split('T')[0],
-                birthTime: data.birthTime,
+                birthDate: effectiveBirthDate?.toISOString().split('T')[0],
+                birthTime: effectiveBirthTime,
             },
         });
     };

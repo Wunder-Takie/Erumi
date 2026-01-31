@@ -4,5 +4,7 @@
  */
 export { NameWizardScreen } from './NameWizardScreen';
 export { ReportScreen } from './ReportScreen';
+export { BirthDateModalScreen } from './BirthDateModalScreen';
+export type { BirthDateResult } from './BirthDateModalScreen';
 export { WizardContainer } from './WizardContainer';
 export type { WizardStep, WizardStepProps, WizardData } from './WizardContainer';

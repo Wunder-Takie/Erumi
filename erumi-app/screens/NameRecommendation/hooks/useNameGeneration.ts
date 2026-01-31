@@ -18,6 +18,11 @@ const FREE_TRIAL_USED_KEY = '@erumi/free_trial_used';
 // Types
 // ==========================================
 
+export interface SajuInfo {
+    birthDate: Date;
+    birthTime?: string;
+}
+
 export interface UseNameGenerationState {
     isLoading: boolean;
     isLoadingMore: boolean;
@@ -28,6 +33,7 @@ export interface UseNameGenerationState {
     isExhausted: boolean;
     isUnlocked: boolean; // 무료 1회 사용 여부
     wasInterrupted: boolean; // 백그라운드 전환으로 인터럽트됨
+    sajuInfo: SajuInfo | null; // 전역 사주 정보
 }
 
 export interface UseNameGenerationActions {
@@ -38,6 +44,8 @@ export interface UseNameGenerationActions {
     markInterrupted: () => void;  // 백그라운드 전환 시 호출
     retry: () => Promise<void>;   // 포그라운드 복귀 시 재시도
     devReset: () => void;         // 개발자용 완전 초기화 (isUnlocked 포함)
+    updateSaju: (saju: SajuInfo) => void; // 사주 정보 업데이트
+    getSajuInfo: () => SajuInfo | null;   // 사주 정보 조회
 }
 
 // ==========================================
@@ -54,6 +62,7 @@ let globalState: UseNameGenerationState = {
     isExhausted: false,
     isUnlocked: false, // 초기에는 잠금
     wasInterrupted: false,
+    sajuInfo: null, // 초기에는 사주 정보 없음
 };
 
 // 마지막 요청 정보 (재시도용)
@@ -113,6 +122,7 @@ export function resetAllNameGenerationState() {
         isExhausted: false,
         isUnlocked: false,
         wasInterrupted: false,
+        sajuInfo: null,
     };
     globalSurname = '';
     lastWizardData = null;
@@ -171,6 +181,7 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             isLoading: true,
             error: null,
             names: [],
+            sajuInfo: null,  // 🆕 새 세션 시작 시 이전 사주 초기화
         }));
 
         try {
@@ -276,8 +287,9 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
      */
     const reset = useCallback(() => {
         namingService.reset();
-        // isUnlocked는 유지 (무료 체험 소진 상태 보존)
+        // isUnlocked와 sajuInfo는 유지 (무료 체험 소진 상태 보존, 사주 정보 보존)
         const preserveUnlocked = globalState.isUnlocked;
+        const preserveSaju = globalState.sajuInfo;
         globalState = {
             isLoading: false,
             isLoadingMore: false,
@@ -288,6 +300,7 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             isExhausted: false,
             isUnlocked: preserveUnlocked,
             wasInterrupted: false,
+            sajuInfo: preserveSaju,
         };
         globalSurname = '';
         lastWizardData = null;
@@ -372,6 +385,7 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
             isExhausted: false,
             isUnlocked: false,  // 🆕 강제 잠금 상태로 리셋
             wasInterrupted: false,
+            sajuInfo: null,     // 사주 정보도 초기화
         };
         globalSurname = '';
         lastWizardData = null;
@@ -379,6 +393,24 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         hasLoadedFromStorage = false;  // 🆕 다시 로드할 수 있도록 리셋
         console.log('[useNameGeneration] devReset: 전체 상태 초기화 완료');
         notifyListeners();
+    }, []);
+
+    /**
+     * 사주 정보 업데이트 - 리포트 화면에서 생년월일 입력 시 호출
+     */
+    const updateSaju = useCallback((saju: SajuInfo) => {
+        setGlobalState(prev => ({
+            ...prev,
+            sajuInfo: saju,
+        }));
+        console.log('[useNameGeneration] Saju info updated:', saju);
+    }, []);
+
+    /**
+     * 사주 정보 조회
+     */
+    const getSajuInfo = useCallback(() => {
+        return globalState.sajuInfo;
     }, []);
 
     return {
@@ -390,6 +422,8 @@ export function useNameGeneration(): UseNameGenerationState & UseNameGenerationA
         markInterrupted,
         retry,
         devReset,
+        updateSaju,
+        getSajuInfo,
     };
 }
 

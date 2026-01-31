@@ -34,6 +34,7 @@ import {
     radius,
 } from '../../design-system';
 import { namingService } from './services/namingService';
+import { useNameGeneration } from './hooks/useNameGeneration';
 import { NameReport } from 'erumi-core';
 
 // =============================================================================
@@ -231,6 +232,9 @@ export const ReportScreen: React.FC = () => {
 
     const report = DUMMY_REPORT;
 
+    // 전역 사주 정보 훅
+    const { sajuInfo: globalSajuInfo, updateSaju } = useNameGeneration();
+
     // Route params에서 이름 데이터 및 사주 정보 가져오기
     const route = useRoute<RouteProp<{
         NameReport: {
@@ -239,21 +243,134 @@ export const ReportScreen: React.FC = () => {
         }
     }, 'NameReport'>>();
     const nameData = route.params?.nameData;
-    const saju = route.params?.saju;
+    const routeSaju = route.params?.saju;
+
+    // 사주 정보: 전역 상태 우선, 없으면 route params 사용
+    const effectiveSajuInfo = globalSajuInfo
+        ? { birthDate: globalSajuInfo.birthDate.toISOString(), birthTime: globalSajuInfo.birthTime ?? null }
+        : routeSaju?.birthDate
+            ? { birthDate: routeSaju.birthDate, birthTime: routeSaju.birthTime ?? null }
+            : null;
+
+    const [sajuLoading, setSajuLoading] = useState(false);
+    const [sajuError, setSajuError] = useState(false);
 
     // 사주 정보 입력 여부 확인 (birthDate가 있어야 사주 정보가 있는 것)
-    const hasSaju = Boolean(saju?.birthDate);
+    const hasSaju = Boolean(effectiveSajuInfo?.birthDate);
 
-    // LLM 리포트 로딩 (캐시에서)
+    // 사주정보 입력하기 버튼 핸들러
+    const handleSajuInputPress = useCallback(() => {
+        (navigation as any).navigate('BirthDateModal', {
+            onComplete: async (result: { birthDate: Date; birthTime?: string }) => {
+                // 1. 전역 사주 정보 업데이트
+                updateSaju({
+                    birthDate: result.birthDate,
+                    birthTime: result.birthTime,
+                });
+
+                setSajuLoading(true);
+                setSajuError(false);
+
+                // 2. route params도 업데이트 (화면 재진입 시 유지)
+                const newSaju = {
+                    birthDate: result.birthDate.toISOString(),
+                    birthTime: result.birthTime ?? null,
+                };
+                (navigation as any).setParams({ saju: newSaju });
+
+                // 3. 현재 카드 LLM 리포트 재생성 (즉시 UI 업데이트)
+                if (nameData?.hanjaName) {
+                    try {
+                        const newReport = await namingService.regenerateReportWithSaju(
+                            nameData.hanjaName,
+                            { birthDate: result.birthDate, birthTime: result.birthTime }
+                        );
+                        setLlmReport(newReport);
+                        console.log('[ReportScreen] Current report regenerated with new saju');
+                    } catch (error) {
+                        console.error('[ReportScreen] Current report regeneration failed:', error);
+                        setSajuError(true);
+                    } finally {
+                        setSajuLoading(false);
+                    }
+                } else {
+                    setSajuLoading(false);
+                }
+
+                // 4. 백그라운드에서 나머지 모든 리포트 병렬 재생성 (다른 카드 즉시 로딩 가능)
+                namingService.regenerateAllReportsWithSaju({
+                    birthDate: result.birthDate,
+                    birthTime: result.birthTime,
+                }).then(count => {
+                    console.log(`[ReportScreen] Background regeneration complete: ${count} reports`);
+                }).catch(error => {
+                    console.error('[ReportScreen] Background regeneration failed:', error);
+                });
+            },
+        });
+    }, [navigation, nameData?.hanjaName, updateSaju]);
+
+    // 사주 분석 재시도 핸들러
+    const handleSajuRetry = useCallback(async () => {
+        if (!effectiveSajuInfo?.birthDate || !nameData?.hanjaName) return;
+
+        setSajuLoading(true);
+        setSajuError(false);
+
+        try {
+            const newReport = await namingService.regenerateReportWithSaju(
+                nameData.hanjaName,
+                {
+                    birthDate: new Date(effectiveSajuInfo.birthDate),
+                    birthTime: effectiveSajuInfo.birthTime ?? undefined,
+                }
+            );
+            setLlmReport(newReport);
+            console.log('[ReportScreen] LLM report regenerated on retry');
+        } catch (error) {
+            console.error('[ReportScreen] LLM retry failed:', error);
+            setSajuError(true);
+        } finally {
+            setSajuLoading(false);
+        }
+    }, [effectiveSajuInfo, nameData?.hanjaName]);
+
+    // LLM 리포트 로딩 (캐시에서 또는 사주 정보로 재생성)
     useEffect(() => {
         if (!nameData?.hanjaName) return;
 
-        const cachedReport = namingService.getReport(nameData.hanjaName);
-        if (cachedReport) {
-            console.log('[ReportScreen] Using cached LLM report for:', nameData.hanjaName);
-            setLlmReport(cachedReport);
-        }
-    }, [nameData?.hanjaName]);
+        const loadReport = async () => {
+            const cachedReport = namingService.getReport(nameData.hanjaName);
+
+            // 전역 사주가 있고, 캐시된 리포트에 사주 정보가 없으면 재생성
+            const hasCachedSaju = cachedReport?.analysis?.naturalElement?.sajuElements;
+            if (effectiveSajuInfo?.birthDate && cachedReport && !hasCachedSaju) {
+                console.log('[ReportScreen] Regenerating report with global saju for:', nameData.hanjaName);
+                setSajuLoading(true);
+                try {
+                    const newReport = await namingService.regenerateReportWithSaju(
+                        nameData.hanjaName,
+                        {
+                            birthDate: new Date(effectiveSajuInfo.birthDate),
+                            birthTime: effectiveSajuInfo.birthTime ?? undefined,
+                        }
+                    );
+                    setLlmReport(newReport);
+                    console.log('[ReportScreen] Report regenerated with global saju');
+                } catch (error) {
+                    console.error('[ReportScreen] Report regeneration failed:', error);
+                    setLlmReport(cachedReport); // 실패 시 기존 리포트 사용
+                } finally {
+                    setSajuLoading(false);
+                }
+            } else if (cachedReport) {
+                console.log('[ReportScreen] Using cached LLM report for:', nameData.hanjaName);
+                setLlmReport(cachedReport);
+            }
+        };
+
+        loadReport();
+    }, [nameData?.hanjaName, effectiveSajuInfo?.birthDate]);
 
     // LLM analysisComments → headerData 변환
     const headerData = llmReport?.analysis ? {
@@ -298,6 +415,10 @@ export const ReportScreen: React.FC = () => {
             (e: string) => e.toLowerCase() as 'wood' | 'fire' | 'earth' | 'metal' | 'water'
         ),
     } : DUMMY_ORTHODOX_DATA.elementalBalance;
+
+    // DEBUG: 자원오행 데이터 확인
+    console.log('[ReportScreen] llmReport.naturalElement.sajuElements:', llmReport?.analysis?.naturalElement?.sajuElements);
+    console.log('[ReportScreen] dynamicElementalBalance:', dynamicElementalBalance);
 
     // 동적 suriAnalysis 데이터 (llmReport.analysis.numerology에서)
     // level → badgeLabel/badgeColor 매핑
@@ -622,6 +743,10 @@ export const ReportScreen: React.FC = () => {
                             unluckyCharacters={dynamicUnluckyCharacters || DUMMY_ORTHODOX_DATA.unluckyCharacters}
                             hasSaju={hasSaju}
                             headerData={headerData}
+                            onSajuInputPress={handleSajuInputPress}
+                            sajuLoading={sajuLoading}
+                            sajuError={sajuError}
+                            onSajuRetry={handleSajuRetry}
                         />
                     </View>
 

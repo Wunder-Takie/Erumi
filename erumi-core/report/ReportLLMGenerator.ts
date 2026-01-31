@@ -24,6 +24,11 @@ export interface HanjaInfo {
 
 export interface AnalysisData {
     yinYang: { isBalanced: boolean; yinCount: number; yangCount: number };
+    // 🆕 사주 음양 정보 (사주 정보가 있는 경우)
+    sajuYinYang?: {
+        dominant: 'yin' | 'yang' | 'balanced';  // 사주의 주된 기운
+        description: string;  // "양 기운이 강한 사주" 등
+    };
     pronunciation: {
         flow: string;
         elements: string[];
@@ -251,7 +256,7 @@ JSON만 응답:
   "energy": {"title": "5-10글자", "content": "1-2문장 (~에요/해요로 끝남)"},
   "blessing": {"title": "5-10글자", "content": "1-2문장 (~에요/해요로 끝남)"},
   "analysisComments": {
-    "yinYang": "50~60자로 (이름 언급 없이, ~에요/해요로 끝남). 숫자 표현 금지. 음/양 비율 자연스럽게 표현",
+    "yinYang": "50~60자 2문장: (1) '사주 음양' 정보가 있으면 사주의 기운과 이름의 기운이 어떻게 조화/보완되는지 설명 (2) 없으면 이름의 음양만 설명. 숫자 표현 금지. ~에요/해요 어미.",
     "pronunciation": "50~60자로 이름 소리가 주는 느낌/인상 (이름 언급 없이, ~에요/해요로 끝남. 예: 부드럽고 맑은 소리가 나요.)",
     "numerologySummary": "초년~말년 운세를 종합하여 정확히 2문장으로 요약 (이름 언급 없이, ~에요/해요로 끝남)",
     "numerology": "초년운: 2-3문장\\n청년운: 2-3문장\\n중년운: 2-3문장\\n말년운: 2-3문장 (모두 이름 언급 없이, ~에요/해요로 끝남)",
@@ -407,7 +412,82 @@ function formatAnalysisData(data: AnalysisData): string {
         naturalElementInfo += `\n  → 사주에 부족한 오행 없음(모든 오행이 1개 이상)`;
     }
 
-    return `- 음양: ${data.yinYang.isBalanced ? '균형' : '불균형'} (음${data.yinYang.yinCount}/양${data.yinYang.yangCount})
+    // 🆕 사주 음양 정보 (있는 경우) + 케이스별 해석 힌트 + 다양한 표현 예시
+    let sajuYinYangInfo = '';
+    if (data.sajuYinYang) {
+        const sajuDominant = data.sajuYinYang.dominant; // 'yin' | 'yang' | 'balanced'
+        const nameYinYangDesc = data.yinYang.yangCount > data.yinYang.yinCount
+            ? '양의 기운이 강한 이름'
+            : data.yinYang.yinCount > data.yinYang.yangCount
+                ? '음의 기운이 강한 이름'
+                : '음양이 균형 잡힌 이름';
+
+        // 이름의 주된 기운 판단
+        const nameDominant = data.yinYang.yangCount > data.yinYang.yinCount
+            ? 'yang'
+            : data.yinYang.yinCount > data.yinYang.yangCount
+                ? 'yin'
+                : 'balanced';
+
+        // 케이스별 해석 힌트 + 다양한 표현 예시
+        let interpretationHint = '';
+        const yinDesc = '차분하고 깊은';
+        const yangDesc = '활발하고 밝은';
+
+        if (sajuDominant === 'balanced' && nameDominant === 'balanced') {
+            // 둘 다 균형
+            interpretationHint = `사주와 이름 모두 음양이 조화롭습니다.
+[표현 예시 - 참고만 하고 비슷한 새 표현 작성]
+• 타고난 균형감각이 이름에서도 드러나요
+• 안정적이고 조화로운 에너지가 느껴져요
+• 흔들림 없는 중심을 가진 사람이 될 거예요
+• 어떤 상황에서도 평정심을 유지할 수 있어요`;
+        } else if (sajuDominant === 'balanced') {
+            // 사주 균형 + 이름 치우침 → 개성 부여
+            const dominant = nameDominant === 'yin' ? yinDesc : yangDesc;
+            interpretationHint = `사주는 균형잡혀 있고, 이름이 ${nameDominant === 'yin' ? '음' : '양'}의 개성을 더해줍니다.
+⚠️ "보완/균형"이라고 표현하면 틀림! "개성/특성 강화"로 표현하세요.
+[표현 예시 - 참고만 하고 비슷한 새 표현 작성]
+• ${dominant} 매력이 더욱 빛나게 해줘요
+• 특별한 ${nameDominant === 'yin' ? '깊이' : '활력'}를 선사해요
+• ${dominant} 기운이 돋보이는 이름이에요
+• ${nameDominant === 'yin' ? '사려 깊은' : '열정적인'} 면모를 부각시켜요`;
+        } else if (nameDominant === 'balanced') {
+            // 사주 치우침 + 이름 균형 → 중화/조율
+            interpretationHint = `사주의 ${sajuDominant === 'yin' ? '음' : '양'} 기운을 이름이 부드럽게 중화해줍니다.
+[표현 예시 - 참고만 하고 비슷한 새 표현 작성]
+• 치우친 기운을 잡아주는 든든한 이름이에요
+• 균형 잡힌 에너지로 조화를 이뤄요
+• 안정감을 더해주는 좋은 조합이에요
+• 부드럽게 기운을 조율해줘요`;
+        } else if (sajuDominant === nameDominant) {
+            // 같은 방향 → 기운 강화/증폭
+            const dominant = sajuDominant === 'yin' ? yinDesc : yangDesc;
+            interpretationHint = `사주와 이름 모두 ${sajuDominant === 'yin' ? '음' : '양'}의 기운이 강합니다.
+⚠️ "보완"이라고 표현하면 틀림! "강화/증폭"으로 표현하세요.
+[표현 예시 - 참고만 하고 비슷한 새 표현 작성]
+• ${dominant} 성향이 더욱 뚜렷해져요
+• 타고난 ${sajuDominant === 'yin' ? '깊이와 사려깊음' : '활력과 추진력'}이 배가돼요
+• 본래의 기질이 한층 강해져요
+• ${sajuDominant === 'yin' ? '내면의 힘' : '외향적 에너지'}이 더욱 단단해져요`;
+        } else {
+            // 반대 방향 → 진정한 보완/균형
+            interpretationHint = `사주의 ${sajuDominant === 'yin' ? '음' : '양'} 기운을 이름의 ${nameDominant === 'yin' ? '음' : '양'} 기운이 보완합니다.
+[표현 예시 - 참고만 하고 비슷한 새 표현 작성]
+• 서로 다른 기운이 조화롭게 어우러져요
+• ${sajuDominant === 'yin' ? '차분함에 활력을' : '활력에 깊이를'} 더해줘요
+• 균형 잡힌 삶을 살아갈 수 있어요
+• 음양이 서로를 보완하며 완성돼요`;
+        }
+
+        sajuYinYangInfo = `
+- 사주 음양: ${data.sajuYinYang.description}
+- 이름 음양: ${nameYinYangDesc} (음${data.yinYang.yinCount}/양${data.yinYang.yangCount})
+- 해석 지시 (⚠️ 예시 표현을 그대로 쓰지 말고 비슷한 새로운 표현으로 작성):
+${interpretationHint}`;
+    }
+
+    return `- 이름 음양: ${data.yinYang.isBalanced ? '균형' : '불균형'} (음${data.yinYang.yinCount}/양${data.yinYang.yangCount})${sajuYinYangInfo}
 - 발음오행: ${pronunciationWithHangul} (${data.pronunciation.flow})
 - 수리성명학: \n  ${numerologyDetails}
 - 자원오행: \n  ${naturalElementInfo}

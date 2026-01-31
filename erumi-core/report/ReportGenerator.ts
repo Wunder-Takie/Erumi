@@ -187,12 +187,66 @@ export class ReportGenerator {
             console.log('[ReportGenerator] sajuCounts is undefined!');
         }
 
+        // 🆕 사주 음양 계산 (오행 기반)
+        // 목/화 = 양의 기운, 금/수 = 음의 기운, 토 = 중성
+        let sajuYinYang: { dominant: 'yin' | 'yang' | 'balanced'; description: string } | undefined;
+        if (sajuCounts) {
+            const yangElements = sajuCounts.wood + sajuCounts.fire;  // 목+화 = 양
+            const yinElements = sajuCounts.metal + sajuCounts.water;  // 금+수 = 음
+            const total = yangElements + yinElements;  // 토는 중성이므로 제외
+
+            if (total > 0) {
+                const yangRatio = yangElements / total;
+
+                // 표현 다양성을 위한 변형들
+                const yangDescriptions = [
+                    '양(陽)의 기운이 강한 사주',
+                    '활발한 양(陽) 기운을 타고난 사주',
+                    '밝고 역동적인 양 기운의 사주',
+                    '양의 기운이 넘치는 사주',
+                ];
+                const yinDescriptions = [
+                    '음(陰)의 기운이 강한 사주',
+                    '차분한 음(陰) 기운을 타고난 사주',
+                    '깊고 안정적인 음 기운의 사주',
+                    '음의 기운이 깊은 사주',
+                ];
+                const balancedDescriptions = [
+                    '음양이 균형 잡힌 사주',
+                    '음과 양이 조화로운 사주',
+                    '균형 잡힌 음양의 사주',
+                    '음양의 조화가 이루어진 사주',
+                ];
+
+                const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+                if (yangRatio > 0.6) {
+                    sajuYinYang = {
+                        dominant: 'yang',
+                        description: pickRandom(yangDescriptions),
+                    };
+                } else if (yangRatio < 0.4) {
+                    sajuYinYang = {
+                        dominant: 'yin',
+                        description: pickRandom(yinDescriptions),
+                    };
+                } else {
+                    sajuYinYang = {
+                        dominant: 'balanced',
+                        description: pickRandom(balancedDescriptions),
+                    };
+                }
+                console.log('[ReportGenerator] sajuYinYang:', sajuYinYang);
+            }
+        }
+
         return {
             yinYang: {
                 isBalanced: analysis.yinYang.isBalanced,
                 yinCount: analysis.yinYang.characters.filter(c => c.type === '음').length,
                 yangCount: analysis.yinYang.characters.filter(c => c.type === '양').length,
             },
+            sajuYinYang,  // 🆕 사주 음양 정보 추가
             pronunciation: {
                 flow: analysis.pronunciation.flow || '중립',
                 elements: analysis.pronunciation.characters.map(c => c.elementKorean),

@@ -4,6 +4,7 @@
  */
 import * as React from 'react';
 import { View, Text, StyleSheet, ViewStyle, Image, ImageSourcePropType } from 'react-native';
+import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { YinYang, YinYangVariant } from './YinYang';
 import { ElementBarGraph, ElementValues, ElementType } from './ElementBarGraph';
 import { Badge } from './Badge';
@@ -323,7 +324,14 @@ export const OrthodoxReportContent: React.FC<OrthodoxReportContentProps> = ({
         }
     };
 
-    return <View style={[styles.container, style]}>{renderContent()}</View>;
+    return (
+        <Animated.View
+            style={[styles.container, style]}
+            entering={FadeIn.duration(300)}
+        >
+            {renderContent()}
+        </Animated.View>
+    );
 };
 
 // =============================================================================

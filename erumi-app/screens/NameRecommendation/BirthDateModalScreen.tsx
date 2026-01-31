@@ -1,11 +1,23 @@
 /**
- * BirthDateStep - 생년월일 선택 스텝 (위자드용)
- * WizardContainer 내부에서 렌더링되는 스텝 컴포넌트
+ * BirthDateModalScreen - 사주정보 입력 모달 스크린
+ * ReportScreen에서 placeholder 버튼 클릭 시 열리는 모달
+ * 
+ * Figma: 532:3376 (birthdateModal)
+ * - Topbar: title "생년월일", trailing item "홈으로" 아이콘, leading item 없음
+ * - ContentSection: questionFrame + vScrollContainer(inputWrapper)
+ * - BottomBar: 저장 버튼
+ * 
+ * 입력 완료 후 route.params.onComplete 콜백으로 결과 전달
  */
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
+    Topbar,
+    TopbarItem,
+    Icon,
     SelectionInput,
     Button,
     Dialog,
@@ -13,8 +25,30 @@ import {
     SelectItem,
     colors,
     space,
-} from '../../../design-system';
-import { WizardStepProps, WizardData } from '../WizardContainer';
+    typography,
+    radius,
+} from '../../design-system';
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface BirthDateResult {
+    birthDate: Date;
+    birthTime?: string;
+}
+
+type RootStackParamList = {
+    BirthDateModal: {
+        onComplete?: (result: BirthDateResult) => void;
+    };
+};
+
+type BirthDateModalRouteProp = RouteProp<RootStackParamList, 'BirthDateModal'>;
+
+// =============================================================================
+// Constants
+// =============================================================================
 
 // 날짜 포맷 함수
 const formatDate = (date: Date): string => {
@@ -40,17 +74,19 @@ const ZODIAC_TIME_OPTIONS = [
     { id: 'hae', label: '해시(亥時) 21:00~23:00' },
 ];
 
-export const BirthDateStep: React.FC<WizardStepProps> = ({
-    goNext,
-    data,
-    updateData,
-}) => {
+// =============================================================================
+// Component
+// =============================================================================
+
+export const BirthDateModalScreen: React.FC = () => {
+    const insets = useSafeAreaInsets();
+    const navigation = useNavigation();
+    const route = useRoute<BirthDateModalRouteProp>();
+
     // 생년월일
-    const [birthDate, setBirthDate] = useState<Date | null>(data.birthDate ?? null);
+    const [birthDate, setBirthDate] = useState<Date | null>(null);
     // 태어난 시간 (시진)
-    const [birthTime, setBirthTime] = useState<string | null>(
-        typeof data.birthTime === 'string' ? data.birthTime : null
-    );
+    const [birthTime, setBirthTime] = useState<string | null>(null);
 
     // 날짜 피커 다이얼로그 표시 여부
     const [showDateDialog, setShowDateDialog] = useState(false);
@@ -63,6 +99,11 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
     // 임시 선택 값 (다이얼로그에서 사용)
     const [tempDate, setTempDate] = useState<Date>(new Date());
     const [tempTime, setTempTime] = useState<string | null>(null);
+
+    // 닫기/홈으로
+    const handleClose = useCallback(() => {
+        navigation.goBack();
+    }, [navigation]);
 
     const handleOpenDateDialog = () => {
         setTempDate(birthDate || new Date());
@@ -83,31 +124,29 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
 
     const handleConfirmDate = () => {
         setBirthDate(tempDate);
-        updateData({ birthDate: tempDate });
     };
 
     const handleConfirmTime = () => {
         if (tempTime) {
             setBirthTime(tempTime);
-            updateData({ birthTime: tempTime });
         }
     };
 
-    const handleNext = () => {
-        // 생년월일 + 유효한 시간(모름 제외) 모두 있을 때만 전달
-        if (birthDate && birthTime && birthTime !== 'unknown') {
-            updateData({ birthDate, birthTime });
-            goNext();
+    // 저장 버튼 클릭
+    const handleSave = useCallback(() => {
+        if (birthDate) {
+            const result: BirthDateResult = {
+                birthDate,
+                birthTime: birthTime ?? undefined,
+            };
+            // 콜백으로 결과 전달
+            route.params?.onComplete?.(result);
+            navigation.goBack();
         }
-    };
+    }, [birthDate, birthTime, navigation, route.params]);
 
-    const handleSkip = () => {
-        // 사주 정보 없이 다음으로 (리포트에서 placeholder 표시됨)
-        goNext();
-    };
-
-    // 생년월일 + 유효한 시간(모름 제외)이 모두 있어야 다음 버튼 활성화
-    const isNextEnabled = birthDate !== null && birthTime !== null && birthTime !== 'unknown';
+    // 생년월일 + 태어난 시간 모두 입력되어야 저장 버튼 활성화
+    const isSaveEnabled = birthDate !== null && birthTime !== null;
 
     // 선택된 시진 라벨
     const selectedTimeLabel = birthTime
@@ -115,34 +154,44 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
         : undefined;
 
     return (
-        <View style={styles.container}>
-            {/* Content Section */}
+        <View style={styles.modalContainer}>
+            {/* Topbar: title "생년월일", trailing "X Mark" 아이콘, no leading */}
+            <Topbar
+                location="page"
+                title="생년월일"
+                trailingItems={
+                    <TopbarItem
+                        status="icon"
+                        icon={<Icon name="X Mark" size={24} />}
+                        onPress={handleClose}
+                    />
+                }
+            />
+
+            {/* ContentSection */}
             <View style={styles.contentSection}>
-                {/* Page Header */}
-                <View style={styles.pageHeader}>
-                    <Text style={styles.title}>
-                        세상에 처음{'\n'}도착한 시간은 언제인가요?
+                {/* questionFrame */}
+                <View style={styles.questionFrame}>
+                    <Text style={styles.questionTitle}>
+                        세상에 처음{"\n"}도착한 시간은 언제인가요?
                     </Text>
-                    <Text style={styles.subtitle}>
+                    <Text style={styles.questionSubtitle}>
                         생년월일과 태어난 시간을 알려주세요.
                     </Text>
                 </View>
 
-                {/* Input Fields */}
-                <View style={styles.inputsContainer}>
+                {/* vScrollContainer > inputWrapper */}
+                <View style={styles.inputWrapper}>
                     {/* 생년월일 */}
                     <SelectionInput
                         shape="rectangle"
                         showLabel={true}
                         label="생년월일"
-                        placeholder="생년 월일을 선택해주세요."
+                        placeholder="생년월일을 선택해주세요."
                         value={birthDate ? formatDate(birthDate) : undefined}
                         onPress={handleOpenDateDialog}
                         showTrailingIcon={!!birthDate}
-                        onTrailingIconPress={() => {
-                            setBirthDate(null);
-                            updateData({ birthDate: undefined });
-                        }}
+                        onTrailingIconPress={() => setBirthDate(null)}
                     />
 
                     {/* 태어난 시간 */}
@@ -154,34 +203,22 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
                         value={selectedTimeLabel}
                         onPress={handleOpenTimeDialog}
                         showTrailingIcon={!!birthTime}
-                        onTrailingIconPress={() => {
-                            setBirthTime(null);
-                            updateData({ birthTime: undefined });
-                        }}
+                        onTrailingIconPress={() => setBirthTime(null)}
                     />
                 </View>
             </View>
 
-            {/* Skip Button */}
-            <View style={styles.skipSection}>
-                <Pressable onPress={handleSkip} style={styles.skipButton}>
-                    <Text style={styles.skipText}>
-                        몰라도 괜찮아요.(건너뛰기)
-                    </Text>
-                </Pressable>
-            </View>
-
-            {/* Bottom Button */}
-            <View style={styles.bottomSection}>
+            {/* BottomBar */}
+            <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
                 <Button
                     variant="primary"
                     size="large"
-                    disabled={!isNextEnabled}
+                    disabled={!isSaveEnabled}
                     haptic
-                    onPress={handleNext}
-                    style={styles.nextButton}
+                    onPress={handleSave}
+                    style={styles.saveButton}
                 >
-                    다음
+                    저장
                 </Button>
             </View>
 
@@ -228,7 +265,6 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
                                 clickedTimeRef.current = option.id;
                                 setShowTimeDialog(false);
                                 setBirthTime(option.id);
-                                updateData({ birthTime: option.id });
                             }}
                         />
                     ))}
@@ -238,10 +274,20 @@ export const BirthDateStep: React.FC<WizardStepProps> = ({
     );
 };
 
+// =============================================================================
+// Styles (Figma: 532:3376 birthdateModal)
+// =============================================================================
+
 const styles = StyleSheet.create({
-    container: {
+    // 모달 컨테이너: 상단만 둥글게 (32/32/0/0), 배경 #FCF8F0
+    modalContainer: {
         flex: 1,
+        backgroundColor: colors.background.default.highest, // #FCF8F0
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        overflow: 'hidden',
     },
+    // ContentSection: padding 20/16, gap 32
     contentSection: {
         flex: 1,
         paddingHorizontal: space[500], // 20
@@ -249,49 +295,29 @@ const styles = StyleSheet.create({
         paddingBottom: space[400], // 16
         gap: space[800], // 32
     },
-    pageHeader: {
+    // questionFrame: gap 8
+    questionFrame: {
         gap: space[200], // 8
     },
-    title: {
-        fontFamily: 'Pretendard-Bold',
-        fontSize: 23,
-        fontWeight: '700',
-        lineHeight: 28,
-        color: colors.text.default.primary,
+    questionTitle: {
+        ...typography.heading.lg,
+        color: colors.text.default.primary, // #332C21
     },
-    subtitle: {
-        fontFamily: 'Pretendard-Medium',
-        fontSize: 14,
-        fontWeight: '500',
-        lineHeight: 18,
-        color: colors.text.default.tertiary,
+    questionSubtitle: {
+        ...typography.label.md,
+        color: colors.text.default.tertiary, // #AEA393
     },
-    inputsContainer: {
+    // inputWrapper: gap 24
+    inputWrapper: {
         flex: 1,
         gap: space[600], // 24
     },
-    // Figma: skipButtonWrapper - padding L=16 R=16 T=4 B=4
-    skipSection: {
-        paddingHorizontal: space[400], // 16
-        paddingVertical: space[100], // 4
-        alignItems: 'center',
-    },
-    skipButton: {
-        paddingHorizontal: space[400], // 16
-        paddingVertical: space[300], // 12 (Figma: SkipButton padding)
-    },
-    skipText: {
-        fontFamily: 'Pretendard-SemiBold',
-        fontSize: 14,
-        fontWeight: '600',
-        lineHeight: 16,
-        color: colors.text.default.tertiary,
-    },
-    bottomSection: {
+    // BottomBar: padding 20/12
+    bottomBar: {
         paddingHorizontal: space[500], // 20
         paddingVertical: space[300], // 12
     },
-    nextButton: {
+    saveButton: {
         alignSelf: 'stretch',
     },
     pickerContent: {
@@ -300,4 +326,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default BirthDateStep;
+export default BirthDateModalScreen;

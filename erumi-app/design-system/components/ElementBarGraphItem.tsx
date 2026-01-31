@@ -3,7 +3,8 @@
  * 오행(五行) 그래프의 개별 바 아이템
  */
 import * as React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ViewStyle, Animated, Easing } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors, typography } from '../tokens';
 
@@ -99,6 +100,45 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
     const [graphWidth, setGraphWidth] = React.useState(0);
     const isLayoutReady = graphWidth > 0;
 
+    // Fill-up 및 이름 박스 애니메이션
+    const heightAnim = useRef(new Animated.Value(0)).current;
+    const nameBoxOpacity = useRef(new Animated.Value(1)).current; // 초기값 1 (기존 렌더링용)
+    const prevAmountRef = useRef(amount);
+
+    useEffect(() => {
+        // amount가 변경되었을 때 순차 애니메이션 실행
+        if (amount > 0 && prevAmountRef.current !== amount) {
+            heightAnim.setValue(0);
+            nameBoxOpacity.setValue(0); // 이름 박스 숨김
+
+            // 순차 애니메이션: 그래프 fill-up → 이름 박스 fade-in
+            Animated.sequence([
+                // 1. 그래프 fill-up
+                Animated.timing(heightAnim, {
+                    toValue: filledHeight,
+                    duration: 600,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: false,
+                }),
+                // 2. 이름 박스 fade-in (hasNameValue일 때만 의미 있음)
+                Animated.timing(nameBoxOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        } else if (amount === 0) {
+            heightAnim.setValue(0);
+            nameBoxOpacity.setValue(1);
+        } else {
+            // 초기 렌더링 시 즉시 설정
+            heightAnim.setValue(filledHeight);
+            nameBoxOpacity.setValue(1);
+        }
+        prevAmountRef.current = amount;
+    }, [amount, filledHeight, heightAnim, nameBoxOpacity]);
+
     return (
         <View style={[styles.container, style]}>
             {/* Graph bar */}
@@ -108,11 +148,11 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
             >
                 {/* Filled bar (사주 오행) */}
                 {amount > 0 && (
-                    <View
+                    <Animated.View
                         style={[
                             styles.filledBar,
                             {
-                                height: filledHeight,
+                                height: heightAnim,
                                 backgroundColor: config.barColor,
                                 // hasNameValue일 때 상단 radius = 0 (이름 박스와 연결)
                                 borderTopLeftRadius: hasNameValue ? 0 : CORNER_RADIUS,
@@ -125,7 +165,7 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
                 {/* Name value indicator (이름 오행) - with dashed border */}
                 {/* amount가 3이면 바 내부 상단에 오버레이, 아니면 바 위에 표시 */}
                 {hasNameValue && isLayoutReady && (
-                    <View
+                    <Animated.View
                         style={[
                             styles.nameBox,
                             amount === 3
@@ -137,6 +177,7 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
                                 borderTopRightRadius: CORNER_RADIUS,
                                 borderBottomLeftRadius: amount > 0 ? 0 : CORNER_RADIUS,
                                 borderBottomRightRadius: amount > 0 ? 0 : CORNER_RADIUS,
+                                opacity: nameBoxOpacity, // 애니메이션 적용
                             }
                         ]}
                     >
@@ -153,7 +194,7 @@ export const ElementBarGraphItem: React.FC<ElementBarGraphItemProps> = ({
                         ]} />
                         {/* "이름" 텍스트 */}
                         <Text style={styles.nameText}>이름</Text>
-                    </View>
+                    </Animated.View>
                 )}
             </View>
 

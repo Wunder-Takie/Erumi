@@ -8,7 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font';
 import { useState, useEffect } from 'react';
 import { colors, SplashScreen, Navbar, NavbarMenu } from './design-system';
-import { HomeScreen, SurnameSearchScreen, NameWizardScreen, NameBuilderScreen, NameChangeScreen, ProfileScreen, ReportScreen } from './screens';
+import { HomeScreen, SurnameSearchScreen, NameWizardScreen, NameBuilderScreen, NameChangeScreen, ProfileScreen, ReportScreen, BirthDateModalScreen } from './screens';
 import DemoScreen from './App.demo';
 
 const Tab = createBottomTabNavigator();
@@ -84,6 +84,12 @@ const MainApp = () => {
       <Stack.Screen name="SurnameSearch" component={SurnameSearchScreen} />
       {/* 이름 리포트 화면 */}
       <Stack.Screen name="NameReport" component={ReportScreen} />
+      {/* 사주정보 입력 모달 */}
+      <Stack.Screen
+        name="BirthDateModal"
+        component={BirthDateModalScreen}
+        options={{ presentation: 'modal' }}
+      />
       {/* 숨겨진 데모 페이지 (개발용) */}
       <Stack.Screen name="Demo" component={DemoScreen} />
     </Stack.Navigator>
